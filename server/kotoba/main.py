@@ -16,6 +16,7 @@ from kotoba.api import (
     encounters,
     lines,
     meta,
+    quiz,
     reviews,
     sessions,
     sources,
@@ -67,6 +68,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(reviews.router, prefix="/api")
     app.include_router(settings_api.router, prefix="/api")
     app.include_router(capture.router, prefix="/api")
+    app.include_router(quiz.router, prefix="/api")
     app.include_router(ws.router)
     app.mount("/media", StaticFiles(directory=p.media_dir), name="media")
     return app

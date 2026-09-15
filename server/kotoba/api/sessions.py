@@ -12,7 +12,7 @@ from kotoba.db import get_db
 from kotoba.errors import ApiError
 from kotoba.models import CaptureSession, Line, utcnow
 from kotoba.schemas import SessionCreate, SessionDTO
-from kotoba.services import settings_store
+from kotoba.services import settings_store, summary
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -90,3 +90,8 @@ def end_session(session_id: int, db: Session = Depends(get_db)) -> SessionDTO:
             settings_store.set_value(db, "active_session_id", None)
         db.commit()
     return SessionDTO.from_model(s, _line_count(db, s.id))
+
+
+@router.get("/{session_id}/summary")
+def session_summary(session_id: int, db: Session = Depends(get_db)) -> dict:
+    return summary.session_summary(db, session_id)
