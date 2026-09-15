@@ -15,7 +15,7 @@ DEFAULTS: dict[str, Any] = {
     "desired_retention": 0.9,
     "ai_provider": "deepseek",
     "ai_base_url": "https://api.deepseek.com",
-    "ai_model": "deepseek-chat",
+    "ai_model": "deepseek-flash",
     "ocr_provider": "auto",
     "active_session_id": None,
     "ui_language": "zh-CN",

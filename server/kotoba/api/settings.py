@@ -5,11 +5,13 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from kotoba.db import get_db
 from kotoba.errors import ApiError
 from kotoba.services import settings_store
+from kotoba.services.ai import llm
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -40,3 +42,31 @@ def put_settings(body: dict[str, Any], db: Session = Depends(get_db)) -> dict[st
         settings_store.set_value(db, key, value)
     db.commit()
     return settings_store.all_values(db)
+
+
+class AiKeyIn(BaseModel):
+    provider: str = Field(min_length=1, max_length=40)
+    key: str = Field(min_length=1)
+
+
+@router.get("/ai-key")
+def ai_key_status(db: Session = Depends(get_db)) -> dict:
+    provider = settings_store.get(db, "ai_provider") or "deepseek"
+    key, source = llm.get_api_key(provider)
+    return {"provider": provider, "configured": bool(key), "source": source}
+
+
+@router.put("/ai-key")
+def put_ai_key(body: AiKeyIn, db: Session = Depends(get_db)) -> dict:
+    llm.set_api_key(body.provider, body.key.strip())
+    settings_store.set_value(db, "ai_provider", body.provider)
+    db.commit()
+    key, source = llm.get_api_key(body.provider)
+    return {"provider": body.provider, "configured": bool(key), "source": source}
+
+
+@router.delete("/ai-key")
+def delete_ai_key(db: Session = Depends(get_db)) -> dict:
+    provider = settings_store.get(db, "ai_provider") or "deepseek"
+    llm.delete_api_key(provider)
+    return {"provider": provider, "configured": False, "source": "none"}
