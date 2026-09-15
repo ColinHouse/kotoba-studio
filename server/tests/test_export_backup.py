@@ -1,0 +1,170 @@
+import io
+import json
+import zipfile
+
+import httpx
+from PIL import Image
+
+from kotoba.services.export.anki_connect import AnkiConnect
+
+
+def _png():
+    buf = io.BytesIO()
+    Image.new("RGB", (64, 32), (200, 100, 50)).save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def _seed(client, data_dir):
+    src = client.post("/api/sources", json={"title": "Summer Pockets"}).json()
+    ses = client.post("/api/sessions", json={"source_id": src["id"]}).json()
+    shot_dir = data_dir / "media" / "screens" / "20260916"
+    shot_dir.mkdir(parents=True)
+    (shot_dir / "a.png").write_bytes(_png())
+    text = "今日は俺が奢ってやるよ。"
+    line = client.post(
+        "/api/lines",
+        json={"session_id": ses["id"], "text": text, "screenshot_path": "screens/20260916/a.png"},
+    ).json()["line"]
+    client.patch(f"/api/lines/{line['id']}", json={"translation_zh": "今天我请客。"})
+    enc = client.post(
+        "/api/encounters",
+        json={
+            "line_id": line["id"],
+            "headword": "奢る",
+            "reading": "おごる",
+            "surface": "奢っ",
+            "span_start": text.index("奢っ"),
+            "span_end": text.index("奢っ") + 2,
+            "sense": {"gloss_zh": "请客", "gloss_en": "to treat"},
+            "card_types": ["reading", "cloze"],
+        },
+    ).json()
+    client.patch(
+        f"/api/encounters/{enc['encounter']['id']}",
+        json={"ai_explanation": {"meaning_here": "我请客", "tone": "随意"}},
+    )
+    line2 = client.post("/api/lines", json={"session_id": ses["id"], "text": "猫が好き。"}).json()[
+        "line"
+    ]
+    client.post(
+        "/api/encounters",
+        json={
+            "line_id": line2["id"],
+            "headword": "猫",
+            "reading": "ねこ",
+            "surface": "猫",
+            "card_types": ["reading"],
+        },
+    )
+    return enc
+
+
+def test_apkg_export_contains_media_and_fields(client, data_dir):
+    _seed(client, data_dir)
+    r = client.post("/api/export/apkg", json={})
+    assert r.status_code == 200 and r.headers["content-disposition"].endswith('.apkg"')
+    assert len(r.content) > 1000
+    with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
+        names = zf.namelist()
+        assert any(n.startswith("collection.anki") for n in names)
+        media = json.loads(zf.read("media"))
+        assert any(v.endswith("a.png") for v in media.values())
+    only_cat = client.get("/api/terms", params={"q": "猫"}).json()[0]
+    cards = client.get("/api/cards", params={"term_id": only_cat["id"]}).json()
+    assert client.post("/api/export/apkg", json={"card_ids": [cards[0]["id"]]}).status_code == 200
+    assert (
+        client.post("/api/export/apkg", json={"card_ids": [999999]}).json()["error"]["code"]
+        == "nothing_to_export"
+    )
+
+
+def test_anki_connect_export_flow(client, data_dir):
+    _seed(client, data_dir)
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        calls.append(body["action"])
+        action = body["action"]
+        if action == "version":
+            return httpx.Response(200, json={"result": 6, "error": None})
+        if action == "deckNames":
+            return httpx.Response(200, json={"result": ["Default"], "error": None})
+        if action == "modelNames":
+            return httpx.Response(200, json={"result": [], "error": None})
+        if action in ("createDeck", "createModel", "storeMediaFile"):
+            return httpx.Response(200, json={"result": None, "error": None})
+        if action == "addNote":
+            word = body["params"]["note"]["fields"]["Word"]
+            if word == "猫":
+                return httpx.Response(
+                    200,
+                    json={"result": None, "error": "cannot create note because it is a duplicate"},
+                )
+            fields = body["params"]["note"]["fields"]
+            assert fields["Sentence"] == "今日は俺が<b>奢っ</b>てやるよ。"
+            assert fields["Meaning"] == "请客" and fields["Translation"] == "今天我请客。"
+            assert (
+                fields["Image"].startswith("<img src=") and "这句里的意思" in fields["Explanation"]
+            )
+            assert body["params"]["note"]["modelName"] == "KotobaStudio-v1"
+            return httpx.Response(200, json={"result": 1500000000001, "error": None})
+        return httpx.Response(200, json={"result": None, "error": f"unknown {action}"})
+
+    client.app.state.anki_transport = httpx.MockTransport(handler)
+    r = client.post("/api/export/anki-connect", json={"deck": "日语"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert [a["word"] for a in body["added"]] == ["奢る"] and body["skipped"] == ["猫"]
+    assert (
+        calls[:4] == ["version", "deckNames", "createDeck", "modelNames"] and "createModel" in calls
+    )
+    assert "storeMediaFile" in calls
+
+
+def test_anki_connect_unreachable():
+    def handler(request):
+        raise httpx.ConnectError("refused")
+
+    ac = AnkiConnect(transport=httpx.MockTransport(handler))
+    try:
+        ac.version()
+    except Exception as exc:  # noqa: BLE001
+        assert getattr(exc, "code", None) == "anki_unreachable"
+    else:
+        raise AssertionError("expected anki_unreachable")
+
+
+def test_json_export(client, data_dir):
+    _seed(client, data_dir)
+    body = client.get("/api/export/json").json()
+    assert body["app"] == "kotoba-studio"
+    assert len(body["terms"]) == 2 and len(body["lines"]) == 2 and len(body["cards"]) == 3
+
+
+def test_backup_roundtrip(client, data_dir):
+    _seed(client, data_dir)
+    r = client.post("/api/backups")
+    assert r.status_code == 201
+    name = r.json()["name"]
+    with zipfile.ZipFile(data_dir / "backups" / name) as zf:
+        names = zf.namelist()
+        assert "kotoba.db" in names and "media/screens/20260916/a.png" in names
+    assert client.get("/api/backups").json()[0]["name"] == name
+
+    # destroy data, then restore
+    ogoru = client.get("/api/terms", params={"q": "奢"}).json()[0]
+    cat_line = next(ln for ln in client.get("/api/lines").json() if ln["text"] == "猫が好き。")
+    assert (
+        client.delete(f"/api/lines/{cat_line['id']}").status_code == 204
+    )  # cascades to encounters
+    assert client.get("/api/terms", params={"q": "猫"}).json()[0]["encounter_count"] == 0
+    client.patch(f"/api/terms/{ogoru['id']}", json={"known_status": "ignored"})
+    (data_dir / "media" / "screens" / "20260916" / "a.png").unlink()
+    r = client.post("/api/backups/restore", json={"name": name})
+    assert r.status_code == 200 and r.json()["snapshot"].startswith("pre-restore")
+    assert client.get(f"/api/terms/{ogoru['id']}").json()["known_status"] == "learning"
+    assert (data_dir / "media" / "screens" / "20260916" / "a.png").is_file()
+    assert len(client.get("/api/backups").json()) == 2
+    assert client.post("/api/backups/restore", json={"name": "../evil.zip"}).status_code == 400
+    assert client.post("/api/backups/restore", json={"name": "missing.zip"}).status_code == 404

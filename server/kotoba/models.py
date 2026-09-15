@@ -92,7 +92,9 @@ class Line(Base):
 
     session: Mapped[CaptureSession | None] = relationship()
     source: Mapped[Source | None] = relationship()
-    encounters: Mapped[list[Encounter]] = relationship(back_populates="line")
+    encounters: Mapped[list[Encounter]] = relationship(
+        back_populates="line", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class Term(Base):
@@ -108,9 +110,18 @@ class Term(Base):
     note: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
-    senses: Mapped[list[Sense]] = relationship(back_populates="term", order_by="Sense.ord")
-    encounters: Mapped[list[Encounter]] = relationship(back_populates="term")
-    cards: Mapped[list[Card]] = relationship(back_populates="term")
+    senses: Mapped[list[Sense]] = relationship(
+        back_populates="term",
+        order_by="Sense.ord",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    encounters: Mapped[list[Encounter]] = relationship(
+        back_populates="term", cascade="all, delete-orphan", passive_deletes=True
+    )
+    cards: Mapped[list[Card]] = relationship(
+        back_populates="term", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class Sense(Base):
@@ -216,7 +227,9 @@ class DictEntry(Base):
     common: Mapped[bool] = mapped_column(Boolean, default=False)
     is_expression: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    forms: Mapped[list[DictForm]] = relationship(back_populates="entry")
+    forms: Mapped[list[DictForm]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class DictForm(Base):

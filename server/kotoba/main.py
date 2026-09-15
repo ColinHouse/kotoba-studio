@@ -10,10 +10,13 @@ from fastapi.staticfiles import StaticFiles
 
 from kotoba import __version__
 from kotoba.api import (
+    ai,
+    backups,
     capture,
     cards,
     devices,
     encounters,
+    export,
     lines,
     meta,
     quiz,
@@ -69,6 +72,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(settings_api.router, prefix="/api")
     app.include_router(capture.router, prefix="/api")
     app.include_router(quiz.router, prefix="/api")
+    app.include_router(ai.router, prefix="/api")
+    app.include_router(export.router, prefix="/api")
+    app.include_router(backups.router, prefix="/api")
     app.include_router(ws.router)
     app.mount("/media", StaticFiles(directory=p.media_dir), name="media")
     return app
