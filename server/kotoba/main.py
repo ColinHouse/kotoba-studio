@@ -9,8 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from kotoba import __version__
+from kotoba.api import cards, encounters, lines, meta, sessions, sources, terms
 from kotoba.api import dict as dict_api
-from kotoba.api import lines, meta, sessions, sources
 from kotoba.config import Settings, get_settings, paths
 from kotoba.db import Database, make_engine, upgrade
 from kotoba.errors import install_error_handlers
@@ -45,6 +45,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(sources.router, prefix="/api")
     app.include_router(sessions.router, prefix="/api")
     app.include_router(lines.router, prefix="/api")
+    app.include_router(terms.router, prefix="/api")
+    app.include_router(encounters.router, prefix="/api")
+    app.include_router(cards.router, prefix="/api")
     app.mount("/media", StaticFiles(directory=p.media_dir), name="media")
     return app
 
