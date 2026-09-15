@@ -36,3 +36,17 @@ def db(client):
         yield session
     finally:
         session.close()
+
+
+@pytest.fixture()
+def jmdict_fixture(db):
+    """Import the small bundled JMdict fixture into the test database."""
+    from pathlib import Path
+
+    from kotoba.services.dictionary import jmdict
+    from kotoba.services.jp import expressions
+
+    path = Path(jmdict.__file__).resolve().parents[2] / "data" / "jmdict_fixture.json"
+    count = jmdict.import_json(db, path)
+    expressions.reset_cache()
+    return count

@@ -8,7 +8,16 @@ from functools import lru_cache
 from kotoba.services.jp.kana import is_all_kana, to_hiragana
 
 CONTENT_POS = {
-    "名詞", "動詞", "形容詞", "形状詞", "副詞", "連体詞", "感動詞", "代名詞", "接頭辞", "接尾辞",
+    "名詞",
+    "動詞",
+    "形容詞",
+    "形状詞",
+    "副詞",
+    "連体詞",
+    "感動詞",
+    "代名詞",
+    "接頭辞",
+    "接尾辞",
 }
 
 

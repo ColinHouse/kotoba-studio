@@ -10,15 +10,11 @@ _SHIFT = 0x60
 
 
 def to_hiragana(s: str) -> str:
-    return "".join(
-        chr(ord(c) - _SHIFT) if _KATA[0] <= ord(c) <= _KATA[1] else c for c in s
-    )
+    return "".join(chr(ord(c) - _SHIFT) if _KATA[0] <= ord(c) <= _KATA[1] else c for c in s)
 
 
 def to_katakana(s: str) -> str:
-    return "".join(
-        chr(ord(c) + _SHIFT) if _HIRA[0] <= ord(c) <= _HIRA[1] else c for c in s
-    )
+    return "".join(chr(ord(c) + _SHIFT) if _HIRA[0] <= ord(c) <= _HIRA[1] else c for c in s)
 
 
 def is_kanji(ch: str) -> bool:
