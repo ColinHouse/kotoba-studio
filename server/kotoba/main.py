@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from kotoba import __version__
@@ -77,7 +79,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(backups.router, prefix="/api")
     app.include_router(ws.router)
     app.mount("/media", StaticFiles(directory=p.media_dir), name="media")
+    _mount_spa(app, settings)
     return app
+
+
+def default_web_dist() -> Path:
+    return Path(__file__).resolve().parents[2] / "web" / "dist"
+
+
+def _mount_spa(app: FastAPI, settings: Settings) -> None:
+    """Serve the built Vue app (web/dist) with history-mode fallback."""
+    dist = settings.web_dist or default_web_dist()
+    if not (dist / "index.html").is_file():
+        return
+    if (dist / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def spa(path: str):
+        if path.startswith(("api/", "media/", "ws/", "assets/")) or path in ("api", "media"):
+            raise HTTPException(status_code=404, detail="not found")
+        candidate = (dist / path).resolve() if path else dist / "index.html"
+        if path and candidate.is_file() and dist.resolve() in candidate.parents:
+            return FileResponse(candidate)
+        return FileResponse(dist / "index.html")
 
 
 def app() -> FastAPI:
