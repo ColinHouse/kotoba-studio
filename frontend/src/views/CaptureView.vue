@@ -4,8 +4,10 @@ import { RouterLink, useRouter } from 'vue-router'
 import { api, mediaUrl } from '@/api/client'
 import type { Line, Region, Session, Source } from '@/api/types'
 import CapturedLines from '@/components/capture/CapturedLines.vue'
+import EngineCompare from '@/components/capture/EngineCompare.vue'
 import ManualPaste from '@/components/capture/ManualPaste.vue'
 import RegionPicker from '@/components/capture/RegionPicker.vue'
+import { useOcrCompare } from '@/composables/useOcrCompare'
 import { useScreenCapture } from '@/composables/useScreenCapture'
 import { useSessionLines } from '@/composables/useSessionLines'
 import { useAppStore } from '@/stores/app'
@@ -35,6 +37,17 @@ async function persistRegion(region: Region) {
 }
 
 const capture = useScreenCapture({ sessionId, persistRegion, onLine: upsert })
+const compare = useOcrCompare()
+
+async function runCompare() {
+  const region = capture.region.value
+  if (region) await compare.run(region)
+}
+
+async function chooseEngine(name: string) {
+  await compare.setDefault(name)
+  capture.provider.value = name
+}
 
 onMounted(async () => {
   try {
@@ -261,6 +274,15 @@ const elapsed = computed(() =>
           />
         </div>
       </div>
+
+      <EngineCompare
+        :results="compare.results.value"
+        :current="app.settings?.ocr_provider ?? 'auto'"
+        :running="compare.running.value"
+        :can-run="framed"
+        @run="runCompare"
+        @select="chooseEngine"
+      />
     </template>
   </div>
 </template>
