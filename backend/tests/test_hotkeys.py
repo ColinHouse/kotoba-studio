@@ -101,12 +101,15 @@ def test_normalize_hotkey_translates_and_validates():
 
 
 def test_windows_control_character_still_matches_the_hotkey():
-    pynput = pytest.importorskip("pynput.keyboard")
+    try:
+        import pynput.keyboard as keyboard
+    except ImportError:  # a platform without a keyboard backend (headless Linux CI)
+        pytest.skip("pynput has no keyboard backend here")
     fired = threading.Event()
     listener = pynput_listener("<ctrl>+<shift>+s", fired.set)
 
     # A real Windows Ctrl+S press arrives as DC3, not as "s".
-    for key in (pynput.Key.ctrl_l, pynput.Key.shift, pynput.KeyCode.from_char("\x13")):
+    for key in (keyboard.Key.ctrl_l, keyboard.Key.shift, keyboard.KeyCode.from_char("\x13")):
         for hotkey in listener._hotkeys:
             hotkey.press(listener.canonical(key))
     assert fired.is_set()
