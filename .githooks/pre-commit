@@ -1,0 +1,56 @@
+#!/bin/sh
+# Blocks the mistakes that are expensive to undo, then lints only what is staged.
+# Bypass with --no-verify only when you know why; agents must not bypass at all.
+set -eu
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$staged" ] && exit 0
+
+fail() { printf '\033[31mpre-commit: %s\033[0m\n' "$1" >&2; exit 1; }
+
+# 1. Paths that must never enter the repository.
+forbidden=$(printf '%s\n' "$staged" | grep -E \
+  '(^|/)data/|(^|/)\.venv/|(^|/)node_modules/|^frontend/(dist|dev-dist)/|\.db(-wal|-shm)?$|\.apkg$|^\.env|(^|/)media/' \
+  || true)
+if [ -n "$forbidden" ]; then
+  printf 'These paths are runtime data or build output and must not be committed:\n%s\n' "$forbidden" >&2
+  fail "remove them from the index (git restore --staged <path>)"
+fi
+
+# 2. Credentials. The app stores keys in the OS keyring for exactly this reason.
+secrets=$(git diff --cached -U0 -- $staged | grep -E '^\+' | grep -Ein \
+  'sk-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|BEGIN [A-Z ]*PRIVATE KEY' \
+  || true)
+if [ -n "$secrets" ]; then
+  printf 'Possible credential in the staged diff:\n%s\n' "$secrets" >&2
+  fail "never commit keys; put them in the OS keyring or an ignored .env"
+fi
+
+# 3. Large files: media belongs in the data directory, not in git.
+for f in $staged; do
+  [ -f "$f" ] || continue
+  size=$(wc -c < "$f" | tr -d ' ')
+  if [ "$size" -gt 1048576 ]; then
+    case "$f" in
+      backend/kotoba/data/jmdict_fixture.json|*.png) ;;
+      *) fail "$f is $((size / 1024)) KB; files over 1 MB do not belong in git" ;;
+    esac
+  fi
+done
+
+# 4. Lint the staged files only, so the hook stays fast.
+py=$(printf '%s\n' "$staged" | grep -E '^backend/.*\.py$' || true)
+if [ -n "$py" ] && command -v uv >/dev/null 2>&1; then
+  rel=$(printf '%s\n' "$py" | sed 's|^backend/||')
+  (cd backend && uv run ruff check $rel && uv run ruff format --check $rel) \
+    || fail "ruff failed; run 'make fix' and stage the result"
+fi
+
+web=$(printf '%s\n' "$staged" | grep -E '^frontend/.*\.(ts|vue|js|mjs)$' || true)
+if [ -n "$web" ] && [ -d frontend/node_modules ]; then
+  rel=$(printf '%s\n' "$web" | sed 's|^frontend/||')
+  (cd frontend && npx eslint $rel && npx prettier --check $rel) \
+    || fail "eslint/prettier failed; run 'make fix' and stage the result"
+fi
+
+exit 0

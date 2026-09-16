@@ -1,0 +1,33 @@
+#!/bin/sh
+# Conventional Commits, so the history stays readable and releasable.
+set -eu
+
+msg_file=$1
+subject=$(sed -n '1p' "$msg_file")
+
+# Let merges, reverts and fixup/squash commits through untouched.
+case "$subject" in
+  "Merge "*|"Revert "*|"fixup!"*|"squash!"*) exit 0 ;;
+esac
+
+pattern='^(feat|fix|docs|refactor|perf|test|build|ci|chore|style|revert)(\([a-z0-9_/-]+\))?!?: .{1,}'
+if ! printf '%s' "$subject" | grep -Eq "$pattern"; then
+  cat >&2 <<'MSG'
+commit-msg: subject must follow Conventional Commits.
+
+  <type>(<optional scope>): <what changed>
+
+  types: feat fix docs refactor perf test build ci chore style revert
+  good:  feat(capture): add a global hotkey for collecting a line
+  good:  fix(jp): match contractions on token boundaries
+  bad:   update stuff
+MSG
+  exit 1
+fi
+
+if [ "${#subject}" -gt 72 ]; then
+  printf 'commit-msg: subject is %s characters; keep it under 72.\n' "${#subject}" >&2
+  exit 1
+fi
+
+exit 0
