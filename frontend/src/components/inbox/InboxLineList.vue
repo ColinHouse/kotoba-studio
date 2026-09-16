@@ -8,11 +8,11 @@ defineEmits<{ select: [line: Line] }>()
 </script>
 
 <template>
-  <ul class="m-0 flex list-none flex-col p-0">
+  <TransitionGroup tag="ul" name="list" class="relative m-0 flex list-none flex-col p-0">
     <li v-for="line in lines" :key="line.id">
       <button
         type="button"
-        class="flex w-full gap-3 border-0 bg-transparent p-3 text-left"
+        class="line-row flex w-full gap-3 border-0 bg-transparent p-3 text-left"
         :class="
           selectedId === line.id
             ? 'lifted'
@@ -48,6 +48,15 @@ defineEmits<{ select: [line: Line] }>()
         </span>
       </button>
     </li>
-    <li v-if="!lines.length" class="py-4 text-[13px] text-ink-35">{{ emptyHint }}</li>
-  </ul>
+  </TransitionGroup>
+  <p v-if="!lines.length" class="m-0 py-4 text-[13px] text-ink-35">{{ emptyHint }}</p>
 </template>
+
+<style scoped>
+/* 选中的那一行会从描边变成"抬起"的纸，底色与边线都要落下来而不是跳变。 */
+.line-row {
+  transition:
+    background var(--mo-base) var(--ease-paper),
+    border-color var(--mo-base) var(--ease-paper);
+}
+</style>
