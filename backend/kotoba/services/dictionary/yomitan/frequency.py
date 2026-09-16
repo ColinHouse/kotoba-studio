@@ -56,6 +56,33 @@ def rank_for(db: Session, headword: str, reading: str | None) -> int | None:
     return int(any_reading) if any_reading is not None else None
 
 
+def ranks_for(db: Session, queries: list[tuple[str, str | None]]) -> list[int | None]:
+    """`rank_for` for many words with one query, for sentence and list views."""
+    headwords = {headword for headword, _ in queries}
+    if not headwords:
+        return []
+    rows = db.execute(
+        select(TermFrequency.headword, TermFrequency.reading, func.min(TermFrequency.rank))
+        .where(TermFrequency.headword.in_(headwords))
+        .group_by(TermFrequency.headword, TermFrequency.reading)
+    ).all()
+    grouped: dict[str, dict[str | None, int]] = {}
+    for headword, reading, rank in rows:
+        grouped.setdefault(headword, {})[reading] = int(rank)
+    out: list[int | None] = []
+    for headword, reading in queries:
+        options = grouped.get(headword, {})
+        rank = options.get(reading) if reading else None
+        if rank is None:
+            rank = options.get(None)
+        out.append(rank)
+    return out
+
+
+def has_any(db: Session) -> bool:
+    return db.scalar(select(TermFrequency.id).limit(1)) is not None
+
+
 def import_frequencies(db: Session, archive: zipfile.ZipFile) -> tuple[Dictionary, int]:
     """Replace any same-titled Yomitan dictionary with this frequency table."""
     index = read_index(archive)

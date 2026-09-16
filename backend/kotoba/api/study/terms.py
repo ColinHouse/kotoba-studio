@@ -37,9 +37,10 @@ def list_terms(
     source_id: int | None = None,
     limit: int = 50,
     offset: int = 0,
+    sort: Literal["recent", "frequency"] = "recent",
     db: Session = Depends(get_db),
 ) -> list[dict]:
-    return learning.search_terms(db, q, status, source_id, limit, offset)
+    return learning.search_terms(db, q, status, source_id, limit, offset, sort=sort)
 
 
 @router.post("/bulk-known")
