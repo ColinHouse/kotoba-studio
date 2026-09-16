@@ -46,6 +46,11 @@ class CollectIn(BaseModel):
     provider: str | None = None
 
 
+class OcrCompareIn(BaseModel):
+    region: RegionIn | None = None
+    path: str | None = None
+
+
 def _grabber(request: Request):
     return getattr(request.app.state, "capture_grabber", None) or screen.grab
 
@@ -112,6 +117,20 @@ def ocr(body: OcrIn, request: Request, db: Session = Depends(get_db)) -> dict:
         raise ApiError("validation_error", "region or path is required", 422)
     result = provider.recognize(png)
     return {**result.to_dict(), "normalized": normalize_ocr(result.text)}
+
+
+@router.post("/ocr/compare")
+def ocr_compare(body: OcrCompareIn, request: Request) -> list[dict]:
+    if body.path:
+        file = request.app.state.paths.media_dir / body.path
+        if not file.is_file():
+            raise ApiError("not_found", f"media {body.path} not found", 404)
+        png = file.read_bytes()
+    elif body.region:
+        png = _grabber(request)(body.region.to_region()).png
+    else:
+        raise ApiError("validation_error", "region or path is required", 422)
+    return registry.compare(png)
 
 
 @router.post("/collect")

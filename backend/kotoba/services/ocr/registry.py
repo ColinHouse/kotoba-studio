@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import time
 
 from kotoba.core.errors import ApiError
 from kotoba.services.ocr.base import ManualProvider, OcrProvider
@@ -62,3 +63,27 @@ def get_provider(name: str | None = None) -> OcrProvider:
     if not provider.available():
         raise ApiError("ocr_unavailable", f"OCR 引擎 {name} 在此设备上不可用。{provider.note}", 503)
     return provider
+
+
+def compare(png: bytes) -> list[dict]:
+    """Run every available provider on the same image; a failure stays in its own row."""
+    rows: list[dict] = []
+    for name, cls in PROVIDERS.items():
+        started = time.perf_counter()
+        try:
+            provider = cls()
+            if not provider.available():
+                continue
+            text, error = provider.recognize(png).text, None
+        except Exception as exc:  # noqa: BLE001
+            text = ""
+            error = exc.message if isinstance(exc, ApiError) else str(exc)
+        rows.append(
+            {
+                "provider": name,
+                "text": text,
+                "ms": int((time.perf_counter() - started) * 1000),
+                "error": error,
+            }
+        )
+    return rows
