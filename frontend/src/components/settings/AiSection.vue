@@ -67,7 +67,7 @@ async function saveKey() {
       <button
         v-for="(preset, name) in presets"
         :key="name"
-        class="btn-ghost text-xs"
+        class="btn-quiet"
         :class="{ 'ring-2 ring-accent': settings.ai_provider === name }"
         @click="applyPreset(name as string)"
       >
@@ -76,7 +76,7 @@ async function saveKey() {
     </div>
     <div class="grid gap-2 sm:grid-cols-2">
       <label class="text-sm" for="ai-base-url">
-        <span class="label">Base URL</span>
+        <span class="kicker">Base URL</span>
         <input
           id="ai-base-url"
           :value="settings.ai_base_url"
@@ -85,7 +85,7 @@ async function saveKey() {
         />
       </label>
       <label class="text-sm" for="ai-model">
-        <span class="label">模型</span>
+        <span class="kicker">模型</span>
         <input
           id="ai-model"
           :value="settings.ai_model"
@@ -106,7 +106,9 @@ async function saveKey() {
             : '粘贴 API Key（存入系统钥匙串，不写进数据库）'
         "
       />
-      <button class="btn-outline" :disabled="saving || !apiKey" @click="saveKey">保存 Key</button>
+      <button class="btn btn-secondary" :disabled="saving || !apiKey" @click="saveKey">
+        保存 Key
+      </button>
     </div>
     <p v-if="usage" class="text-xs text-ink-3">
       已调用 {{ usage.calls }} 次（失败 {{ usage.failed }}）· 估算费用 ${{

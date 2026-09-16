@@ -7,7 +7,7 @@ import InboxLineList from '@/components/inbox/InboxLineList.vue'
 import TermEditor, { type ConfirmPayload } from '@/components/inbox/TermEditor.vue'
 import TokenChips, { type PickedTerm } from '@/components/inbox/TokenChips.vue'
 import ExplanationBlock from '@/components/review/ExplanationBlock.vue'
-import { useInboxLines } from '@/composables/useInboxLines'
+import { useInboxLines, type LineStatus } from '@/composables/useInboxLines'
 import { useAppStore } from '@/stores/app'
 import { relTime } from '@/utils/format'
 
@@ -18,6 +18,14 @@ const picked = ref<PickedTerm | null>(null)
 const lastResult = ref<{ term: Term; encounter: Encounter } | null>(null)
 const busy = ref(false)
 const explaining = ref(false)
+/** 手机上列表与整理是同一层级的两屏，返回即回列表。 */
+const showDetailOnMobile = ref(false)
+
+const FILTERS: { value: LineStatus; label: string }[] = [
+  { value: 'inbox', label: '待整理' },
+  { value: 'kept', label: '已确认' },
+  { value: 'discarded', label: '已丢弃' },
+]
 
 onMounted(async () => {
   try {
@@ -32,6 +40,7 @@ onMounted(async () => {
 function selectLine(line: Line) {
   picked.value = null
   lastResult.value = null
+  showDetailOnMobile.value = true
   inbox.select(line)
 }
 
@@ -83,91 +92,119 @@ const emptyHint = computed(() =>
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl space-y-4">
-    <header class="flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <header class="flex flex-wrap items-end justify-between gap-4 border-b border-divider pb-3.5">
       <div>
-        <h1 class="text-2xl font-semibold">收件箱</h1>
-        <p class="text-sm text-ink-2">
+        <h1 class="page-title text-[27px] md:text-[32px]">收件箱</h1>
+        <p class="mt-0.5 mb-0 text-[13px] text-ink-50">
           点句子 → 点不认识的词 → 选释义 → 确认建卡。整理放在会后，不打断剧情。
         </p>
       </div>
-      <div class="flex flex-wrap gap-2">
-        <select v-model="inbox.sessionId.value" class="input w-auto" aria-label="会话">
-          <option value="all">全部会话</option>
-          <option v-for="s in inbox.sessions.value" :key="s.id" :value="s.id">
-            {{ s.source_title ?? '—' }} · {{ relTime(s.started_at) }} · {{ s.line_count }} 句
-          </option>
-        </select>
-        <select v-model="inbox.status.value" class="input w-auto" aria-label="状态">
-          <option value="inbox">待整理</option>
-          <option value="kept">已确认</option>
-          <option value="discarded">已丢弃</option>
-        </select>
-        <RouterLink v-if="quizSession" :to="`/quiz/${quizSession}`" class="btn-primary">
+      <div class="flex flex-wrap items-center gap-3.5">
+        <label class="flex flex-col gap-0.5">
+          <span class="kicker">会话</span>
+          <select
+            v-model="inbox.sessionId.value"
+            class="num border-0 border-b border-divider bg-transparent pb-[3px] text-[13px] text-ink"
+          >
+            <option value="all">全部会话</option>
+            <option v-for="s in inbox.sessions.value" :key="s.id" :value="s.id">
+              {{ s.source_title ?? '—' }} · {{ relTime(s.started_at) }} · {{ s.line_count }} 句
+            </option>
+          </select>
+        </label>
+        <div class="seg">
+          <button
+            v-for="f in FILTERS"
+            :key="f.value"
+            type="button"
+            class="seg-opt"
+            :aria-pressed="inbox.status.value === f.value"
+            @click="inbox.status.value = f.value"
+          >
+            {{ f.label }}
+          </button>
+        </div>
+        <RouterLink v-if="quizSession" :to="`/quiz/${quizSession}`" class="btn btn-primary">
           开始短测
         </RouterLink>
       </div>
     </header>
 
-    <div class="grid gap-4 lg:grid-cols-[2fr_3fr]">
-      <section class="space-y-2">
+    <div class="mt-5 md:grid md:grid-cols-[2fr_1px_3fr]">
+      <section :class="showDetailOnMobile ? 'hidden md:block' : ''" class="md:pr-[26px]">
         <InboxLineList
           :lines="inbox.lines.value"
           :selected-id="inbox.selected.value?.id ?? null"
           :empty-hint="emptyHint"
           @select="selectLine"
         />
-        <button
-          v-if="inbox.status.value === 'inbox' && inbox.lines.value.length"
-          class="btn-ghost text-xs text-red-600"
-          @click="inbox.discardRest"
-        >
-          丢弃剩余全部
-        </button>
+        <div class="mt-4 flex items-baseline justify-between gap-3 text-[12px]">
+          <span class="text-ink-35">只有"抬起"的那一条是当前句子</span>
+          <button
+            v-if="inbox.status.value === 'inbox' && inbox.lines.value.length"
+            class="btn-quiet"
+            @click="inbox.discardRest"
+          >
+            丢弃剩余全部
+          </button>
+        </div>
       </section>
 
-      <section class="space-y-3">
-        <div v-if="!inbox.selected.value" class="card p-6 text-sm text-ink-2">
+      <div class="hidden bg-divider md:block" />
+
+      <section :class="showDetailOnMobile ? '' : 'hidden md:block'" class="md:pl-[26px]">
+        <button
+          v-if="inbox.selected.value"
+          class="btn-quiet mb-4 md:hidden"
+          @click="showDetailOnMobile = false"
+        >
+          ← 回到列表
+        </button>
+
+        <p v-if="!inbox.selected.value" class="m-0 py-6 text-[13px] text-ink-35">
           选择一句台词开始整理。
-        </div>
+        </p>
+
         <template v-else>
-          <div class="card p-4">
-            <img
-              v-if="inbox.selected.value.screenshot_path"
-              :src="mediaUrl(inbox.selected.value.screenshot_path)"
-              class="mb-3 max-h-56 rounded-lg border border-line"
-              alt="截图"
-            />
+          <img
+            v-if="inbox.selected.value.screenshot_path"
+            :src="mediaUrl(inbox.selected.value.screenshot_path)"
+            class="plate w-full rounded-chip"
+            alt="这句台词的截图"
+          />
+
+          <div class="mt-[22px]">
+            <p class="kicker mb-3">分词 · 点一个词开始建卡</p>
             <TokenChips
               v-if="inbox.analysis.value"
               :analysis="inbox.analysis.value"
               :selected-start="picked?.span_start ?? null"
+              :legend="true"
               @pick="picked = $event"
             />
-            <p v-else class="jp">{{ inbox.selected.value.text }}</p>
+            <p v-else class="jp m-0 text-[22px] leading-[2.2]">{{ inbox.selected.value.text }}</p>
+
             <div
               v-if="inbox.analysis.value?.contractions.length"
-              class="mt-2 flex flex-wrap gap-1 text-xs"
+              class="mt-3.5 flex flex-wrap gap-2"
             >
               <span
                 v-for="c in inbox.analysis.value.contractions"
                 :key="c.form"
-                class="chip bg-plum/10 text-plum"
+                class="tag tag-fact jp"
                 :title="c.note_zh"
+                >{{ c.form }} ← {{ c.full }}</span
               >
-                {{ c.form }} ← {{ c.full }}
-              </span>
             </div>
-            <div class="mt-3 flex gap-2">
-              <button
-                class="btn-ghost text-xs"
-                @click="inbox.setStatus(inbox.selected.value, 'discarded')"
-              >
+
+            <div class="mt-4 flex gap-4">
+              <button class="btn-quiet" @click="inbox.setStatus(inbox.selected.value, 'discarded')">
                 丢弃这句
               </button>
               <button
                 v-if="inbox.selected.value.status !== 'kept'"
-                class="btn-ghost text-xs"
+                class="btn-quiet"
                 @click="inbox.setStatus(inbox.selected.value, 'kept')"
               >
                 仅保留，不建卡
@@ -179,30 +216,29 @@ const emptyHint = computed(() =>
             v-if="picked"
             :picked="picked"
             :busy="busy"
+            class="mt-[22px]"
             @confirm="confirmTerm"
             @cancel="picked = null"
           />
 
-          <div v-if="lastResult" class="card space-y-2 p-4">
-            <p class="text-sm">
+          <div v-if="lastResult" class="framed mt-[22px] px-5 py-4">
+            <p class="m-0 text-[13px]">
               已记录
               <RouterLink
                 :to="`/terms/${lastResult.term.id}`"
-                class="jp font-semibold text-accent-2"
+                class="jp font-semibold text-accent"
                 >{{ lastResult.term.headword }}</RouterLink
-              >，第 {{ lastResult.term.encounter_count }} 次遇见
-              <span
-                v-if="lastResult.term.trap"
-                class="chip ml-2 bg-accent/15 text-xs text-accent-2"
               >
-                中日同形：日语＝{{ lastResult.term.trap.ja_meaning }}
-              </span>
+              ，第 <span class="num">{{ lastResult.term.encounter_count }}</span> 次遇见
+              <span v-if="lastResult.term.trap" class="tag tag-warn ml-2">同形</span>
             </p>
             <ExplanationBlock
               v-if="lastResult.encounter.ai_explanation"
               :explanation="lastResult.encounter.ai_explanation"
+              :bare="true"
+              class="mt-3"
             />
-            <button v-else class="btn-outline text-xs" :disabled="explaining" @click="explain">
+            <button v-else class="btn-quiet mt-3" :disabled="explaining" @click="explain">
               {{ explaining ? '解释中…' : 'AI 解释这句（可选）' }}
             </button>
           </div>

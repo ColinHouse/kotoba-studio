@@ -8,18 +8,25 @@ const app = useAppStore()
 const device = useDeviceStore()
 const route = useRoute()
 
-const nav = computed(() => {
-  const items = [
-    { to: '/', label: '首页', icon: '⌂', mobile: true },
-    { to: '/capture', label: '采集', icon: '⌖', mobile: false, desktopOnly: true },
-    { to: '/inbox', label: '收件箱', icon: '✎', mobile: true },
-    { to: '/review', label: '复习', icon: '◐', mobile: true },
-    { to: '/library', label: '词库', icon: '本', mobile: true },
-    { to: '/sources', label: '作品', icon: '▣', mobile: false },
-    { to: '/settings', label: '设置', icon: '⚙', mobile: true },
-  ]
-  return items.filter((i) => !i.desktopOnly || device.kind === 'desktop')
-})
+interface NavItem {
+  to: string
+  label: string
+  mobile: boolean
+  desktopOnly?: boolean
+}
+
+const NAV: NavItem[] = [
+  { to: '/', label: '首页', mobile: true },
+  { to: '/capture', label: '采集', mobile: false, desktopOnly: true },
+  { to: '/inbox', label: '收件箱', mobile: true },
+  { to: '/review', label: '复习', mobile: true },
+  { to: '/library', label: '词库', mobile: true },
+  { to: '/sources', label: '作品', mobile: false },
+  { to: '/settings', label: '设置', mobile: true },
+]
+
+const nav = computed(() => NAV.filter((i) => !i.desktopOnly || device.kind === 'desktop'))
+const mobileNav = computed(() => nav.value.filter((i) => i.mobile))
 
 function active(to: string) {
   if (to === '/') return route.path === '/'
@@ -31,110 +38,111 @@ function active(to: string) {
 
 <template>
   <div class="min-h-dvh md:flex">
+    <!-- 桌面外壳：208px 文字导航，不用图标 -->
     <aside
-      class="hidden md:flex md:w-56 md:flex-col md:border-r md:border-line md:bg-paper-2/60 md:px-4 md:py-6"
+      class="hidden shrink-0 flex-col border-r border-divider px-5 py-[26px] md:flex"
+      style="width: var(--shell-nav)"
     >
-      <RouterLink to="/" class="mb-6 flex items-center gap-2 px-2">
+      <RouterLink to="/" class="mb-[26px] flex items-center gap-2.5 no-underline">
         <span
-          class="grid h-9 w-9 place-items-center rounded-xl bg-accent text-lg font-bold text-white jp"
+          class="jp grid size-[34px] place-items-center rounded-chip border border-accent text-[17px] text-accent"
           >言</span
         >
         <span>
-          <span class="block text-base font-semibold leading-tight">Kotoba Studio</span>
-          <span class="block text-xs text-ink-3">会记住语境的伴读</span>
+          <span class="block font-head text-[18px] leading-tight text-ink">Kotoba Studio</span>
+          <span class="block text-[11px] text-ink-35">会记住语境的伴读</span>
         </span>
       </RouterLink>
-      <nav class="flex flex-col gap-1">
+
+      <nav class="flex flex-col gap-0.5 text-[14px]">
         <RouterLink
           v-for="item in nav"
           :key="item.to"
           :to="item.to"
-          class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition"
-          :class="
-            active(item.to)
-              ? 'bg-accent/15 font-semibold text-accent-2'
-              : 'text-ink-2 hover:bg-white/70'
-          "
+          class="py-1.5 no-underline"
+          :class="active(item.to) ? 'text-accent' : 'text-ink-70 hover:text-ink'"
         >
-          <span class="w-5 text-center">{{ item.icon }}</span
-          >{{ item.label }}
+          <span :class="active(item.to) ? 'border-b border-accent pb-[3px]' : ''">{{
+            item.label
+          }}</span>
         </RouterLink>
       </nav>
-      <div class="mt-auto space-y-2 px-2 text-xs text-ink-3">
-        <div v-if="app.activeSession" class="rounded-lg bg-white/70 p-2">
-          <span class="label">进行中的会话</span>
-          <div class="text-ink-2">
+
+      <div class="mt-auto text-[11px] leading-[1.7] text-ink-35">
+        <template v-if="app.activeSession">
+          <div class="border-t border-rule pt-2.5">进行中的会话</div>
+          <div class="text-ink-50">
             {{ app.activeSession.source_title ?? '未指定作品' }} ·
-            {{ app.activeSession.line_count }} 句
+            <span class="num">{{ app.activeSession.line_count }}</span> 句
           </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="h-2 w-2 rounded-full" :class="app.offline ? 'bg-red-500' : 'bg-matcha'" />
-          {{
-            app.offline
-              ? '服务器离线'
-              : `v${app.health?.version ?? '…'} · ${device.device?.name ?? device.kind}`
-          }}
+        </template>
+        <div class="num mt-2.5" :class="app.activeSession ? '' : 'border-t border-rule pt-2.5'">
+          v{{ app.health?.version ?? '…' }} · {{ device.device?.name ?? device.kind }}
         </div>
       </div>
     </aside>
 
     <div class="flex min-h-dvh flex-1 flex-col">
-      <header
-        class="flex items-center justify-between border-b border-line bg-paper-2/70 px-4 py-3 md:hidden"
-      >
-        <RouterLink to="/" class="flex items-center gap-2 font-semibold">
-          <span class="grid h-7 w-7 place-items-center rounded-lg bg-accent text-sm text-white jp"
-            >言</span
-          >Kotoba
-        </RouterLink>
-        <span class="text-xs text-ink-3">{{
-          app.offline ? '离线' : (device.device?.name ?? '')
-        }}</span>
-      </header>
-
-      <div v-if="app.offline" class="bg-red-50 px-4 py-2 text-sm text-red-700">
+      <p v-if="app.offline" class="m-0 bg-accent-100 px-5 py-2 text-[12px] text-gold">
         无法连接 Kotoba Studio 服务器。请确认桌面端正在运行，手机需与电脑在同一局域网。
-      </div>
+      </p>
 
-      <main class="flex-1 px-4 pb-24 pt-4 md:px-8 md:pb-10 md:pt-8">
-        <RouterView />
+      <main class="flex-1">
+        <div class="mx-auto w-full page-shell">
+          <RouterView />
+        </div>
       </main>
 
+      <!-- 手机底部 Tab：文字，无图标；底部留安全区 -->
       <nav
-        class="fixed inset-x-0 bottom-0 z-20 flex border-t border-line bg-paper-2/95 backdrop-blur md:hidden"
-        style="padding-bottom: env(safe-area-inset-bottom)"
+        class="fixed inset-x-0 bottom-0 z-20 flex border-t border-divider bg-bg font-head text-[13px] md:hidden"
+        style="padding-bottom: max(26px, env(safe-area-inset-bottom))"
       >
         <RouterLink
-          v-for="item in nav.filter((i) => i.mobile)"
+          v-for="item in mobileNav"
           :key="item.to"
           :to="item.to"
-          class="flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px]"
-          :class="active(item.to) ? 'text-accent-2 font-semibold' : 'text-ink-3'"
+          class="relative flex-1 py-2.5 text-center no-underline"
+          :class="active(item.to) ? 'text-accent' : 'text-ink-50'"
         >
-          <span class="text-lg leading-none">{{ item.icon }}</span
-          >{{ item.label }}
+          <span
+            v-if="active(item.to)"
+            class="absolute left-1/2 top-0 h-0.5 w-[26px] -translate-x-1/2 bg-accent"
+          />
+          {{ item.label }}
         </RouterLink>
       </nav>
     </div>
 
+    <!-- 提示：压在内容上方，不占布局 -->
     <div
       class="pointer-events-none fixed inset-x-0 top-3 z-50 flex flex-col items-center gap-2 px-4"
     >
-      <div
+      <p
         v-for="t in app.toasts"
         :key="t.id"
-        class="pointer-events-auto rounded-xl px-4 py-2 text-sm shadow-lg"
+        class="pointer-events-auto m-0 rounded-ui border px-4 py-2 text-[13px] shadow-[var(--shadow)]"
         :class="
           t.kind === 'error'
-            ? 'bg-red-600 text-white'
-            : t.kind === 'success'
-              ? 'bg-matcha text-white'
-              : 'bg-ink text-paper'
+            ? 'border-accent bg-accent-100 text-gold'
+            : 'border-divider bg-paper text-ink'
         "
       >
         {{ t.text }}
-      </div>
+      </p>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* 每个页面用同一组尺寸：桌面 1050px 内容宽，手机 20px 边距 + Tab 高度。 */
+.page-shell {
+  max-width: var(--content-max);
+  padding: 18px var(--mobile-pad) calc(var(--tab-bar-h) + 26px);
+}
+@media (min-width: 768px) {
+  .page-shell {
+    padding: var(--page-pad-top) var(--page-pad-x) var(--page-pad-bottom);
+  }
+}
+</style>

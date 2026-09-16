@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Analysis, DictEntry, KnownStatus, Span, Token } from '@/api/types'
-import { headwordFor } from '@/utils/headword'
+import Furigana from '@/components/common/Furigana.vue'
 
 export interface PickedTerm {
   headword: string
@@ -16,12 +16,13 @@ export interface PickedTerm {
   is_expression: boolean
 }
 
-const props = defineProps<{ analysis: Analysis; selectedStart?: number | null }>()
+const props = defineProps<{ analysis: Analysis; selectedStart?: number | null; legend?: boolean }>()
 const emit = defineEmits<{ pick: [term: PickedTerm] }>()
 
 interface Chip {
   key: string
   text: string
+  reading: string
   token?: Token
   span?: Span
   content: boolean
@@ -39,6 +40,7 @@ const chips = computed<Chip[]>(() => {
       out.push({
         key: `s${i}`,
         text: span.text,
+        reading: span.reading,
         span,
         content: true,
         status: span.known_status,
@@ -51,6 +53,7 @@ const chips = computed<Chip[]>(() => {
     out.push({
       key: `t${i}`,
       text: t.surface,
+      reading: t.reading,
       token: t,
       content: t.is_content,
       status: t.known_status,
@@ -60,19 +63,20 @@ const chips = computed<Chip[]>(() => {
   return out
 })
 
-function cls(c: Chip) {
-  if (!c.content) return 'text-ink-3'
-  if (c.start === props.selectedStart) return 'bg-accent text-white'
-  if (c.span) return 'bg-plum/15 text-plum hover:bg-plum/25'
+/** 状态用墨色浓淡 + 线型编码，颜色只留给"当前选中"和动作。 */
+function chipClass(c: Chip): string {
+  if (!c.content) return 'tok tok-plain'
+  if (c.start === props.selectedStart) return 'tok tok-selected'
+  if (c.span) return 'tok tok-expression'
   switch (c.status) {
     case 'known':
-      return 'bg-matcha/10 text-matcha hover:bg-matcha/20'
+      return 'tok tok-known'
     case 'learning':
-      return 'bg-sky/10 text-sky hover:bg-sky/20'
+      return 'tok tok-learning'
     case 'ignored':
-      return 'text-ink-3 line-through'
+      return 'tok tok-ignored'
     default:
-      return 'bg-accent/10 text-accent-2 hover:bg-accent/20'
+      return 'tok tok-unknown'
   }
 }
 
@@ -82,7 +86,7 @@ function pick(c: Chip) {
     const first = c.span.candidates[0]
     const endTok = props.analysis.tokens[c.span.end_tok]!
     emit('pick', {
-      headword: headwordFor(first, c.span.text, c.span.matched_form),
+      headword: first?.headword ?? c.span.matched_form,
       reading: first?.reading ?? c.span.reading,
       surface: c.span.text,
       span_start: c.start,
@@ -98,7 +102,7 @@ function pick(c: Chip) {
   const t = c.token!
   const first = t.candidates[0]
   emit('pick', {
-    headword: headwordFor(first, t.surface, t.base),
+    headword: first?.headword ?? t.base,
     reading: first?.reading ?? t.reading_base,
     surface: t.surface,
     span_start: t.start,
@@ -113,23 +117,48 @@ function pick(c: Chip) {
 </script>
 
 <template>
-  <div class="jp flex flex-wrap gap-x-0.5 gap-y-1 text-lg leading-relaxed">
-    <button
-      v-for="c in chips"
-      :key="c.key"
-      type="button"
-      class="rounded-md px-1 transition"
-      :class="[cls(c), c.content ? 'cursor-pointer' : 'cursor-default']"
-      :title="
-        c.token
-          ? `${c.token.base}（${c.token.reading_base}）${c.token.pos1}`
-          : c.span
-            ? `${c.span.matched_form}（${c.span.reading}）表达`
-            : ''
-      "
-      @click="pick(c)"
+  <div>
+    <div
+      class="jp flex flex-wrap items-baseline text-[24px] leading-[2.5] md:text-[30px] md:leading-[2.4]"
     >
-      {{ c.text }}
-    </button>
+      <component
+        :is="c.content ? 'button' : 'span'"
+        v-for="c in chips"
+        :key="c.key"
+        :type="c.content ? 'button' : undefined"
+        :class="chipClass(c)"
+        :title="
+          c.span
+            ? `${c.span.matched_form}（${c.span.reading}）· 固定表达`
+            : c.token
+              ? `${c.token.base}（${c.token.reading_base}）${c.token.pos1}`
+              : undefined
+        "
+        @click="pick(c)"
+      >
+        <Furigana v-if="c.content" :word="c.text" :reading="c.reading" />
+        <template v-else>{{ c.text }}</template>
+      </component>
+    </div>
+
+    <div
+      v-if="legend"
+      class="mt-4 flex flex-wrap items-center gap-x-[18px] gap-y-1.5 text-[11px] text-ink-50"
+    >
+      <span class="kicker">读法</span>
+      <span
+        ><b class="text-ink" style="border-bottom: 2px solid var(--ink)">深墨＋实线</b>
+        未学，要点的</span
+      >
+      <span
+        ><span class="text-ink-70" style="border-bottom: 1px dashed var(--ink-50)">中墨＋虚线</span>
+        学习中</span
+      >
+      <span><span class="font-light text-ink-50">浅墨</span> 已掌握</span>
+      <span
+        ><span class="rounded-chip border border-divider px-1">方框</span>
+        固定表达，整块算一个词</span
+      >
+    </div>
   </div>
 </template>

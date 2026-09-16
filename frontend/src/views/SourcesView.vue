@@ -44,8 +44,10 @@ async function create() {
 
 async function start(s: Source) {
   try {
-    const session = await api.post<Session>('/api/sessions', { source_id: s.id, mode: 'companion' })
-    app.activeSession = session
+    app.activeSession = await api.post<Session>('/api/sessions', {
+      source_id: s.id,
+      mode: 'companion',
+    })
     router.push(device.kind === 'desktop' ? '/capture' : '/inbox')
   } catch (e) {
     app.fail(e)
@@ -53,7 +55,7 @@ async function start(s: Source) {
 }
 
 async function remove(s: Source) {
-  if (!confirm(`删除「${s.title}」？句子会保留但不再关联作品。`)) return
+  if (!window.confirm(`删除「${s.title}」？句子会保留但不再关联作品。`)) return
   try {
     await api.del(`/api/sources/${s.id}`)
     await load()
@@ -64,46 +66,68 @@ async function remove(s: Source) {
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl space-y-6">
-    <h1 class="text-2xl font-semibold">作品</h1>
-    <form class="card grid gap-2 p-4 sm:grid-cols-[1fr_1fr_auto_auto]" @submit.prevent="create">
-      <input v-model="form.title" class="input" placeholder="作品名（中文或任意）" required />
-      <input v-model="form.title_ja" class="input jp" placeholder="日文原名（可选）" />
-      <select v-model="form.kind" class="input">
-        <option v-for="(label, k) in KIND_LABEL" :key="k" :value="k">{{ label }}</option>
-      </select>
-      <button class="btn-primary" :disabled="busy">添加</button>
+  <div>
+    <header class="border-b border-divider pb-3.5">
+      <h1 class="page-title text-[27px] md:text-[32px]">作品</h1>
+      <p class="mt-0.5 mb-0 text-[13px] text-ink-50">
+        词卡按作品归档，并记录同一个词在不同作品里的出现。
+      </p>
+    </header>
+
+    <form class="mt-5 grid gap-2.5 sm:grid-cols-[1fr_1fr_auto_auto]" @submit.prevent="create">
+      <div>
+        <label class="field-label" for="src-title">作品名</label>
+        <input
+          id="src-title"
+          v-model="form.title"
+          class="input"
+          placeholder="中文或任意"
+          required
+        />
+      </div>
+      <div>
+        <label class="field-label" for="src-title-ja">日文原名（可选）</label>
+        <input id="src-title-ja" v-model="form.title_ja" class="input jp" />
+      </div>
+      <div>
+        <label class="field-label" for="src-kind">类型</label>
+        <select id="src-kind" v-model="form.kind" class="input">
+          <option v-for="(label, k) in KIND_LABEL" :key="k" :value="k">{{ label }}</option>
+        </select>
+      </div>
+      <button class="btn btn-primary self-end" :disabled="busy">添加</button>
     </form>
 
-    <ul class="space-y-2">
+    <ul class="m-0 mt-6 flex list-none flex-col p-0">
       <li
         v-for="s in sources"
         :key="s.id"
-        class="card flex flex-wrap items-center justify-between gap-3 p-4"
+        class="flex flex-wrap items-center justify-between gap-3 border-b border-rule py-3.5"
       >
-        <div>
-          <p class="font-semibold">
+        <div class="min-w-0">
+          <p class="m-0 font-head text-[19px]">
             {{ s.title }}
-            <span v-if="s.title_ja" class="jp text-sm font-normal text-ink-2">{{
+            <span v-if="s.title_ja" class="jp text-[13px] font-normal text-ink-35">{{
               s.title_ja
             }}</span>
           </p>
-          <p class="text-xs text-ink-3">
-            {{ KIND_LABEL[s.kind] }} · {{ s.line_count }} 句 · {{ s.term_count }} 词 ·
+          <p class="num m-0 text-[11px] text-ink-35">
+            {{ KIND_LABEL[s.kind] }} · {{ s.line_count }} 句 · 已掌握 {{ s.known_term_count }} /
+            {{ s.term_count }} 词 ·
             {{ s.region ? `对话区域 ${s.region.width}×${s.region.height}` : '未设置对话区域' }}
           </p>
         </div>
-        <div class="flex gap-2">
-          <button v-if="device.kind === 'desktop'" class="btn-primary" @click="start(s)">
+        <div class="flex shrink-0 items-center gap-3">
+          <button v-if="device.kind === 'desktop'" class="btn btn-primary" @click="start(s)">
             开始会话
           </button>
-          <RouterLink :to="`/library?source=${s.id}`" class="btn-outline">词库</RouterLink>
-          <button class="btn-ghost text-red-600" @click="remove(s)">删除</button>
+          <RouterLink :to="`/library?source=${s.id}`" class="btn btn-secondary">词库</RouterLink>
+          <button class="btn-quiet" @click="remove(s)">删除</button>
         </div>
       </li>
+      <li v-if="!sources.length" class="py-4 text-[13px] text-ink-50">
+        添加你正在玩的 Galgame 或在看的动画，然后开始第一次会话。
+      </li>
     </ul>
-    <p v-if="!sources.length" class="text-sm text-ink-2">
-      添加你正在玩的 Galgame 或在看的动画，词卡会按作品归档，并记录同一个词在不同作品里的出现。
-    </p>
   </div>
 </template>

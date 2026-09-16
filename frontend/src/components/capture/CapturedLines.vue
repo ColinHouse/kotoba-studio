@@ -4,39 +4,51 @@ import { mediaUrl } from '@/api/client'
 import type { Line } from '@/api/types'
 import { relTime } from '@/utils/format'
 
-defineProps<{ lines: Line[]; inboxLink: string }>()
-
-const STATUS_TEXT: Record<string, string> = {
-  kept: '已确认',
-  discarded: '已丢弃',
-  inbox: '待整理',
-}
+defineProps<{ lines: Line[]; inboxLink: string; elapsed?: string | null }>()
 </script>
 
 <template>
-  <section class="space-y-2">
-    <h2 class="font-semibold">
-      本次收藏 <span class="text-sm font-normal text-ink-3">{{ lines.length }} 句</span>
-    </h2>
-    <ul class="space-y-2">
-      <li v-for="line in lines" :key="line.id" class="card flex gap-3 p-3">
+  <section class="flex min-w-0 flex-col">
+    <div class="flex items-baseline justify-between">
+      <h2 class="m-0 font-head text-[18px] font-normal">本次收藏</h2>
+      <span class="num text-[11px] text-ink-35">
+        {{ lines.length }} 句<template v-if="elapsed"> · {{ elapsed }}</template>
+      </span>
+    </div>
+
+    <ul class="m-0 mt-3 flex list-none flex-col p-0">
+      <li
+        v-for="(line, i) in lines"
+        :key="line.id"
+        class="flex gap-[11px] border-rule py-3 first:pt-0"
+        :class="i < lines.length - 1 ? 'border-b' : ''"
+      >
         <img
           v-if="line.screenshot_path"
           :src="mediaUrl(line.screenshot_path)"
-          class="h-14 w-24 shrink-0 rounded-lg border border-line object-cover"
+          class="plate h-[42px] w-[74px] shrink-0"
+          style="border-width: 4px"
           alt=""
         />
-        <div class="min-w-0 flex-1">
-          <p class="jp leading-relaxed">{{ line.text }}</p>
-          <p class="text-xs text-ink-3">
-            {{ line.origin }} · {{ relTime(line.captured_at) }} · {{ STATUS_TEXT[line.status] }}
+        <div class="min-w-0">
+          <p class="jp m-0 text-[14px] leading-[1.7]" :class="i === 0 ? 'text-ink' : 'text-ink-70'">
+            {{ line.text }}
+          </p>
+          <p class="m-0 mt-px text-[10px] text-ink-35">
+            {{ line.origin }} · {{ relTime(line.captured_at) }}
           </p>
         </div>
       </li>
     </ul>
-    <p v-if="!lines.length" class="text-sm text-ink-2">
+
+    <p v-if="!lines.length" class="m-0 text-[12px] leading-relaxed text-ink-35">
       收藏的句子会出现在这里；游戏结束后到收件箱统一整理。
     </p>
-    <RouterLink v-if="lines.length" :to="inboxLink" class="btn-outline">去收件箱整理 →</RouterLink>
+    <RouterLink v-else :to="inboxLink" class="btn-quiet mt-4 self-start">去收件箱整理 →</RouterLink>
+
+    <div class="mt-auto border-t border-rule pt-[18px] text-[11px] leading-[1.9] text-ink-35">
+      <p class="kicker m-0 text-ink-50">键盘</p>
+      <p class="num m-0">⌘↵ 收藏这句</p>
+    </div>
   </section>
 </template>

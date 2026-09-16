@@ -15,12 +15,13 @@ const emit = defineEmits<{ 'update:modelValue': [region: Region] }>()
 const img = ref<HTMLImageElement | null>(null)
 const drag = ref<{ x0: number; y0: number; x1: number; y1: number } | null>(null)
 
-// displayed px → logical points: displayed * (natural px / displayed px) / scale
+/** displayed px → logical points */
 function toLogical(px: number, py: number) {
   const el = img.value!
-  const fx = props.width / el.clientWidth
-  const fy = props.height / el.clientHeight
-  return { x: Math.round((px * fx) / props.scale), y: Math.round((py * fy) / props.scale) }
+  return {
+    x: Math.round((px * (props.width / el.clientWidth)) / props.scale),
+    y: Math.round((py * (props.height / el.clientHeight)) / props.scale),
+  }
 }
 
 function pos(e: PointerEvent) {
@@ -75,7 +76,7 @@ const box = computed(() => {
 
 <template>
   <div
-    class="relative select-none overflow-hidden rounded-xl border border-line bg-black/80"
+    class="relative select-none overflow-hidden rounded-chip border border-divider bg-surface"
     style="touch-action: none"
   >
     <img
@@ -89,20 +90,59 @@ const box = computed(() => {
       @pointerup="up"
       @pointercancel="up"
     />
+
+    <!-- 已框选：实线 + 四角，外侧压暗 -->
     <div
       v-if="box"
-      class="pointer-events-none absolute border-2 border-accent bg-accent/15"
+      class="pointer-events-none absolute border border-accent"
+      style="box-shadow: 0 0 0 9999px rgba(32, 31, 29, 0.28)"
       :style="{
-        left: box.left + 'px',
-        top: box.top + 'px',
-        width: box.width + 'px',
-        height: box.height + 'px',
+        left: `${box.left}px`,
+        top: `${box.top}px`,
+        width: `${box.width}px`,
+        height: `${box.height}px`,
       }"
-    />
-    <p
-      class="pointer-events-none absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white"
     >
-      在预览图上拖拽框选对话框区域
-    </p>
+      <i
+        class="corner"
+        style="left: -1px; top: -1px; border-left-width: 2px; border-top-width: 2px"
+      />
+      <i
+        class="corner"
+        style="right: -1px; top: -1px; border-right-width: 2px; border-top-width: 2px"
+      />
+      <i
+        class="corner"
+        style="left: -1px; bottom: -1px; border-left-width: 2px; border-bottom-width: 2px"
+      />
+      <i
+        class="corner"
+        style="right: -1px; bottom: -1px; border-right-width: 2px; border-bottom-width: 2px"
+      />
+    </div>
+
+    <!-- 未框选：虚线提示，每部作品只做一次 -->
+    <div
+      v-else
+      class="pointer-events-none absolute inset-0 grid place-items-center"
+      style="background: rgba(32, 31, 29, 0.34)"
+    >
+      <div
+        class="rounded-chip border-2 border-dashed border-accent px-10 py-[26px] text-center"
+        style="background: color-mix(in srgb, var(--paper) 90%, transparent)"
+      >
+        <p class="m-0 font-head text-[26px] text-gold">拖出对话框区域</p>
+        <p class="mt-1 mb-0 text-[12px] text-gold">每部作品只做一次，之后自动复用</p>
+      </div>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.corner {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 0 solid var(--accent);
+}
+</style>

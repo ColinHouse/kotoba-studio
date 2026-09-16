@@ -16,7 +16,7 @@ function onOwner(event: Event) {
 <template>
   <SettingsSection v-if="settings" title="复习">
     <label class="block text-sm" for="owner-default">
-      <span class="label">新卡默认归属</span>
+      <span class="kicker">新卡默认归属</span>
       <select
         id="owner-default"
         class="input w-auto"
@@ -30,7 +30,7 @@ function onOwner(event: Event) {
       </select>
     </label>
     <label class="block text-sm" for="retention">
-      <span class="label">目标记忆保持率 {{ Math.round(settings.desired_retention * 100) }}%</span>
+      <span class="kicker">目标记忆保持率 {{ Math.round(settings.desired_retention * 100) }}%</span>
       <input
         id="retention"
         type="range"

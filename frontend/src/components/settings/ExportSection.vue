@@ -53,10 +53,10 @@ async function sendToAnki() {
   >
     <div class="flex flex-wrap gap-2">
       <input id="anki-deck" v-model="deck" class="input w-48" placeholder="牌组名" />
-      <button class="btn-outline" :disabled="busy === 'apkg'" @click="downloadApkg">
+      <button class="btn btn-secondary" :disabled="busy === 'apkg'" @click="downloadApkg">
         下载 .apkg
       </button>
-      <button class="btn-outline" :disabled="busy === 'anki'" @click="sendToAnki">
+      <button class="btn btn-secondary" :disabled="busy === 'anki'" @click="sendToAnki">
         通过 AnkiConnect 加卡
       </button>
     </div>

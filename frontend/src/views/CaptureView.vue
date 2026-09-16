@@ -10,6 +10,7 @@ import { useScreenCapture } from '@/composables/useScreenCapture'
 import { useSessionLines } from '@/composables/useSessionLines'
 import { useAppStore } from '@/stores/app'
 import { useDeviceStore } from '@/stores/device'
+import { fmtDuration } from '@/utils/format'
 
 const app = useAppStore()
 const device = useDeviceStore()
@@ -43,6 +44,7 @@ onMounted(async () => {
     if (session.value) {
       await loadLines()
       capture.region.value = currentSource.value?.region ?? null
+      if (!capture.shot.value) await capture.takeShot()
     }
     sourceId.value = session.value?.source_id ?? sources.value[0]?.id ?? null
   } catch (e) {
@@ -60,6 +62,7 @@ async function startSession() {
     })
     lines.value = []
     capture.region.value = currentSource.value?.region ?? null
+    await capture.takeShot()
   } catch (e) {
     app.fail(e)
   }
@@ -95,66 +98,71 @@ async function addManual(text: string) {
 function onKey(event: KeyboardEvent) {
   if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
     event.preventDefault()
-    capture.collect()
+    if (capture.region.value) capture.collect()
   }
 }
+
+const framed = computed(() => !!capture.region.value)
+const busy = computed(() => capture.busy.value !== '')
+const elapsed = computed(() =>
+  session.value
+    ? fmtDuration(Math.round((Date.now() - new Date(session.value.started_at).getTime()) / 1000))
+    : null,
+)
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl space-y-5" @keydown="onKey">
-    <header class="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-semibold">采集</h1>
-        <p class="text-sm text-ink-2">
-          框选一次对话框区域，之后按「收藏这句」（Ctrl/⌘ + Enter）即可保存台词 + 截图。
-        </p>
-      </div>
-      <div v-if="session" class="flex items-center gap-2 text-sm">
-        <span class="chip bg-matcha/15 text-matcha">
-          会话进行中 · {{ currentSource?.title ?? '未指定作品' }}
+  <div @keydown="onKey">
+    <header class="flex flex-wrap items-center justify-between gap-4 border-b border-divider pb-3">
+      <div class="flex items-baseline gap-3">
+        <h1 class="page-title text-[26px] md:text-[28px]">采集</h1>
+        <span v-if="session" class="inline-flex items-center gap-[7px] text-[12px] text-ink-50">
+          <i class="size-1.5 rounded-full bg-accent" />会话进行中 ·
+          {{ currentSource?.title ?? '未指定作品' }}
         </span>
-        <button class="btn-outline" @click="endSession">结束会话并整理</button>
       </div>
+      <button v-if="session" class="btn btn-secondary" style="font-size: 13px" @click="endSession">
+        结束会话并整理
+      </button>
     </header>
 
-    <div v-if="device.kind !== 'desktop'" class="card p-4 text-sm">
+    <p v-if="device.kind !== 'desktop'" class="framed mt-5 p-4 text-[13px]">
       采集需要在运行 Kotoba Studio 的电脑上进行；手机端请使用收件箱与复习。
-    </div>
+    </p>
 
-    <section v-if="!session" class="card flex flex-wrap items-center gap-2 p-4">
-      <label class="text-sm" for="session-source">先选择作品并开始会话：</label>
+    <section v-if="!session" class="framed mt-5 flex flex-wrap items-center gap-3 p-4">
+      <label class="text-[13px]" for="session-source">先选择作品并开始会话：</label>
       <select id="session-source" v-model="sourceId" class="input w-56">
         <option v-for="s in sources" :key="s.id" :value="s.id">{{ s.title }}</option>
       </select>
-      <button class="btn-primary" :disabled="!sourceId" @click="startSession">开始会话</button>
-      <RouterLink v-if="!sources.length" to="/sources" class="text-sm text-accent-2">
-        先添加作品 →
-      </RouterLink>
+      <button class="btn btn-primary" :disabled="!sourceId" @click="startSession">开始会话</button>
+      <RouterLink v-if="!sources.length" to="/sources" class="btn-quiet">先添加作品 →</RouterLink>
     </section>
 
-    <div class="grid gap-5 lg:grid-cols-[3fr_2fr]">
-      <section class="space-y-3">
-        <div class="flex flex-wrap items-center gap-2">
-          <select v-model.number="capture.display.value" class="input w-auto" aria-label="显示器">
+    <template v-else>
+      <!-- 一次性设置压成一条线，不和主动作抢注意力 -->
+      <div
+        class="flex flex-wrap items-center gap-x-[22px] gap-y-2 border-b border-rule py-2.5 text-[12px] text-ink-50"
+      >
+        <span class="kicker">一次性设置</span>
+        <label class="flex items-center gap-1.5">
+          显示器
+          <select
+            v-model.number="capture.display.value"
+            class="num border-0 border-b border-divider bg-transparent text-[12px] text-ink-50"
+          >
             <option v-for="d in capture.displays.value" :key="d.index" :value="d.index">
-              显示器 {{ d.index + 1 }} · {{ d.width }}×{{ d.height }}
+              {{ d.index + 1 }} · {{ d.width }}×{{ d.height }}
             </option>
           </select>
-          <button
-            class="btn-outline"
-            :disabled="capture.busy.value === 'shot'"
-            @click="capture.takeShot"
+        </label>
+        <label class="flex items-center gap-1.5">
+          OCR
+          <select
+            v-model="capture.provider.value"
+            class="border-0 border-b border-divider bg-transparent text-[12px] text-ink-50"
           >
-            {{
-              capture.busy.value === 'shot'
-                ? '截取中…'
-                : capture.shot.value
-                  ? '重新截取预览'
-                  : '截取屏幕预览'
-            }}
-          </button>
-          <select v-model="capture.provider.value" class="input w-auto" aria-label="OCR 引擎">
-            <option value="auto">OCR：自动</option>
+            <option value="auto">自动</option>
             <option
               v-for="p in capture.providers.value"
               :key="p.name"
@@ -164,58 +172,133 @@ function onKey(event: KeyboardEvent) {
               {{ p.name }}{{ p.available ? '' : '（不可用）' }}
             </option>
           </select>
-        </div>
+        </label>
+        <button class="btn-quiet" :disabled="busy" @click="capture.takeShot">重新截取预览</button>
+        <ManualPaste @submit="addManual" />
+        <span class="ml-auto" :class="framed ? 'text-accent' : 'text-ink-35'">
+          {{
+            framed
+              ? `区域已随 ${currentSource?.title ?? '该作品'} 保存`
+              : `${currentSource?.title ?? '该作品'} 还没设过对话区域`
+          }}
+        </span>
+      </div>
 
-        <RegionPicker
-          v-if="capture.shot.value"
-          v-model="capture.region.value"
-          :src="mediaUrl(capture.shot.value.path)!"
-          :width="capture.shot.value.width"
-          :height="capture.shot.value.height"
-          :scale="capture.shot.value.scale"
-          :display="capture.display.value"
-        />
-        <div v-else class="card grid place-items-center p-10 text-sm text-ink-2">
-          先截取一张屏幕预览，然后在预览上框选游戏的对话框区域。
-        </div>
-        <p v-if="capture.region.value" class="text-xs text-ink-3">
-          区域：{{ capture.region.value.left }}, {{ capture.region.value.top }} ·
-          {{ capture.region.value.width }}×{{ capture.region.value.height }}（已随作品保存）
-        </p>
+      <div class="mt-5 md:grid md:grid-cols-[3fr_1px_2fr]">
+        <div class="md:pr-[26px]">
+          <RegionPicker
+            v-if="capture.shot.value"
+            v-model="capture.region.value"
+            :src="mediaUrl(capture.shot.value.path)!"
+            :width="capture.shot.value.width"
+            :height="capture.shot.value.height"
+            :scale="capture.shot.value.scale"
+            :display="capture.display.value"
+          />
+          <div v-else class="framed grid place-items-center p-10 text-[13px] text-ink-35">
+            正在截取屏幕预览…
+          </div>
 
-        <div class="flex flex-wrap gap-2">
+          <div class="mt-2 flex items-baseline justify-between gap-3 text-[11px]">
+            <span v-if="capture.region.value" class="num text-ink-35">
+              区域：{{ capture.region.value.left }}, {{ capture.region.value.top }} ·
+              {{ capture.region.value.width }}×{{ capture.region.value.height }}（已随作品保存）
+            </span>
+            <span v-else class="text-accent">未设置区域</span>
+            <button v-if="framed" class="btn-quiet" @click="capture.region.value = null">
+              重新框选
+            </button>
+          </div>
+
+          <!-- 整个产品只有一个巨型主操作 -->
           <button
-            class="btn-outline"
-            :disabled="!capture.region.value || capture.busy.value !== ''"
-            @click="capture.runOcr"
-          >
-            {{ capture.busy.value === 'ocr' ? '识别中…' : '只识别，不保存' }}
-          </button>
-          <button
-            class="btn-primary"
-            :disabled="!capture.region.value || capture.busy.value !== ''"
+            type="button"
+            class="collect mt-[22px]"
+            :class="framed ? 'collect-on' : 'collect-off'"
+            :disabled="!framed || busy"
             @click="capture.collect"
           >
-            {{ capture.busy.value === 'collect' ? '收藏中…' : '收藏这句（⌘/Ctrl+Enter）' }}
+            <span class="text-left">
+              <span class="block font-head text-[32px] leading-none md:text-[38px]">
+                {{ capture.busy.value === 'collect' ? '收藏中…' : '收藏这句' }}
+              </span>
+              <span class="mt-1 block text-[12px]">
+                {{ framed ? '保存台词 + 截图到收件箱，不打断游戏' : '先框选对话框区域才能收藏' }}
+              </span>
+            </span>
+            <span class="hidden items-center gap-2.5 font-head text-[22px] sm:flex">
+              <kbd class="key">⌘</kbd><kbd class="key">↵</kbd>
+            </span>
           </button>
+
+          <div class="mt-2.5 flex flex-wrap items-center gap-[18px] text-[12px] text-ink-50">
+            <button class="btn-quiet" :disabled="!framed || busy" @click="capture.runOcr">
+              {{ capture.busy.value === 'ocr' ? '识别中…' : '只识别，不保存' }}
+            </button>
+            <span class="text-ink-35">按一次就回游戏；识别结果在右边核对。</span>
+          </div>
         </div>
 
-        <div v-if="capture.ocr.value" class="card p-3 text-sm">
-          <p class="label">
-            识别结果 · {{ capture.ocr.value.provider }} · {{ capture.ocr.value.elapsed_ms }} ms
-          </p>
-          <p class="jp mt-1 whitespace-pre-wrap text-base">
-            {{ capture.ocr.value.normalized ?? capture.ocr.value.text }}
-          </p>
+        <div class="hidden bg-divider md:block" />
+
+        <div class="mt-6 flex flex-col md:mt-0 md:pl-[26px]">
+          <template v-if="capture.ocr.value">
+            <p class="kicker">
+              识别结果 · {{ capture.ocr.value.provider }} ·
+              <span class="num">{{ capture.ocr.value.elapsed_ms }} ms</span>
+            </p>
+            <p class="jp mt-2 mb-0 text-[18px] leading-[1.95] md:text-[20px]">
+              {{ capture.ocr.value.normalized ?? capture.ocr.value.text }}
+            </p>
+            <div class="my-4 h-px bg-divider" />
+          </template>
+
+          <CapturedLines
+            :lines="lines"
+            :elapsed="elapsed"
+            :inbox-link="session ? `/inbox?session=${session.id}` : '/inbox'"
+            class="flex-1"
+          />
         </div>
-
-        <ManualPaste @submit="addManual" />
-      </section>
-
-      <CapturedLines
-        :lines="lines"
-        :inbox-link="session ? `/inbox?session=${session.id}` : '/inbox'"
-      />
-    </div>
+      </div>
+    </template>
   </div>
 </template>
+
+<style scoped>
+.collect {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-radius: var(--radius-ui);
+  padding: 22px 26px;
+  text-align: left;
+  cursor: pointer;
+}
+.collect-on {
+  border: 2px solid var(--accent);
+  background: var(--accent-100);
+  color: var(--gold-deep);
+}
+.collect-on:hover:not(:disabled) {
+  background: var(--accent-200);
+}
+.collect-off {
+  border: 1px dashed var(--divider);
+  background: transparent;
+  color: var(--ink-35);
+  cursor: not-allowed;
+}
+.collect:disabled {
+  cursor: not-allowed;
+}
+.key {
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 4px 12px;
+  font-family: var(--font-head);
+  opacity: 0.55;
+}
+</style>

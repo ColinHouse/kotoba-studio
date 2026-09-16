@@ -1,62 +1,452 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-paper: #faf7f1;
-  --color-paper-2: #f2ecdf;
-  --color-ink: #2b2a28;
-  --color-ink-2: #6b665c;
-  --color-ink-3: #a29b8d;
-  --color-line: #e4dccb;
-  --color-accent: #d9773b;
-  --color-accent-2: #b5541c;
-  --color-matcha: #6b8f4e;
-  --color-plum: #8c5a7a;
-  --color-sky: #4f7fa8;
-  --font-sans:
-    'Inter', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif;
-  --font-jp:
-    'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', 'Meiryo', sans-serif;
+/* Classical — 纸、墨、金线.
+   三条规矩：纸只有三层（页面 → 裱框 → 抬起）；状态先用墨色再用颜色；
+   中文与日语永远是两套字。见 docs/conventions.md。 */
+
+/* ── Palette ──────────────────────────────────────────────────────────────
+   Values live here as plain custom properties so the theme can flip at
+   runtime; @theme inline below only maps them to Tailwind utility names. */
+:root {
+  --bg: #f3f2f2;
+  --surface: #eae9e9;
+  --paper: #fbfaf9;
+  --ink: #201f1d;
+  --ink-70: #605d5d;
+  --ink-50: #7d7979;
+  --ink-35: #9b9797;
+  --divider: rgba(32, 31, 29, 0.16);
+  --rule-2: rgba(32, 31, 29, 0.07);
+  --accent: #b68235;
+  --gold-deep: #7d5411;
+  --accent-100: #fff3e4;
+  --accent-200: #ffe3bf;
+  --accent-300: #facb8d;
+  --accent-800: #5a3b0a;
+  --neutral-100: #f8f4f4;
+  --neutral-800: #444141;
+  --shadow: 0 3px 10px rgba(45, 43, 43, 0.14);
+
+  /* Layout constants — every desktop page uses the same two numbers, so no
+     page is a different width from its neighbour. */
+  --shell-nav: 208px;
+  --content-max: 1050px;
+  --page-pad-x: 34px;
+  --page-pad-top: 30px;
+  --page-pad-bottom: 26px;
+  --mobile-pad: 20px;
+  --tab-bar-h: 62px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #191817;
+    --surface: #262422;
+    --paper: #211f1e;
+    --ink: #eae7e7;
+    --ink-70: #bab6b6;
+    --ink-50: #9b9797;
+    --ink-35: #7d7979;
+    --divider: rgba(234, 231, 231, 0.2);
+    --rule-2: rgba(234, 231, 231, 0.09);
+    --accent: #e1ad66;
+    --gold-deep: #facb8d;
+    --accent-100: rgba(225, 173, 102, 0.13);
+    --accent-200: rgba(225, 173, 102, 0.2);
+    --accent-300: rgba(225, 173, 102, 0.3);
+    --accent-800: #f2dcba;
+    --neutral-100: #2d2b2b;
+    --neutral-800: #eae7e7;
+    --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #191817;
+  --surface: #262422;
+  --paper: #211f1e;
+  --ink: #eae7e7;
+  --ink-70: #bab6b6;
+  --ink-50: #9b9797;
+  --ink-35: #7d7979;
+  --divider: rgba(234, 231, 231, 0.2);
+  --rule-2: rgba(234, 231, 231, 0.09);
+  --accent: #e1ad66;
+  --gold-deep: #facb8d;
+  --accent-100: rgba(225, 173, 102, 0.13);
+  --accent-200: rgba(225, 173, 102, 0.2);
+  --accent-300: rgba(225, 173, 102, 0.3);
+  --accent-800: #f2dcba;
+  --neutral-100: #2d2b2b;
+  --neutral-800: #eae7e7;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-70: var(--ink-70);
+  --color-ink-50: var(--ink-50);
+  --color-ink-35: var(--ink-35);
+  --color-divider: var(--divider);
+  --color-rule: var(--rule-2);
+  --color-accent: var(--accent);
+  --color-gold: var(--gold-deep);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
+  --color-accent-800: var(--accent-800);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-800: var(--neutral-800);
+
+  --font-head: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+  --font-body: 'Lora', 'Noto Serif SC', Georgia, serif;
+  --font-jp: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+
+  --radius-chip: 2px;
+  --radius-ui: 4px;
+  --radius-phone: 16px;
 }
 
 html,
 body {
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--bg);
+  color: var(--ink);
 }
 body {
-  font-family: var(--font-sans);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.75;
   -webkit-font-smoothing: antialiased;
 }
+
+/* 日语用明朝体：日文汉字字形与中文不同，这不是细节。 */
 .jp {
   font-family: var(--font-jp);
 }
-
-@utility btn {
-  @apply inline-flex items-center justify-center gap-1 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap transition;
-  @apply active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none;
+.num {
+  font-feature-settings: 'tnum';
 }
-@utility card {
-  @apply rounded-2xl border border-line bg-white/70;
-  box-shadow: 0 2px 10px rgba(60, 40, 20, 0.05);
+ruby {
+  ruby-align: center;
+}
+rt {
+  font-weight: 400;
+  font-size: 0.34em;
+  letter-spacing: 0.06em;
+  color: var(--ink-50);
+}
+
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* ── 纸的三层 ─────────────────────────────────────────────────────────── */
+
+/* 第二层：1px 细线 + 4px 圆角，不填色不投影。可点的独立对象。 */
+@utility framed {
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-ui);
+}
+
+/* 第三层：一屏最多一处——复习卡、词条编辑器、选中的句子。 */
+@utility lifted {
+  background: var(--paper);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-ui);
+  box-shadow: var(--shadow);
+}
+
+/* 截图的裱边：旧照片的调子，和界面的墨色不冲突。 */
+@utility plate {
+  box-sizing: border-box;
+  border: 6px solid var(--surface);
+  outline: 1px solid var(--divider);
+  filter: sepia(0.22) saturate(0.82) contrast(1.05);
+  object-fit: cover;
+}
+
+/* ── 分区小标 ─────────────────────────────────────────────────────────── */
+@utility kicker {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-35);
+  line-height: 1.2;
+}
+
+@utility page-title {
+  font-family: var(--font-head);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.15;
+  margin: 0;
+}
+
+/* ── 动作：从强到弱。全系统不填实心色，除了反白。 ─────────────────────── */
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-head);
+  font-size: 14px;
+  line-height: 1.2;
+  padding: 8px 17px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-ui);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.12s ease;
+  white-space: nowrap;
+}
+@utility btn-primary {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+@utility btn-secondary {
+  border-color: var(--divider);
+}
+@utility btn-quiet {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-50);
+  border: 0;
+  border-bottom: 1px solid var(--divider);
+  border-radius: 0;
+  padding: 0 0 1px;
+  background: none;
+  cursor: pointer;
+}
+
+.btn:disabled,
+.btn-quiet:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.btn-quiet:hover:not(:disabled) {
+  color: var(--ink);
+  border-bottom-color: var(--ink-50);
+}
+
+/* ── 标签：三种，含义不重叠 ───────────────────────────────────────────── */
+@utility tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: 3px;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+/* 需要警惕：金色描边，只给中日同形 */
+@utility tag-warn {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+/* 中性事实：灰底无边 */
+@utility tag-fact {
+  background: var(--neutral-100);
+  color: var(--neutral-800);
+}
+/* 学习状态：细边框，墨色深浅 */
+@utility tag-state {
+  border: 1px solid var(--divider);
+  color: var(--ink-70);
+}
+
+/* ── 分段控件 ─────────────────────────────────────────────────────────── */
+@utility seg {
+  display: inline-flex;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-ui);
+  overflow: hidden;
+  font-family: var(--font-head);
+}
+.seg > * + * {
+  border-left: 1px solid var(--divider);
+}
+@utility seg-opt {
+  padding: 7px 14px;
+  font-size: 13px;
+  color: var(--ink-50);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  white-space: nowrap;
+}
+.seg-opt[aria-pressed='true'],
+.seg-opt.is-on {
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.seg-opt:hover:not(.is-on):not([aria-pressed='true']) {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+/* ── 表单 ─────────────────────────────────────────────────────────────── */
+@utility field-label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: var(--ink-70);
 }
 @utility input {
-  @apply w-full rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none focus:border-accent;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  caret-color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-ui);
 }
-@utility chip {
-  @apply inline-flex items-center rounded-lg px-2 py-1 text-sm leading-tight;
+.input:hover {
+  border-color: color-mix(in srgb, var(--ink) 45%, transparent);
 }
-@utility label {
-  @apply text-xs font-semibold uppercase tracking-wide text-ink-3;
+.input:focus-visible {
+  border-color: var(--accent);
+  outline-offset: 0;
+}
+textarea.input {
+  min-height: 84px;
+  resize: vertical;
+}
+select.input {
+  cursor: pointer;
+}
+input[type='range'],
+input[type='checkbox'],
+input[type='radio'],
+progress {
+  accent-color: var(--accent);
+}
+input[type='range'] {
+  width: 100%;
+  height: 2px;
+  cursor: pointer;
 }
 
-@layer components {
-  .btn-primary {
-    @apply btn bg-accent text-white hover:bg-accent-2;
-  }
-  .btn-ghost {
-    @apply btn bg-paper-2 text-ink hover:bg-line;
-  }
-  .btn-outline {
-    @apply btn border border-line bg-white/60 text-ink hover:bg-paper-2;
+/* ── 分词词块：墨色浓淡 + 线型，不用颜色分类 ─────────────────────────── */
+@utility tok {
+  font-weight: 300;
+  color: var(--ink-35);
+  padding: 1px 2px;
+  border-radius: var(--radius-chip);
+  background: none;
+  border: 0;
+  font: inherit;
+  line-height: inherit;
+}
+.tok-unknown {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom: 2px solid var(--ink);
+  cursor: pointer;
+}
+.tok-learning {
+  color: var(--ink-70);
+  font-weight: 400;
+  border-bottom: 1px dashed var(--ink-50);
+  cursor: pointer;
+}
+.tok-known {
+  color: var(--ink-50);
+  font-weight: 300;
+  cursor: pointer;
+}
+.tok-ignored {
+  color: var(--ink-35);
+  text-decoration: line-through;
+  cursor: pointer;
+}
+.tok-plain {
+  color: var(--ink-35);
+  font-weight: 300;
+  cursor: default;
+}
+/* 框住＝这几个词算一个 */
+.tok-expression {
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-chip);
+  padding: 1px 5px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+/* 墨底反白——金色留给动作 */
+.tok-selected {
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: var(--radius-chip);
+  padding: 1px 5px;
+  font-weight: 600;
+  border-bottom: 0;
+  text-decoration: none;
+}
+.tok-selected rt {
+  color: var(--bg);
+}
+
+/* ── 表格 ─────────────────────────────────────────────────────────────── */
+@utility table-plain {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table-plain th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-50);
+  font-weight: 400;
+  padding: 8px 9px;
+  border-bottom: 1px solid var(--divider);
+}
+.table-plain td {
+  padding: 9px;
+  border-bottom: 1px solid var(--rule-2);
+}
+.table-plain tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ── 滚动条：不抢视线 ─────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--divider) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

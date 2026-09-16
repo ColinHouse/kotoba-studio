@@ -30,11 +30,11 @@ onMounted(async () => {
         />
         <span class="font-mono">{{ p.name }}</span>
         <span class="text-ink-2">{{ p.note }}</span>
-        <span v-if="p.recommended" class="chip bg-matcha/15 text-[10px] text-matcha">推荐</span>
+        <span v-if="p.recommended" class="tag tag-fact">推荐</span>
       </li>
     </ul>
     <label v-if="settings" class="block text-sm" for="ocr-provider">
-      <span class="label">默认引擎</span>
+      <span class="kicker">默认引擎</span>
       <select
         id="ocr-provider"
         class="input w-auto"

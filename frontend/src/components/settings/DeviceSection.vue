@@ -37,7 +37,7 @@ async function save() {
         <option value="desktop">电脑</option>
         <option value="mobile">手机</option>
       </select>
-      <button class="btn-outline" @click="save">保存</button>
+      <button class="btn btn-secondary" @click="save">保存</button>
     </div>
     <p class="text-xs text-ink-3">ID {{ device.device?.id?.slice(0, 8) }}</p>
   </SettingsSection>

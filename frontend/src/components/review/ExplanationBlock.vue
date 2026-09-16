@@ -1,34 +1,41 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Explanation } from '@/api/types'
-defineProps<{ explanation: Explanation }>()
-const rows: { key: keyof Explanation; label: string }[] = [
-  { key: 'meaning_here', label: '这句里的意思' },
+
+const props = defineProps<{ explanation: Explanation; bare?: boolean }>()
+
+const ROWS: { key: keyof Explanation; label: string }[] = [
+  { key: 'meaning_here', label: '这句里' },
   { key: 'form', label: '词形' },
   { key: 'tone', label: '语气' },
-  { key: 'needs_context', label: '需要上下文' },
-  { key: 'daily_usable', label: '日常能否这样说' },
-  { key: 'trap_for_zh', label: '给中文母语者的提醒' },
+  { key: 'needs_context', label: '需上下文' },
+  { key: 'daily_usable', label: '日常' },
+  { key: 'trap_for_zh', label: '提醒' },
 ]
+
+const rows = computed(() =>
+  ROWS.filter((r) => typeof props.explanation[r.key] === 'string' && props.explanation[r.key]),
+)
+const confidence = computed(() =>
+  typeof props.explanation.confidence === 'number'
+    ? `把握 ${Math.round(props.explanation.confidence * 100)}%`
+    : null,
+)
 </script>
 
 <template>
-  <div class="rounded-xl border border-sky/20 bg-sky/5 p-3 text-sm">
-    <div class="mb-1 flex items-center justify-between">
-      <span class="label text-sky">AI 语境解释</span>
-      <span v-if="explanation.confidence !== undefined" class="text-xs text-ink-3"
-        >把握 {{ Math.round((explanation.confidence ?? 0) * 100) }}%</span
-      >
+  <div :class="bare ? '' : 'border-t border-rule bg-surface px-6 pt-4 pb-[18px]'">
+    <div class="mb-2.5 flex items-baseline justify-between">
+      <span class="kicker text-ink-50">AI 语境解释</span>
+      <span v-if="confidence" class="num text-[11px] text-ink-35">{{ confidence }}</span>
     </div>
-    <dl class="space-y-1.5">
+    <dl
+      class="m-0 grid grid-cols-[62px_1fr] gap-x-3 gap-y-2 text-[13px] leading-[1.65] text-ink-70"
+    >
       <template v-for="row in rows" :key="row.key">
-        <div v-if="explanation[row.key]">
-          <dt class="text-xs font-semibold text-ink-2">{{ row.label }}</dt>
-          <dd class="leading-relaxed">{{ explanation[row.key] }}</dd>
-        </div>
+        <dt class="text-right text-[11px] text-ink-35">{{ row.label }}</dt>
+        <dd class="m-0">{{ explanation[row.key] }}</dd>
       </template>
     </dl>
-    <p class="mt-2 text-[11px] text-ink-3">
-      AI 解释与词典释义分开显示；不确定之处以"需要上下文"标出。
-    </p>
   </div>
 </template>

@@ -26,8 +26,19 @@ export const useDeviceStore = defineStore('device', () => {
   const device = ref<Device | null>(null)
   const kind = ref<'desktop' | 'mobile'>(detectKind())
   const ready = ref(false)
+  /** Views await this before querying anything that depends on the device kind;
+      concurrent callers share one registration round-trip. */
+  let inFlight: Promise<void> | null = null
 
-  async function ensureRegistered() {
+  function ensureRegistered(): Promise<void> {
+    if (ready.value) return Promise.resolve()
+    inFlight ??= register().finally(() => {
+      inFlight = null
+    })
+    return inFlight
+  }
+
+  async function register() {
     let saved: { id: string; name: string; kind: 'desktop' | 'mobile' } | null
     try {
       saved = JSON.parse(localStorage.getItem(KEY) ?? 'null')

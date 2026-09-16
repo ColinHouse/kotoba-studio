@@ -2,7 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { api, mediaUrl } from '@/api/client'
-import type { QuizItem, SessionSummary } from '@/api/types'
+import type { QuizItem, Session, SessionSummary } from '@/api/types'
+import Furigana from '@/components/common/Furigana.vue'
 import { useAppStore } from '@/stores/app'
 import { useDeviceStore } from '@/stores/device'
 import { diffAnswer } from '@/utils/diff'
@@ -18,14 +19,31 @@ const revealed = ref(false)
 const result = ref<{ correct: boolean; expected: string } | null>(null)
 const score = ref({ answered: 0, correct: 0 })
 const summary = ref<SessionSummary | null>(null)
+const session = ref<Session | null>(null)
 const loading = ref(true)
 const startedAt = ref(Date.now())
 const input = ref<HTMLInputElement | null>(null)
+
+const KIND_LABEL: Record<string, string> = {
+  reading: '读音回忆',
+  cloze: '语境填空',
+  meaning: '语境释义',
+  listening: '听音理解',
+}
 
 const current = computed(() => items.value[index.value] ?? null)
 const pieces = computed(() =>
   result.value && given.value ? diffAnswer(given.value, result.value.expected) : [],
 )
+
+async function loadSummary() {
+  const [s, meta] = await Promise.all([
+    api.get<SessionSummary>(`/api/sessions/${props.sessionId}/summary`),
+    api.get<Session>(`/api/sessions/${props.sessionId}`).catch(() => null),
+  ])
+  summary.value = s
+  session.value = meta
+}
 
 onMounted(async () => {
   try {
@@ -33,8 +51,7 @@ onMounted(async () => {
       `/api/quiz/sessions/${props.sessionId}?limit=12`,
     )
     items.value = r.items
-    if (!r.items.length)
-      summary.value = await api.get<SessionSummary>(`/api/sessions/${props.sessionId}/summary`)
+    if (!r.items.length) await loadSummary()
   } catch (e) {
     app.fail(e)
   } finally {
@@ -43,10 +60,10 @@ onMounted(async () => {
 })
 
 async function submit(selfCorrect?: boolean) {
-  if (!current.value) return
   const item = current.value
+  if (!item) return
   try {
-    const r = await api.post<{ correct: boolean; expected: string }>('/api/quiz/answers', {
+    result.value = await api.post<{ correct: boolean; expected: string }>('/api/quiz/answers', {
       card_id: item.card_id,
       encounter_id: item.encounter_id,
       kind: item.kind,
@@ -56,9 +73,8 @@ async function submit(selfCorrect?: boolean) {
       device_id: device.device?.id ?? null,
       session_id: Number(props.sessionId),
     })
-    result.value = r
     score.value.answered += 1
-    if (r.correct) score.value.correct += 1
+    if (result.value.correct) score.value.correct += 1
   } catch (e) {
     app.fail(e)
   }
@@ -70,125 +86,185 @@ async function next() {
   revealed.value = false
   result.value = null
   startedAt.value = Date.now()
-  if (!current.value)
-    summary.value = await api.get<SessionSummary>(`/api/sessions/${props.sessionId}/summary`)
-  else setTimeout(() => input.value?.focus(), 0)
+  if (!current.value) {
+    await loadSummary()
+  } else {
+    setTimeout(() => input.value?.focus(), 0)
+  }
 }
 </script>
 
 <template>
-  <div class="mx-auto max-w-2xl space-y-4">
-    <header class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold">会后短测</h1>
-      <span class="text-sm text-ink-3"
-        >{{ Math.min(index + 1, items.length) }} / {{ items.length }} · 对 {{ score.correct }}</span
-      >
+  <div class="mx-auto max-w-[660px]">
+    <header class="flex items-baseline justify-between gap-3 border-b border-divider pb-3">
+      <h1 class="page-title text-[26px] md:text-[28px]">会后短测</h1>
+      <span class="num text-[12px] text-ink-50">
+        {{ Math.min(index + 1, items.length) }} / {{ items.length }} · 对 {{ score.correct }}
+      </span>
     </header>
 
-    <div v-if="loading" class="card p-8 text-center text-sm text-ink-2">出题中…</div>
+    <p v-if="loading" class="mt-8 text-center text-[13px] text-ink-35">出题中…</p>
 
     <template v-else-if="current">
-      <div class="card space-y-4 p-6">
-        <p class="label">
-          {{
-            { reading: '读音回忆', cloze: '语境填空', meaning: '语境释义', listening: '听音理解' }[
-              current.kind
-            ]
-          }}
-        </p>
-        <audio
-          v-if="current.kind === 'listening' && current.audio_path"
-          :src="mediaUrl(current.audio_path)"
-          controls
-        />
-        <p v-else class="jp text-2xl leading-relaxed">{{ current.prompt }}</p>
-        <p class="text-sm text-ink-2">{{ current.hint }}</p>
+      <p class="kicker mt-5 text-accent">{{ KIND_LABEL[current.kind] }}</p>
 
+      <audio
+        v-if="current.kind === 'listening' && current.audio_path"
+        :src="mediaUrl(current.audio_path)"
+        controls
+        class="mt-3"
+      />
+      <p v-else class="jp mt-2.5 mb-0 text-[23px] leading-[2.1] md:text-[26px]">
+        {{ current.prompt }}
+      </p>
+      <p class="mt-2 mb-0 text-[13px] text-ink-50">{{ current.hint }}</p>
+
+      <div v-if="!result" class="mt-5">
         <template v-if="current.kind === 'meaning'">
-          <div v-if="!revealed">
-            <button class="btn-primary" @click="revealed = true">显示答案</button>
-          </div>
-          <template v-else-if="!result">
-            <p class="text-lg">{{ current.answer }}</p>
-            <div class="flex gap-2">
-              <button class="btn bg-red-500/90 text-white" @click="submit(false)">没想起来</button>
-              <button class="btn bg-matcha text-white" @click="submit(true)">想起来了</button>
+          <button v-if="!revealed" class="btn btn-primary" @click="revealed = true">
+            显示答案
+          </button>
+          <template v-else>
+            <p class="m-0 text-[18px]">{{ current.answer }}</p>
+            <div class="mt-4 flex gap-2.5">
+              <button class="btn btn-secondary" @click="submit(false)">没想起来</button>
+              <button class="btn btn-primary" @click="submit(true)">想起来了</button>
             </div>
           </template>
         </template>
-        <template v-else>
-          <form v-if="!result" class="flex gap-2" @submit.prevent="submit()">
-            <input
-              ref="input"
-              v-model="given"
-              class="input jp text-lg"
-              autofocus
-              placeholder="输入答案…"
-            />
-            <button class="btn-primary" :disabled="!given.trim()">提交</button>
-          </form>
-        </template>
+        <form v-else class="flex gap-2.5" @submit.prevent="submit()">
+          <input ref="input" v-model="given" class="input jp text-[18px]" placeholder="输入答案…" />
+          <button class="btn btn-primary" :disabled="!given.trim()">提交</button>
+        </form>
+      </div>
 
-        <div
-          v-if="result"
-          class="rounded-xl p-3"
-          :class="result.correct ? 'bg-matcha/10' : 'bg-red-50'"
-        >
-          <p class="font-semibold" :class="result.correct ? 'text-matcha' : 'text-red-700'">
-            {{ result.correct ? '正确！' : '不对，正确答案：' }}
-          </p>
-          <p v-if="!result.correct" class="jp text-xl">
-            <template v-if="pieces.length"
-              ><span
-                v-for="(p, i) in pieces"
+      <div v-else class="mt-[22px] border-t border-rule pt-[18px]">
+        <dl class="m-0 grid grid-cols-[64px_1fr] items-baseline gap-x-3.5 gap-y-2.5">
+          <template v-if="current.kind !== 'meaning'">
+            <dt class="text-right text-[11px] tracking-[0.1em] text-ink-35">你写的</dt>
+            <dd class="jp m-0 text-[22px] md:text-[24px]">
+              <template v-if="pieces.length">
+                <span
+                  v-for="(p, i) in pieces.filter((x) => !x.missing)"
+                  :key="i"
+                  :class="p.ok ? '' : 'wrong'"
+                  >{{ p.text }}</span
+                >
+              </template>
+              <template v-else>{{ given || '（空）' }}</template>
+            </dd>
+          </template>
+          <dt class="text-right text-[11px] tracking-[0.1em] text-ink-35">
+            {{ result.correct ? '正确' : '正确答案' }}
+          </dt>
+          <dd class="jp m-0 text-[22px] md:text-[24px]">
+            <template v-if="pieces.length && !result.correct">
+              <span
+                v-for="(p, i) in pieces.filter((x) => !x.extra)"
                 :key="i"
-                :class="p.ok ? '' : 'font-bold text-red-700'"
+                :class="p.ok ? '' : 'right'"
                 >{{ p.text }}</span
-              ></template
-            >
+              >
+            </template>
             <template v-else>{{ result.expected }}</template>
-          </p>
-          <p class="mt-1 text-sm text-ink-2 jp">{{ current.headword }}（{{ current.reading }}）</p>
-          <button class="btn-primary mt-3" @click="next">下一题</button>
+          </dd>
+        </dl>
+
+        <p class="jp mt-3.5 mb-0 text-[14px] text-ink-70">
+          <Furigana :word="current.headword" :reading="current.reading" /> ·
+          {{ current.kind === 'meaning' ? current.answer : '' }}
+        </p>
+
+        <div class="mt-5 flex flex-wrap items-center gap-3.5">
+          <button class="btn btn-primary" @click="next">下一题</button>
+          <span class="text-[11px] text-ink-35">短测只作记录，不改变 FSRS 的正式安排。</span>
         </div>
       </div>
-      <p class="text-center text-xs text-ink-3">短测结果只作记录，不改变 FSRS 的正式复习安排。</p>
     </template>
 
-    <div v-else-if="summary" class="card space-y-4 p-6">
-      <h2 class="text-lg font-semibold">本次会话复盘</h2>
-      <div class="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-        <div class="rounded-xl bg-paper-2 p-3">
-          <span class="label">收藏</span>
-          <p class="text-2xl font-semibold">{{ summary.lines_total }}</p>
-        </div>
-        <div class="rounded-xl bg-paper-2 p-3">
-          <span class="label">确认</span>
-          <p class="text-2xl font-semibold">{{ summary.kept }}</p>
-        </div>
-        <div class="rounded-xl bg-paper-2 p-3">
-          <span class="label">新词</span>
-          <p class="text-2xl font-semibold">{{ summary.new_terms.length }}</p>
-        </div>
-        <div class="rounded-xl bg-paper-2 p-3">
-          <span class="label">再见词</span>
-          <p class="text-2xl font-semibold">{{ summary.seen_again_terms.length }}</p>
+    <!-- 版权页式的收束 -->
+    <section v-else-if="summary" class="mt-6">
+      <div class="border-b border-divider pb-[18px] text-center">
+        <p class="kicker text-accent">本次会话复盘</p>
+        <p class="m-0 mt-1.5 font-head text-[26px] md:text-[30px]">
+          {{ session?.source_title ?? '本次会话' }}
+        </p>
+        <p class="num m-0 text-[12px] text-ink-50">时长 {{ fmtDuration(summary.duration_s) }}</p>
+      </div>
+
+      <div class="mt-[22px] grid grid-cols-4">
+        <div
+          v-for="(stat, i) in [
+            { n: summary.lines_total, label: '收藏' },
+            { n: summary.kept, label: '确认' },
+            { n: summary.new_terms.length, label: '新词' },
+            { n: summary.seen_again_terms.length, label: '再见词' },
+          ]"
+          :key="stat.label"
+          class="text-center"
+          :class="i < 3 ? 'border-r border-rule' : ''"
+        >
+          <p
+            class="num m-0 font-head text-[34px] leading-none md:text-[40px]"
+            :class="stat.n ? 'text-ink' : 'text-ink-35'"
+          >
+            {{ stat.n }}
+          </p>
+          <p class="m-0 mt-1.5 text-[11px] tracking-[0.1em] text-ink-50">{{ stat.label }}</p>
         </div>
       </div>
-      <p class="text-sm text-ink-2">
-        建卡 {{ summary.cards_created }} 张 · 短测 {{ summary.quiz.correct }}/{{
-          summary.quiz.answered
-        }}
-        · 时长 {{ fmtDuration(summary.duration_s) }}
-      </p>
-      <div v-if="summary.seen_again_terms.length" class="text-sm">
-        <span class="label">这些词你之前也遇到过</span>
-        <p class="jp">{{ summary.seen_again_terms.map((t) => t.headword).join('、') }}</p>
+
+      <div class="my-5 h-px bg-divider" />
+      <div class="num flex justify-between text-[13px] text-ink-70">
+        <span
+          >建卡 <b class="font-semibold text-ink">{{ summary.cards_created }}</b> 张</span
+        >
+        <span
+          >短测
+          <b class="font-semibold text-ink"
+            >{{ summary.quiz.correct }}/{{ summary.quiz.answered }}</b
+          ></span
+        >
       </div>
-      <div class="flex gap-2">
-        <RouterLink :to="`/inbox?session=${sessionId}`" class="btn-outline">回到收件箱</RouterLink>
-        <RouterLink to="/review" class="btn-primary">去正式复习</RouterLink>
+
+      <div v-if="summary.new_terms.length" class="mt-5 border-t border-rule pt-4">
+        <p class="kicker">这次新认识的</p>
+        <p class="jp mt-2 mb-0 text-[20px]">
+          <template v-for="(t, i) in summary.new_terms" :key="t.id"
+            ><Furigana :word="t.headword" :reading="t.reading" /><span
+              v-if="i < summary.new_terms.length - 1"
+              >、</span
+            ></template
+          >
+        </p>
       </div>
-    </div>
+      <div v-if="summary.seen_again_terms.length" class="mt-4">
+        <p class="kicker">之前也遇到过</p>
+        <p class="jp mt-2 mb-0 text-[18px] text-ink-70">
+          {{ summary.seen_again_terms.map((t) => t.headword).join('、') }}
+        </p>
+      </div>
+
+      <div class="mt-[22px] flex gap-2.5">
+        <RouterLink to="/review" class="btn btn-primary">去正式复习</RouterLink>
+        <RouterLink :to="`/inbox?session=${sessionId}`" class="btn btn-secondary">
+          回到收件箱
+        </RouterLink>
+      </div>
+    </section>
   </div>
 </template>
+
+<style scoped>
+/* 差异用线型和墨色标，不用红色 */
+.wrong {
+  color: var(--ink-50);
+  text-decoration: line-through;
+  text-decoration-style: dotted;
+}
+.right {
+  font-weight: 600;
+  color: var(--gold-deep);
+  border-bottom: 2px solid var(--accent);
+}
+</style>

@@ -19,6 +19,7 @@ export interface Source {
   created_at: string
   line_count: number
   term_count: number
+  known_term_count: number
 }
 
 export interface Session {

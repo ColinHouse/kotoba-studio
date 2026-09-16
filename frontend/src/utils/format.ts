@@ -29,8 +29,10 @@ export function fmtDateTime(iso: string): string {
 }
 
 export function fmtDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60)
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
   const s = seconds % 60
+  if (h) return `${h} 小时 ${m} 分`
   return m ? `${m} 分 ${s} 秒` : `${s} 秒`
 }
 

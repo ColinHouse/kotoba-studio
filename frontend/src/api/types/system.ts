@@ -53,6 +53,7 @@ export interface CardStats {
   total: number
   new: number
   due_now: number
+  streak_days: number
   by_owner: Record<string, number>
   by_state: Record<string, number>
 }

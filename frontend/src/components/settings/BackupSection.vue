@@ -58,9 +58,7 @@ async function restore(backup: Backup) {
           {{ b.name }}
           <span class="text-ink-3">{{ fmtBytes(b.size) }} · {{ fmtDateTime(b.created_at) }}</span>
         </span>
-        <button class="btn-ghost text-xs" :disabled="busy === 'restore'" @click="restore(b)">
-          恢复
-        </button>
+        <button class="btn-quiet" :disabled="busy === 'restore'" @click="restore(b)">恢复</button>
       </li>
       <li v-if="!backups.length" class="py-2 text-ink-3">还没有备份。</li>
     </ul>
