@@ -1,5 +1,53 @@
 import { describe, expect, it } from 'vitest'
-import { originLabel, senseOrigin } from './dictionaries'
+import {
+  dictionaryCountLabel,
+  dictionaryKindLabel,
+  dictionaryListShows,
+  originLabel,
+  senseOrigin,
+} from './dictionaries'
+
+describe('dictionary labels', () => {
+  it('names the kinds and counts what they hold', () => {
+    expect(dictionaryKindLabel('jmdict')).toBe('JMdict')
+    expect(dictionaryKindLabel('yomitan')).toBe('Yomitan 词典')
+    expect(dictionaryKindLabel('yomitan-freq')).toBe('频率表')
+    expect(
+      dictionaryCountLabel({
+        title: '频率表',
+        kind: 'yomitan-freq',
+        entry_count: 2000,
+        revision: null,
+        attribution: null,
+      }),
+    ).toBe('2,000 条频率')
+    expect(
+      dictionaryCountLabel({
+        title: '词典',
+        kind: 'yomitan',
+        entry_count: 300,
+        revision: null,
+        attribution: null,
+      }),
+    ).toBe('300 条词条')
+  })
+
+  it('shows the list even when JMdict itself is not installed', () => {
+    expect(
+      dictionaryListShows([
+        {
+          title: '测试日中词典',
+          kind: 'yomitan',
+          entry_count: 2,
+          revision: null,
+          attribution: null,
+        },
+      ]),
+    ).toBe(true)
+    expect(dictionaryListShows([])).toBe(false)
+    expect(dictionaryListShows(undefined)).toBe(false)
+  })
+})
 
 describe('senseOrigin', () => {
   it('records the dictionary the gloss came from, not a hardcoded jmdict', () => {

@@ -4,6 +4,11 @@ import SettingsSection from './SettingsSection.vue'
 import { api } from '@/api/client'
 import type { DictStatus } from '@/api/types'
 import { useAppStore } from '@/stores/app'
+import {
+  dictionaryCountLabel,
+  dictionaryKindLabel,
+  dictionaryListShows,
+} from '@/utils/dictionaries'
 
 const app = useAppStore()
 const dict = ref<DictStatus | null>(null)
@@ -54,19 +59,21 @@ async function installPitch() {
 
 <template>
   <SettingsSection title="词典">
-    <ul v-if="dict?.dictionaries.length" class="space-y-1 text-sm">
-      <li v-for="d in dict.dictionaries" :key="d.id">
-        <span>{{ d.title }}</span>
-        <span class="text-ink-50">
-          （{{ d.entry_count.toLocaleString() }} 条<template v-if="d.revision"
-            >，{{ d.revision }}</template
-          >）
-        </span>
-        <span v-if="d.attribution" class="block text-xs text-ink-35">{{ d.attribution }}</span>
-      </li>
-    </ul>
+    <template v-if="dict && dictionaryListShows(dict.dictionaries)">
+      <ul class="space-y-1 text-sm">
+        <li v-for="d in dict.dictionaries" :key="d.id">
+          <span>{{ d.title }}</span>
+          <span class="tag tag-fact ml-1.5 align-middle">{{ dictionaryKindLabel(d.kind) }}</span>
+          <span class="text-ink-50">
+            （{{ dictionaryCountLabel(d) }}<template v-if="d.revision">，{{ d.revision }}</template
+            >）
+          </span>
+          <span v-if="d.attribution" class="block text-xs text-ink-35">{{ d.attribution }}</span>
+        </li>
+      </ul>
+    </template>
     <p v-else-if="dict" class="text-sm text-ink-50">
-      尚未安装 JMdict。安装后可查词、识别表达、给出候选释义（约 25 MB 下载）。
+      尚未安装 JMdict，也还没有导入其他词典。安装后可查词、识别表达、给出候选释义（约 25 MB 下载）。
     </p>
     <div class="flex flex-wrap items-center gap-2">
       <button class="btn-primary" :disabled="busy()" @click="install">
