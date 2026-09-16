@@ -93,7 +93,6 @@ class RegionWatcher:
                 image = Image.open(io.BytesIO(png))
                 if self._tracker.update(dhash(image)):
                     self._recognize(png)
-                self.last_error = None
             except ApiError as exc:
                 self.last_error = exc.message
                 log.debug("region watcher skipped a frame: %s", exc.message)
@@ -103,6 +102,9 @@ class RegionWatcher:
 
     def _recognize(self, png: bytes) -> None:
         result = self._provider.recognize(png)
+        # Only a successful OCR clears the error: clearing it on the next quiet
+        # frame would hide a failed engine from /watch/status almost at once.
+        self.last_error = None
         text = normalize_ocr(result.text)
         if not text:
             return

@@ -153,9 +153,10 @@ def test_watcher_survives_ocr_failure(client):
     watcher = make_watcher(client, frames, FailingProvider())
     watcher.start()
     try:
-        assert wait_for(lambda: watcher.last_error == "引擎炸了")
-        calls = frames.calls
-        assert wait_for(lambda: frames.calls > calls + 2)  # still polling
+        # The trigger is frame 6. Later polls keep succeeding but need no OCR;
+        # the error must stay visible instead of vanishing after one frame.
+        assert wait_for(lambda: frames.calls > 10)
+        assert watcher.last_error == "引擎炸了"
         assert watcher.running is True
         assert watcher.captured == 0
     finally:
