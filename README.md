@@ -16,16 +16,16 @@
 
 ```bash
 # 后端（Python 3.12，uv）
-cd server
+cd backend
 uv sync --extra macos --extra dev      # Windows: --extra windows；跨平台 OCR：--extra ocr-onnx
 uv run pytest                          # 52 tests
 
 # 前端（Node 22）
-cd ../web
-npm ci && npm run build                # 产物在 web/dist，由后端托管
+cd ../frontend
+npm ci && npm run build                # 产物在 frontend/dist，由后端托管
 
 # 运行（单端口；--host 0.0.0.0 后手机可扫码访问）
-cd ../server
+cd ../backend
 uv run python -m kotoba serve --open
 ```
 
@@ -36,12 +36,25 @@ uv run python -m kotoba serve --open
 ## 架构
 
 ```
-server/  FastAPI · SQLAlchemy 2 + Alembic · py-fsrs · fugashi/unidic · mss
-         OCR: Apple Vision | Windows OCR | RapidOCR | 手动    Hook: /ws/hook（WebSocket）
-         AI: OpenAI 兼容接口（DeepSeek 默认，Key 在系统钥匙串）  导出: AnkiConnect / .apkg / JSON
-web/     Vue 3 + TypeScript + Vite + Tailwind 4 + PWA（桌面侧栏 / 手机底部 Tab）
-docs/    产品分析、设计规格、ADR、路线图
+backend/kotoba/
+  core/        配置、数据库、错误、事件、内置资源
+  models/      ORM，按域拆分：capture / vocabulary / review / reference / system
+  schemas/     请求与响应 DTO
+  api/         capture（作品·会话·句子·截屏·Hook）· study（词条·语境·卡片·复习·短测）
+               · system（词典·设置·AI·导出·备份）
+  services/    jp（假名·归一化·分词·缩约·表达式）· text（去重·分析·入库）
+               · dictionary/jmdict · ocr/providers · capture · learning · review
+               · ai · export · backup
+frontend/src/
+  api/         客户端与按域拆分的类型
+  composables/ useScreenCapture · useSessionLines · useInboxLines · useSettings
+  components/  common · capture · inbox · review · settings
+  views/       首页·作品·采集·收件箱·复习·短测·词库·词条·设置
+docs/          产品分析、设计规格、ADR、路线图
 ```
+
+技术：FastAPI · SQLAlchemy 2 + Alembic · py-fsrs · fugashi/unidic · mss ·
+Apple Vision / Windows OCR / RapidOCR · Vue 3 + Vite + Tailwind 4 + PWA。
 
 核心数据模型：作品 → 会话 → 句子（截图/音频）→ 语境（某句里的某个词）→ 词条/义项 → 卡片（FSRS 状态 + 设备归属）→ 复习记录（正式 / 短测分开）。详见 [设计规格](docs/superpowers/specs/2026-09-15-kotoba-studio-design.md)。
 
@@ -61,6 +74,15 @@ docs/    产品分析、设计规格、ADR、路线图
 
 本项目合并并重写了作者早先的两个实验仓库：`vocab_test`（PySide6 词汇测试）与 `anki_mpv`（Electron 字幕学习 + AnkiConnect）。它们的 AnkiConnect 逻辑、口语缩约规则、答案 diff 高亮与错误加权抽题思想被保留下来。
 
-## 许可证
+## 许可证与致谢
 
-MIT
+代码采用 **AGPL-3.0-or-later**（见 [LICENSE](LICENSE)）。选择理由见
+[ADR 0002](docs/adr/0002-license.md)：本应用自己提供网络界面（手机通过局域网访问桌面端），
+AGPL 第 13 条正对应这种形态；最接近的同类 Anki、Kamite、jimaku 也都用 AGPL。
+
+词典数据来自 **JMdict/EDICT 项目**，© 电子辞書研究開発グループ（EDRDG），依
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) 授权使用：
+
+- <https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project>
+
+其余第三方组件的授权见 [NOTICE.md](NOTICE.md)。

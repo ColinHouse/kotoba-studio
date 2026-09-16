@@ -90,13 +90,13 @@ Kotoba Studio 是一个"会记住语境的日语伴读工具"：在玩 Galgame /
 
 ```
 ┌───────────────────────── 桌面端（Windows / macOS） ─────────────────────────┐
-│ server/ (Python 3.12, FastAPI, SQLite)                                      │
+│ backend/ (Python 3.12, FastAPI, SQLite)                                      │
 │  ├ api/         REST + WebSocket                                            │
 │  ├ services/    capture(mss) · ocr(Vision/WinOCR/RapidOCR) · jp(fugashi)    │
 │  │              dictionary(JMdict/Yomitan) · scheduling(py-fsrs) · ai(LLM)  │
 │  │              media(ffmpeg) · export(AnkiConnect/apkg) · backup           │
-│  └ 静态托管 web/dist（单端口，局域网可达）                                    │
-│ web/ (Vue 3 + TS + Vite + Tailwind 4 + PWA)  ← 桌面浏览器 / pywebview 壳    │
+│  └ 静态托管 frontend/dist（单端口，局域网可达）                                    │
+│ frontend/ (Vue 3 + TS + Vite + Tailwind 4 + PWA)  ← 桌面浏览器 / pywebview 壳    │
 └──────────────────────────────────────────────────────────────────────────────┘
                  ▲ 局域网 http://<ip>:8720（扫码打开，安装为 PWA）
 ┌────────────────┴─────────┐
@@ -167,8 +167,8 @@ OCR 提供者优先级：
 
 ## 10. 测试
 
-- pytest（server/tests）：调度（短测不改 FSRS；归属过滤）、去重、归一化、表达式合并、缩约表、备份恢复往返、API 契约（TestClient + 临时 SQLite）。
-- vitest（web）：kana 工具、答案 diff（源自 vocab_test 的高亮逻辑）。
+- pytest（backend/tests）：调度（短测不改 FSRS；归属过滤）、去重、归一化、表达式合并、缩约表、备份恢复往返、API 契约（TestClient + 临时 SQLite）。
+- vitest（frontend）：kana 工具、答案 diff（源自 vocab_test 的高亮逻辑）。
 - `vue-tsc --noEmit` 与 `ruff` 进 CI。
 - OCR 集成测试仅在 macOS 上本地运行（渲染日文图片 → Vision），CI 跳过。
 
@@ -178,5 +178,5 @@ OCR 提供者优先级：
 2. 手机端 v1 在线复习（依赖桌面端运行），离线复习延后到 M3。
 3. 桌面壳延后到 M2，M0/M1 直接用浏览器。
 4. 不把两个旧仓库的 git 历史合并进来；旧仓库改为归档（可逆）而非删除，删除命令交给用户执行。
-5. 许可证 MIT（anki_mpv 原为 MIT）。
+5. ~~许可证 MIT~~ → 2026-09-16 改为 AGPL-3.0-or-later，见 ADR 0002。
 6. Windows OCR 默认 winocr，未在本机验证（本机为 macOS）。

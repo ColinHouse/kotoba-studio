@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Kotoba Studio backend: capture, dictionary, FSRS review and export for Japanese sentence mining."
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "MIT" }
+license = { text = "AGPL-3.0-or-later" }
 dependencies = [
   "fastapi>=0.141",
   "uvicorn[standard]>=0.53",
