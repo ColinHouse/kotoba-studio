@@ -4,6 +4,7 @@ import BackupSection from '@/components/settings/BackupSection.vue'
 import DeviceSection from '@/components/settings/DeviceSection.vue'
 import DictionarySection from '@/components/settings/DictionarySection.vue'
 import ExportSection from '@/components/settings/ExportSection.vue'
+import KnownImportSection from '@/components/settings/KnownImportSection.vue'
 import OcrSection from '@/components/settings/OcrSection.vue'
 import QrConnect from '@/components/settings/QrConnect.vue'
 import ReviewSection from '@/components/settings/ReviewSection.vue'
@@ -25,6 +26,7 @@ const app = useAppStore()
     <ReviewSection />
     <AiSection />
     <DictionarySection />
+    <KnownImportSection />
     <OcrSection />
     <ExportSection />
     <BackupSection />
