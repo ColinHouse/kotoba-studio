@@ -43,6 +43,7 @@ export interface Token {
   term_id: number | null
   known_status: KnownStatus | null
   encountered: boolean
+  frequency_rank: number | null
 }
 
 export interface Span {
@@ -99,6 +100,7 @@ export interface Term {
   encounter_count: number
   source_count: number
   card_count: number
+  frequency_rank: number | null
   trap: Trap | null
 }
 

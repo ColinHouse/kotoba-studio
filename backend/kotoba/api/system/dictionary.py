@@ -10,13 +10,18 @@ from sqlalchemy.orm import Session
 from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.services.dictionary import jmdict, lookup, yomitan
+from kotoba.services.dictionary.yomitan import frequency
 
 router = APIRouter(prefix="/dict", tags=["dictionary"])
 
 
 @router.get("/status")
 def dict_status(db: Session = Depends(get_db)) -> dict:
-    return {**jmdict.status(db), "install": jmdict.install_job.snapshot()}
+    return {
+        **jmdict.status(db),
+        "install": jmdict.install_job.snapshot(),
+        "has_frequencies": frequency.has_any(db),
+    }
 
 
 @router.get("/lookup")

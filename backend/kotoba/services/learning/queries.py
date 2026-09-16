@@ -8,7 +8,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from kotoba.core.errors import ApiError
-from kotoba.models import Card, Encounter, Line, Source, Term
+from kotoba.models import Card, Encounter, Line, Source, Term, TermFrequency
+from kotoba.services.dictionary.yomitan import frequency
 from kotoba.services.learning.cards import card_to_dict
 from kotoba.services.learning.traps import homograph_trap
 
@@ -83,6 +84,7 @@ def term_summary(db: Session, term: Term) -> dict:
         "encounter_count": encounter_count,
         "source_count": source_count,
         "card_count": card_count,
+        "frequency_rank": frequency.rank_for(db, term.headword, term.reading),
         "trap": homograph_trap(term.headword),
     }
 
@@ -104,8 +106,20 @@ def search_terms(
     source_id: int | None = None,
     limit: int = 50,
     offset: int = 0,
+    sort: str = "recent",
 ) -> list[dict]:
-    stmt = select(Term).order_by(Term.created_at.desc()).limit(limit).offset(offset)
+    stmt = select(Term).limit(limit).offset(offset)
+    if sort == "frequency":
+        # The most common word first; words without any rank come last, not first.
+        rank = (
+            select(func.min(TermFrequency.rank))
+            .where(TermFrequency.headword == Term.headword)
+            .correlate(Term)
+            .scalar_subquery()
+        )
+        stmt = stmt.order_by(rank.is_(None), rank.asc(), Term.created_at.desc())
+    else:
+        stmt = stmt.order_by(Term.created_at.desc())
     if q:
         like = f"%{q}%"
         stmt = stmt.where((Term.headword.like(like)) | (Term.reading.like(like)))
