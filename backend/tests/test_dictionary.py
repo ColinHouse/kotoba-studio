@@ -43,6 +43,12 @@ def test_expression_grouping_requires_matching_reading(db, jmdict_fixture):
     assert "今日は" not in texts
 
 
+def test_lookup_reports_jmdict_as_the_source(client, jmdict_fixture):
+    entry = client.get("/api/dict/lookup", params={"q": "大丈夫"}).json()["entries"][0]
+    assert entry["dict_title"] == "JMdict (eng)"
+    assert entry["dict_kind"] == "jmdict"
+
+
 def test_dict_api(client, jmdict_fixture):
     r = client.get("/api/dict/lookup", params={"q": "大丈夫"})
     assert r.status_code == 200
