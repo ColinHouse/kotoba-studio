@@ -20,6 +20,8 @@ class LineCreate(BaseModel):
     audio_path: str | None = None
     position: dict | None = None
     speaker: str | None = None
+    start_ms: int | None = None
+    end_ms: int | None = None
 
 
 class LineUpdate(BaseModel):
@@ -40,6 +42,8 @@ class LineDTO(BaseModel):
     audio_path: str | None
     position: dict | None
     speaker: str | None
+    start_ms: int | None
+    end_ms: int | None
     translation_zh: str | None
     status: str
     captured_at: datetime
@@ -60,6 +64,8 @@ class LineDTO(BaseModel):
             audio_path=line.audio_path,
             position=loads(line.position_json),
             speaker=line.speaker,
+            start_ms=line.start_ms,
+            end_ms=line.end_ms,
             translation_zh=line.translation_zh,
             status=line.status,
             captured_at=line.captured_at,
