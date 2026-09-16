@@ -13,6 +13,8 @@ from kotoba.models import Setting
 DEFAULTS: dict[str, Any] = {
     "review_owner_default": None,  # None → auto (mobile if a phone is registered, else desktop)
     "desired_retention": 0.9,
+    "fsrs_parameters": None,  # personal parameters from the optimizer, None → library defaults
+    "fsrs_parameters_previous": None,  # one-click restore of the pre-optimization values
     "ai_provider": "deepseek",
     "ai_base_url": "https://api.deepseek.com",
     "ai_model": "deepseek-flash",

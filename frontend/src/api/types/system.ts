@@ -12,6 +12,8 @@ export interface Device {
 export interface Settings {
   review_owner_default: Owner | null
   desired_retention: number
+  fsrs_parameters: number[] | null
+  fsrs_parameters_previous: number[] | null
   ai_provider: string
   ai_base_url: string
   ai_model: string
