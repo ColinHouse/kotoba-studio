@@ -39,8 +39,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             yield
         finally:
-            app.state.clipboard_watcher.stop()
             await app.state.hook_manager.shutdown()
+            app.state.clipboard_watcher.stop()
             app.state.db.dispose()
 
     app = FastAPI(title="Kotoba Studio", version=__version__, lifespan=lifespan)
