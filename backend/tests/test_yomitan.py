@@ -79,6 +79,7 @@ def test_import_keeps_author_and_attribution(client):
     )
     assert entry["author"] == "tester"
     assert entry["attribution"] == "CC BY-SA"
+    assert entry["kind"] == "yomitan"
 
 
 def test_import_without_attribution_leaves_it_empty(client):

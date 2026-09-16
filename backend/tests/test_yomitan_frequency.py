@@ -51,6 +51,30 @@ def test_import_reads_all_frequency_shapes_and_skips_the_rest(client):
         d for d in client.get("/api/dict/status").json()["dictionaries"] if d["title"] == "频率表"
     )
     assert entry["attribution"] == "CC BY-SA 4.0"
+    assert entry["kind"] == "yomitan-freq"
+
+
+def test_frequency_and_terms_with_the_same_title_coexist(client, db):
+    terms_zip = io.BytesIO()
+    with zipfile.ZipFile(terms_zip, "w") as zf:
+        zf.writestr("index.json", json.dumps({"title": "同名", "format": 3}))
+        zf.writestr(
+            "term_bank_1.json",
+            json.dumps([["水", "みず", "n", "", 0, ["water"], 1, []]]),
+        )
+    upload(client, terms_zip.getvalue())
+    upload(client, make_zip("同名", [["水", "freq", 42]]))
+
+    kinds = sorted(
+        d["kind"]
+        for d in client.get("/api/dict/status").json()["dictionaries"]
+        if d["title"] == "同名"
+    )
+    assert kinds == ["yomitan", "yomitan-freq"]
+    assert rank(db, "水", "") == 42
+    assert (
+        client.get("/api/dict/lookup", params={"q": "水"}).json()["entries"][0]["headword"] == "水"
+    )
 
 
 def test_rank_prefers_the_reading_and_the_smallest_rank(client, db):

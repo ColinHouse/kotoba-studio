@@ -87,7 +87,7 @@ def import_frequencies(db: Session, archive: zipfile.ZipFile) -> tuple[Dictionar
     """Replace any same-titled Yomitan dictionary with this frequency table."""
     index = read_index(archive)
     for old in db.scalars(
-        select(Dictionary).where(Dictionary.kind == "yomitan", Dictionary.title == index.title)
+        select(Dictionary).where(Dictionary.kind == "yomitan-freq", Dictionary.title == index.title)
     ).all():
         db.execute(delete(TermFrequency).where(TermFrequency.dict_id == old.id))
         db.delete(old)
@@ -98,7 +98,7 @@ def import_frequencies(db: Session, archive: zipfile.ZipFile) -> tuple[Dictionar
         revision=index.revision,
         author=index.author,
         attribution=index.attribution,
-        kind="yomitan",
+        kind="yomitan-freq",
         entry_count=0,
     )
     db.add(dictionary)
