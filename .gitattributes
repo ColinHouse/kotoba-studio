@@ -1,0 +1,7 @@
+# One working tree, every platform. Prettier's format check and the pre-commit
+# hook are line-ending sensitive, and core.autocrlf is true by default on many
+# Windows installs, which turned every file into a format failure there.
+# Text is stored and checked out as LF everywhere; binaries are never touched.
+* text=auto eol=lf
+
+*.png binary
