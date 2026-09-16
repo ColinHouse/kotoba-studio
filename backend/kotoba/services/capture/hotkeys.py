@@ -8,6 +8,7 @@ thread keeps OCR off the keyboard hook so the next press is never delayed.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import queue
 import sys
@@ -242,10 +243,10 @@ class HotkeyListener:
 
     def _on_hotkey(self) -> None:
         """Runs on the hook thread: hand off at once, never do OCR here."""
-        try:
+        # A full queue means the previous press is still being handled, so this one
+        # is already represented and dropping it is the intended behaviour.
+        with contextlib.suppress(queue.Full):
             self._queue.put_nowait(None)
-        except queue.Full:
-            pass  # the previous press is still being handled; this one is already queued
 
     def _work(self) -> None:
         while not self._stop.is_set():

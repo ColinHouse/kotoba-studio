@@ -247,9 +247,8 @@ def test_collector_needs_a_region_and_respects_the_gate(client):
     assert exc.value.code == "no_region"
 
     _active_session(client, {"left": 0, "top": 0, "width": 120, "height": 40})
-    with gate.hold():
-        with pytest.raises(ApiError) as exc:
-            collector()
+    with gate.hold(), pytest.raises(ApiError) as exc:
+        collector()
     assert exc.value.code == "capture_paused"
 
 

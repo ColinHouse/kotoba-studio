@@ -19,6 +19,7 @@ import os
 import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -431,7 +432,7 @@ def _enumerate_raw() -> list[dict]:
             buf = ctypes.create_unicode_buffer(1024)
             size = wt.DWORD(1024)
             if kernel32.QueryFullProcessImageNameW(handle, 0, buf, ctypes.byref(size)):
-                return os.path.basename(buf.value)
+                return Path(buf.value).name
             return ""
         finally:
             kernel32.CloseHandle(handle)
