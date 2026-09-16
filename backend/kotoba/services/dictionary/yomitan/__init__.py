@@ -10,6 +10,15 @@ from kotoba.services.dictionary.yomitan.archive import (
     read_index,
     term_bank_names,
 )
+from kotoba.services.dictionary.yomitan.frequency import rank_for
+from kotoba.services.dictionary.yomitan.importer import import_package
 from kotoba.services.dictionary.yomitan.terms import import_archive
 
-__all__ = ["YomitanIndex", "import_archive", "read_index", "term_bank_names"]
+__all__ = [
+    "YomitanIndex",
+    "import_archive",
+    "import_package",
+    "rank_for",
+    "read_index",
+    "term_bank_names",
+]
