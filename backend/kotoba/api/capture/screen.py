@@ -11,6 +11,7 @@ from kotoba.core.errors import ApiError
 from kotoba.services import settings_store
 from kotoba.services.capture import collect as collect_service
 from kotoba.services.capture import screen
+from kotoba.services.capture import windows as windows_service
 from kotoba.services.capture.watcher import RegionWatcher
 from kotoba.services.jp.normalize import normalize_ocr
 from kotoba.services.ocr import registry
@@ -77,6 +78,14 @@ def list_displays(request: Request) -> list[dict]:
 @router.get("/providers")
 def list_providers() -> list[dict]:
     return registry.list_providers()
+
+
+@router.get("/windows")
+def list_game_windows() -> list[dict]:
+    """Visible top-level windows a game could be running in, biggest first."""
+    if not windows_service.available():
+        return []
+    return [w.to_dict() for w in windows_service.list_windows()]
 
 
 @router.post("/screenshot")
@@ -171,11 +180,21 @@ def watch_start(body: WatchIn, request: Request, db: Session = Depends(get_db)) 
     watcher = getattr(request.app.state, "region_watcher", None)
     if watcher is not None and watcher.running:
         return _watcher_status(watcher)
+
+    def region_provider() -> screen.Region | None:
+        """Re-resolve every cycle: the game window may have moved or resized."""
+        session = request.app.state.db.session()
+        try:
+            return windows_service.resolve_region(session, body.source_id)  # type: ignore[arg-type]
+        finally:
+            session.close()
+
     watcher = RegionWatcher(
         body.region.to_region(),
         lambda: request.app.state.db.session(),
         _provider(request, db, None),
         grabber=_grabber(request),
+        region_provider=region_provider if body.source_id is not None else None,
         source_id=body.source_id,
     )
     request.app.state.region_watcher = watcher
