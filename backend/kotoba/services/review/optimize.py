@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from kotoba.core.errors import ApiError
 from kotoba.models import ReviewLog
 from kotoba.services import settings_store
+from kotoba.services.capture.gate import gate
 
 MIN_REVIEWS = 400
 
@@ -81,6 +82,7 @@ class OptimizeJob:
     def start(self, session_factory: Callable[[], Session]) -> bool:
         if self._thread and self._thread.is_alive():
             return False
+        gate.begin_long_write("fsrs-optimize")
 
         def run() -> None:
             db = session_factory()
@@ -106,9 +108,16 @@ class OptimizeJob:
                 self.state, self.message = "error", str(exc)
             finally:
                 db.close()
+                gate.end_long_write("fsrs-optimize")
 
-        self._thread = threading.Thread(target=run, name="fsrs-optimize", daemon=True)
-        self._thread.start()
+        # If the thread never starts, the claim must not outlive this call: a leaked
+        # claim blocks every future restore until the application is restarted.
+        try:
+            self._thread = threading.Thread(target=run, name="fsrs-optimize", daemon=True)
+            self._thread.start()
+        except BaseException:
+            gate.end_long_write("fsrs-optimize")
+            raise
         return True
 
 

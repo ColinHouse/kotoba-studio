@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from kotoba.core.config import Paths
 from kotoba.models import TermPitch
+from kotoba.services.capture.gate import gate
 from kotoba.services.dictionary.yomitan.archive import meta_bank_names
 from kotoba.services.jp import mora
 
@@ -199,6 +200,7 @@ class PitchInstallJob:
     ) -> bool:
         if self._thread and self._thread.is_alive():
             return False
+        gate.begin_long_write("pitch-install")
 
         def run() -> None:
             db = session_factory()
@@ -213,9 +215,16 @@ class PitchInstallJob:
                 self.state, self.message = "error", str(exc)
             finally:
                 db.close()
+                gate.end_long_write("pitch-install")
 
-        self._thread = threading.Thread(target=run, name="pitch-install", daemon=True)
-        self._thread.start()
+        # If the thread never starts, the claim must not outlive this call: a leaked
+        # claim blocks every future restore until the application is restarted.
+        try:
+            self._thread = threading.Thread(target=run, name="pitch-install", daemon=True)
+            self._thread.start()
+        except BaseException:
+            gate.end_long_write("pitch-install")
+            raise
         return True
 
 

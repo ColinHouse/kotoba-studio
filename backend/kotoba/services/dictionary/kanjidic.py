@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 
 from kotoba.core.config import Paths
 from kotoba.models import Kanji
+from kotoba.services.capture.gate import gate
 
 DOWNLOAD_URL = "https://www.edrdg.org/pub/Nihongo/kanjidic2.xml.gz"
 BATCH = 2000
@@ -131,6 +132,7 @@ class InstallJob:
     ) -> bool:
         if self._thread and self._thread.is_alive():
             return False
+        gate.begin_long_write("kanjidic-install")
 
         def run() -> None:
             db = session_factory()
@@ -149,9 +151,16 @@ class InstallJob:
                 self.state, self.message = "error", str(exc)
             finally:
                 db.close()
+                gate.end_long_write("kanjidic-install")
 
-        self._thread = threading.Thread(target=run, name="kanjidic-install", daemon=True)
-        self._thread.start()
+        # If the thread never starts, the claim must not outlive this call: a leaked
+        # claim blocks every future restore until the application is restarted.
+        try:
+            self._thread = threading.Thread(target=run, name="kanjidic-install", daemon=True)
+            self._thread.start()
+        except BaseException:
+            gate.end_long_write("kanjidic-install")
+            raise
         return True
 
 
