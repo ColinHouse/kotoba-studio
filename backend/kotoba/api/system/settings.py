@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends
+from fsrs import Scheduler
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -38,6 +39,11 @@ def put_settings(body: dict[str, Any], db: Session = Depends(get_db)) -> dict[st
         "any",
     ):
         raise ApiError("invalid_value", "review_owner_default must be desktop/mobile/any/null")
+    if body.get("fsrs_parameters") is not None:
+        try:
+            Scheduler(parameters=[float(value) for value in body["fsrs_parameters"]])
+        except (TypeError, ValueError) as exc:
+            raise ApiError("invalid_value", f"fsrs_parameters 无效：{exc}") from exc
     for key, value in body.items():
         settings_store.set_value(db, key, value)
     db.commit()

@@ -31,6 +31,7 @@ dependencies = [
 macos = ["pyobjc-framework-Vision>=11; sys_platform == 'darwin'", "pyobjc-framework-Quartz>=11; sys_platform == 'darwin'"]
 windows = ["winocr; sys_platform == 'win32'"]
 ocr-onnx = ["rapidocr>=3"]
+optimizer = ["fsrs[optimizer]>=6.3"]
 dev = ["pytest>=8", "ruff>=0.12", "pytest-freezer>=0.4"]
 
 [project.scripts]

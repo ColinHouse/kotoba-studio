@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -15,7 +15,7 @@ from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.models import Card, Device, utcnow
 from kotoba.services import learning
-from kotoba.services.review import scheduler
+from kotoba.services.review import optimize, scheduler
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -101,6 +101,25 @@ def submit_review(body: ReviewIn, db: Session = Depends(get_db)) -> dict:
         "card": learning.card_to_dict(card),
         "next_due": card.due.isoformat() if card.due else None,
     }
+
+
+@router.post("/optimize")
+def start_optimize(request: Request, db: Session = Depends(get_db)) -> dict:
+    count = optimize.count_scheduled(db)
+    if count < optimize.MIN_REVIEWS:
+        missing = optimize.MIN_REVIEWS - count
+        raise ApiError(
+            "not_enough_reviews",
+            f"复习记录不足：需要 {optimize.MIN_REVIEWS} 条已调度的复习，还差 {missing} 条",
+        )
+    optimize.load_optimizer()  # readable 503 when the [optimizer] extra is missing
+    started = optimize.optimize_job.start(request.app.state.db.session)
+    return {"started": started, **optimize.optimize_job.snapshot()}
+
+
+@router.get("/optimize")
+def optimize_status() -> dict:
+    return optimize.optimize_job.snapshot()
 
 
 @router.get("/forecast")

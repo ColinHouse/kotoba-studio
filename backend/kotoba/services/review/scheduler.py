@@ -18,6 +18,9 @@ MODES = ("scheduled", "session_quiz")
 
 def scheduler(db: Session) -> Scheduler:
     retention = float(settings_store.get(db, "desired_retention") or 0.9)
+    parameters = settings_store.get(db, "fsrs_parameters")
+    if parameters:
+        return Scheduler(parameters=parameters, desired_retention=retention)
     return Scheduler(desired_retention=retention)
 
 
