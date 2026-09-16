@@ -1,5 +1,66 @@
-# Kotoba Studio
+# Kotoba Studio · ことば Studio
 
-会记住语境的日语伴读工具：玩 Galgame / 看动画时低打断地收藏台词（原句 + 截图 + 原声），自动整理成词卡，用 FSRS 在电脑或手机上复习。Anki 是可选出口。
+**会记住语境的日语伴读工具。** 玩 Galgame / 看动画时，用很低的打断成本收藏台词（原句 + 截图 + 原声），自动整理成词卡，用 FSRS 在电脑或手机上复习。独立可用，Anki 只是可选出口。第一版面向中文母语的日语学习者。
 
-> Work in progress. See `docs/` for the product analysis, design spec and roadmap.
+> A local-first companion for learning Japanese from visual novels and anime: capture a line with its screenshot, confirm the words you met, and review them with FSRS on desktop or phone. Chinese-first UI; Anki export optional.
+
+## 它解决什么
+
+- **看得懂汉字却读不出**：含汉字的词默认生成"看汉字写读音"卡。
+- **中日同形词误导**：勉強・大丈夫・手紙・怪我… 命中时卡片自动提醒。
+- **口语缩约看不懂**：ちゃう ← てしまう、なきゃ ← なければ 等按词边界识别并标注。
+- **收藏了却不复习**：会后三分钟短测 + FSRS 到期复习 + 手机扫码即用的 PWA。
+- **数据不想被锁在别人的服务里**：SQLite + 媒体目录，一键备份/恢复，JSON / .apkg / AnkiConnect 导出。
+
+## 快速开始
+
+```bash
+# 后端（Python 3.12，uv）
+cd server
+uv sync --extra macos --extra dev      # Windows: --extra windows；跨平台 OCR：--extra ocr-onnx
+uv run pytest                          # 52 tests
+
+# 前端（Node 22）
+cd ../web
+npm ci && npm run build                # 产物在 web/dist，由后端托管
+
+# 运行（单端口；--host 0.0.0.0 后手机可扫码访问）
+cd ../server
+uv run python -m kotoba serve --open
+```
+
+开发时：`scripts/dev.sh` 同时启动后端（自动重载）与 Vite（端口 5174，代理 `/api` `/media` `/ws`）。
+
+首次使用：设置页安装 JMdict（约 25 MB）→ 作品页添加作品 → 开始会话 → 采集页截取预览、框选对话框 → ⌘/Ctrl+Enter 收藏 → 收件箱确认建卡 → 复习。
+
+## 架构
+
+```
+server/  FastAPI · SQLAlchemy 2 + Alembic · py-fsrs · fugashi/unidic · mss
+         OCR: Apple Vision | Windows OCR | RapidOCR | 手动    Hook: /ws/hook（WebSocket）
+         AI: OpenAI 兼容接口（DeepSeek 默认，Key 在系统钥匙串）  导出: AnkiConnect / .apkg / JSON
+web/     Vue 3 + TypeScript + Vite + Tailwind 4 + PWA（桌面侧栏 / 手机底部 Tab）
+docs/    产品分析、设计规格、ADR、路线图
+```
+
+核心数据模型：作品 → 会话 → 句子（截图/音频）→ 语境（某句里的某个词）→ 词条/义项 → 卡片（FSRS 状态 + 设备归属）→ 复习记录（正式 / 短测分开）。详见 [设计规格](docs/superpowers/specs/2026-09-15-kotoba-studio-design.md)。
+
+## 文档
+
+- [产品分析：竞品、定位与优势](docs/product-analysis.md)
+- [设计规格](docs/superpowers/specs/2026-09-15-kotoba-studio-design.md) · [M0 实施计划](docs/superpowers/plans/2026-09-15-m0-skeleton.md)
+- [ADR 0001 技术栈](docs/adr/0001-tech-stack.md) · [路线图](docs/roadmap.md)
+
+## 平台说明
+
+- macOS：截屏需要在「系统设置 → 隐私与安全性 → 屏幕录制」中授权启动服务器的终端或应用；未授权时只会截到壁纸。
+- Windows：内置 OCR 需要日语语言包（`Add-WindowsCapability -Online -Name Language.OCR~~~ja-JP~0.0.1.0`），或安装 `--extra ocr-onnx` 使用 RapidOCR。Windows 路径尚未在真机验证。
+- Hook 工具（Textractor / Agent / LunaTranslator）可把文本发送到 `ws://<host>:8720/ws/hook`（纯文本或 `{"text": "..."}`）。
+
+## 来源
+
+本项目合并并重写了作者早先的两个实验仓库：`vocab_test`（PySide6 词汇测试）与 `anki_mpv`（Electron 字幕学习 + AnkiConnect）。它们的 AnkiConnect 逻辑、口语缩约规则、答案 diff 高亮与错误加权抽题思想被保留下来。
+
+## 许可证
+
+MIT

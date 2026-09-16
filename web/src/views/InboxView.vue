@@ -182,7 +182,7 @@ const quizSession = computed(() => (sessionId.value === 'all' ? null : sessionId
       </section>
 
       <section class="space-y-3">
-        <div v-if="!selected" class="card p-6 text-sm text-ink-2">选择左侧的一句台词开始整理。</div>
+        <div v-if="!selected" class="card p-6 text-sm text-ink-2">选择一句台词开始整理。</div>
         <template v-else>
           <div class="card p-4">
             <img v-if="selected.screenshot_path" :src="mediaUrl(selected.screenshot_path)" class="mb-3 max-h-56 rounded-lg border border-line" alt="截图" />
