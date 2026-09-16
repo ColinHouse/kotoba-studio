@@ -21,6 +21,8 @@ DEFAULTS: dict[str, Any] = {
     "ocr_provider": "auto",
     "active_session_id": None,
     "ui_language": "zh-CN",
+    "capture_hotkey": "Ctrl+Shift+S",
+    "capture_hotkey_enabled": False,
 }
 
 

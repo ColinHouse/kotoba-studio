@@ -7,7 +7,17 @@ separately because they live at the root (``/ws/...``).
 from fastapi import APIRouter
 
 from kotoba.api import meta
-from kotoba.api.capture import clipboard, hooks, lines, screen, sessions, sources, subtitles, ws
+from kotoba.api.capture import (
+    clipboard,
+    hooks,
+    hotkeys,
+    lines,
+    screen,
+    sessions,
+    sources,
+    subtitles,
+    ws,
+)
 from kotoba.api.study import cards, encounters, quiz, reviews, terms
 from kotoba.api.system import ai, backups, devices, dictionary, export, settings
 
@@ -19,6 +29,7 @@ API_MODULES = (
     screen,
     clipboard,
     hooks,
+    hotkeys,
     subtitles,
     dictionary,
     terms,

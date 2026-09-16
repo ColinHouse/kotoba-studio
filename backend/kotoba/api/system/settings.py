@@ -13,6 +13,7 @@ from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.services import settings_store
 from kotoba.services.ai import keys
+from kotoba.services.capture import hotkeys
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -44,6 +45,13 @@ def put_settings(body: dict[str, Any], db: Session = Depends(get_db)) -> dict[st
             Scheduler(parameters=[float(value) for value in body["fsrs_parameters"]])
         except (TypeError, ValueError) as exc:
             raise ApiError("invalid_value", f"fsrs_parameters 无效：{exc}") from exc
+    if "capture_hotkey" in body:
+        hotkey = str(body["capture_hotkey"]).strip()
+        try:
+            hotkeys.normalize_hotkey(hotkey)
+        except ValueError as exc:
+            raise ApiError("invalid_value", f"快捷键无效：{exc}") from exc
+        body["capture_hotkey"] = hotkey
     for key, value in body.items():
         settings_store.set_value(db, key, value)
     db.commit()

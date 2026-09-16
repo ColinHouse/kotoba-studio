@@ -18,8 +18,11 @@ from kotoba.api import build_api_router, build_websocket_router
 from kotoba.core.config import Settings, get_settings, paths
 from kotoba.core.db import Database, make_engine, upgrade
 from kotoba.core.errors import install_error_handlers
+from kotoba.services import settings_store
 from kotoba.services.capture.clipboard import ClipboardWatcher
 from kotoba.services.capture.hook_client import HookManager
+from kotoba.services.capture.hotkeys import DEFAULT_HOTKEY, HotkeyListener, make_collector
+from kotoba.services.ocr import registry
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -38,9 +41,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.clipboard_watcher = ClipboardWatcher(lambda: app.state.db.session())
         app.state.hook_manager = HookManager(lambda: app.state.db.session())
         app.state.region_watcher = None
+        app.state.hotkey_listener = HotkeyListener(
+            make_collector(
+                lambda: app.state.db.session(),
+                resolved_paths,
+                lambda db: registry.get_provider(settings_store.get(db, "ocr_provider")),
+                lambda: getattr(app.state, "region_watcher", None),
+            )
+        )
+        db = app.state.db.session()
+        try:
+            if settings_store.get(db, "capture_hotkey_enabled"):
+                app.state.hotkey_listener.start(
+                    settings_store.get(db, "capture_hotkey") or DEFAULT_HOTKEY
+                )
+        finally:
+            db.close()
         try:
             yield
         finally:
+            app.state.hotkey_listener.stop()
             watcher = app.state.region_watcher
             if watcher is not None:
                 watcher.stop()

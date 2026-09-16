@@ -20,6 +20,8 @@ export interface Settings {
   ocr_provider: string
   active_session_id: number | null
   ui_language: string
+  capture_hotkey: string
+  capture_hotkey_enabled: boolean
 }
 
 export interface ConnectInfo {

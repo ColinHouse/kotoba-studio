@@ -18,6 +18,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - 可选的 AI 语境解释，兼容 OpenAI 接口，默认 DeepSeek；密钥存系统钥匙串。
 - 导出到 Anki（AnkiConnect 或 .apkg）、JSON 导出、备份与恢复。
 - 手机端 PWA：扫码连接，浏览与复习。
+- 全局快捷键：默认 `Ctrl+Shift+S`，在游戏里直接收藏当前句（设置页可改键并查看监听状态）；
+  未设置对话区域、macOS 缺少「辅助功能」授权等失败都会说明原因，不会静默失效。
 - Classical 设计语言：纸墨金三层、墨色编码学习状态、中日双字体、明暗两套主题。
 
 ### Notes
