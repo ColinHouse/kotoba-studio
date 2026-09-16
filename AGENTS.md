@@ -137,3 +137,71 @@ a constraint is not.
   images instead. The Apple Vision test is skipped off macOS.
 - The Windows OCR path has never run on real hardware. Do not claim it works; say it is untested.
 - Anything involving a real game window. Say what you verified and what you did not.
+
+## 7. Working the issue queue unattended
+
+This section applies when a human has told you to work the queue, and **only then**. It is the
+one standing exception to §4's "never take an action visible outside this repository": inside
+the loop below, branching, pushing and opening a pull request are pre-authorised. Nothing else
+in §4 is relaxed.
+
+### The loop
+
+```bash
+git switch main && git pull --ff-only
+
+# Is a queue PR still open? If this prints anything, stop — see below.
+gh pr list --state open --json headRefName --jq '.[].headRefName | select(startswith("agent/"))'
+
+# Otherwise take the lowest-numbered ready issue.
+gh issue list --state open --label agent-ready --json number,title --jq 'sort_by(.number)[0]'
+
+git switch -c agent/<type>-<slug>   # agent/feat-subtitle-parser, agent/fix-dedup-growth
+#   ... implement only what the issue's acceptance criteria ask for ...
+make check
+git commit                          # Conventional Commits, Assisted-by: trailer
+git push -u origin agent/<type>-<slug>
+gh pr create --fill --body "...Closes #<n>..."
+```
+
+Then **stop and report**. Do not start the next issue.
+
+**Branches from this loop are always prefixed `agent/`.** That prefix is not decoration: it is
+how you tell your own unreviewed work from everyone else's, and how a human reviewing the branch
+list can see at a glance what came from an unattended run. Do not use `--author` to find your
+PRs — you and the human share one GitHub account, so that matches their work too.
+
+### Rules that hold throughout
+
+1. **One open `agent/` pull request at a time.** If one is still unmerged, the queue is blocked
+   on a human, not on you. Do not open a second one, and do not branch off an unreviewed branch —
+   always branch from `main`.
+2. **Never merge anything** — not your PR, not anyone's. Never approve, never enable auto-merge,
+   never push to `main`. A human merges; that review is the whole point of the loop.
+3. **Only issues labelled `agent-ready`.** That label means a human decided the description is
+   complete enough to implement without asking. An issue without it is not yours to take, no
+   matter how easy it looks. Lowest open number first, so dependencies land in order.
+4. **One issue, one branch, one PR.** If you discover a second problem, open an issue for it
+   (that much is allowed) and leave it alone.
+5. **The issue's "Out of scope" list is binding.** It is there because the work was deliberately
+   split to keep each PR reviewable.
+6. **Never edit or close an issue you did not finish**, and never remove a label a human set.
+   `Closes #<n>` in the PR body is how an issue gets closed — by the merge, not by you.
+
+### The pull request body must say
+
+- what changed and why, in one short paragraph;
+- how you verified it — the actual command and its result, not "tests pass";
+- **what you could not verify** (§6 lists the usual suspects: real screen OCR, Windows, a real
+  game window). An honest "untested on Windows" is worth more than a confident guess;
+- `Closes #<n>`.
+
+### Stop, report, and leave the branch for a human when
+
+- the acceptance criteria cannot be met without breaking an invariant in §5;
+- `make check` fails for a reason your change did not introduce;
+- the task needs hardware, an OS permission or a credential you do not have;
+- you have tried the same failing check three times. Three is enough to know you are guessing.
+
+Stopping with "here is the branch, here is what blocks me" is a success. A green PR that quietly
+skipped half the acceptance criteria is not.
