@@ -34,6 +34,7 @@ export interface ConnectInfo {
 
 export interface DictStatus {
   installed: boolean
+  has_pitch: boolean
   has_frequencies: boolean
   dictionaries: {
     id: number
@@ -46,6 +47,7 @@ export interface DictStatus {
     imported_at: string
   }[]
   install: { state: string; message: string; done: number; total: number }
+  pitch: { state: string; message: string; done: number; total: number }
 }
 
 export interface Backup {
