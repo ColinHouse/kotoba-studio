@@ -12,7 +12,9 @@ const BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
 
 async function request<T>(method: string, path: string, body?: unknown, raw = false): Promise<T> {
   const init: RequestInit = { method, headers: {} }
-  if (body !== undefined) {
+  if (body instanceof FormData) {
+    init.body = body
+  } else if (body !== undefined) {
     init.headers = { 'Content-Type': 'application/json' }
     init.body = JSON.stringify(body)
   }
