@@ -58,9 +58,15 @@ Apple Vision / Windows OCR / RapidOCR · Vue 3 + Vite + Tailwind 4 + PWA。
 
 核心数据模型：作品 → 会话 → 句子（截图/音频）→ 语境（某句里的某个词）→ 词条/义项 → 卡片（FSRS 状态 + 设备归属）→ 复习记录（正式 / 短测分开）。详见 [设计规格](docs/superpowers/specs/2026-09-15-kotoba-studio-design.md)。
 
+## 参与
+
+欢迎参与，也**明确欢迎用 AI 工具写的贡献**——这个项目本身就是这么开发的。
+给 AI 工具看的约定在 [AGENTS.md](AGENTS.md)，给人看的在 [CONTRIBUTING.md](CONTRIBUTING.md)。
+最需要帮助的是 Windows 实机验证、日语分词的错例，以及中日同形词表的扩充。
+
 ## 文档
 
-- [产品分析：竞品、定位与优势](docs/product-analysis.md)
+- [UI 设计说明](docs/ui-design-brief.md)
 - [设计规格](docs/superpowers/specs/2026-09-15-kotoba-studio-design.md) · [M0 实施计划](docs/superpowers/plans/2026-09-15-m0-skeleton.md)
 - [ADR 0001 技术栈](docs/adr/0001-tech-stack.md) · [路线图](docs/roadmap.md)
 

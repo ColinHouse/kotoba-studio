@@ -9,8 +9,8 @@ build/
 
 # Node
 node_modules/
-web/dist/
-web/dev-dist/
+frontend/dist/
+frontend/dev-dist/
 *.tsbuildinfo
 
 # App data (never commit user data, media, dictionaries or backups)
@@ -20,6 +20,9 @@ web/dev-dist/
 *.db-shm
 *.apkg
 *.zip
+
+# Competitive research: kept locally, deliberately not published
+docs/product-analysis.md
 
 # OS / editors
 .DS_Store
