@@ -90,7 +90,7 @@ const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.co
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-[calc(100dvh-140px)] max-w-[760px] flex-col md:min-h-0">
+  <div class="flex min-h-[calc(100dvh-160px)] flex-col md:min-h-0">
     <header class="flex items-baseline justify-between gap-3">
       <h1 class="page-title text-[27px] md:text-[32px]">复习</h1>
       <span class="num text-[12px] text-ink-50 md:text-[13px]">
