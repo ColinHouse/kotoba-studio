@@ -162,10 +162,23 @@ def _japanese_field(notes: list[list[str]]) -> int | None:
 
 
 def _find_term(db: Session, headword: str, reading: str) -> Term | None:
+    """Match on the reading when the import supplies one.
+
+    A different reading is a different word: 辛い/からい is "spicy" and 辛い/つらい is
+    "painful". Falling back to any row with the same headword would declare the wrong
+    homograph known, and the user would never be shown the one they do not know. Only a
+    row whose reading is unrecorded is a safe match for a reading we were given.
+    """
     if reading:
         term = db.scalar(select(Term).where(Term.headword == headword, Term.reading == reading))
         if term is not None:
             return term
+        return db.scalar(
+            select(Term)
+            .where(Term.headword == headword, Term.reading == "")
+            .order_by(Term.id)
+            .limit(1)
+        )
     return db.scalar(select(Term).where(Term.headword == headword).order_by(Term.id).limit(1))
 
 
