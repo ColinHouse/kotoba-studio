@@ -177,19 +177,29 @@ export interface Card {
   reading: string | null
 }
 
+export interface CardPitch {
+  reading: string
+  accent: number
+  pattern: string
+  label: string
+}
+
 export interface CardFace extends Card {
   term: Term
   encounter: Encounter | null
   other_encounters: number
   cloze_text: string | null
+  pitches: CardPitch[]
   preview: Record<'again' | 'hard' | 'good' | 'easy', string>
 }
+
+export type QuizKind = CardType | 'pitch'
 
 export interface QuizItem {
   card_id: number
   term_id: number
   encounter_id: number
-  kind: CardType
+  kind: QuizKind
   prompt: string
   answer: string | null
   accept: string[]
@@ -198,6 +208,7 @@ export interface QuizItem {
   surface: string
   hint: string | null
   audio_path: string | null
+  choices: string[]
 }
 
 export interface SessionSummary {
