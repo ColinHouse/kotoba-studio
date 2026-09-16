@@ -22,6 +22,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - 手机端 PWA：扫码连接，浏览与复习。
 - 全局快捷键：默认 `Ctrl+Shift+S`，在游戏里直接收藏当前句（设置页可改键并查看监听状态）；
   未设置对话区域、macOS 缺少「辅助功能」授权等失败都会说明原因，不会静默失效。
+- 采集：导入 mokuro 生成的 `.mokuro` 文件，把漫画按页收进一部作品；首版只收文字，
+  卡片暂时没有漫画页截图。
 - Windows 分发：`make package-windows` 构建 PyInstaller onedir 与 Inno Setup 安装包（含前端与分词词典），
   构建后自动冒烟（内置 OCR 实拍识别、分词、SPA）；签名脚本与证书说明见 `docs/CODE_SIGNING.md`（仓库暂无证书，签名未实测）。
 - Classical 设计语言：纸墨金三层、墨色编码学习状态、中日双字体、明暗两套主题。
