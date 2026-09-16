@@ -19,7 +19,7 @@ from kotoba.api.capture import (
     subtitles,
     ws,
 )
-from kotoba.api.study import cards, encounters, quiz, reviews, terms
+from kotoba.api.study import cards, encounters, kanji, quiz, reviews, terms
 from kotoba.api.system import ai, backups, devices, dictionary, export, settings
 
 API_MODULES = (
@@ -37,6 +37,7 @@ API_MODULES = (
     terms,
     encounters,
     cards,
+    kanji,
     devices,
     reviews,
     quiz,
