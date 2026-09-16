@@ -21,6 +21,23 @@ const busy = ref(false)
 const coverageId = ref<number | null>(null)
 const coverage = ref<Coverage | null>(null)
 const coverageBusy = ref(false)
+const prestudyLimit = ref(100)
+const prestudyBusy = ref(false)
+
+async function runPrestudy(s: Source) {
+  prestudyBusy.value = true
+  try {
+    const r = await api.post<{ created: number; skipped: number }>(
+      `/api/sources/${s.id}/prestudy`,
+      { limit: prestudyLimit.value },
+    )
+    app.toast(`已加入 ${r.created} 张，跳过 ${r.skipped} 张`, 'success')
+  } catch (e) {
+    app.fail(e)
+  } finally {
+    prestudyBusy.value = false
+  }
+}
 
 async function showCoverage(s: Source) {
   if (coverageId.value === s.id) {
@@ -180,6 +197,22 @@ async function remove(s: Source) {
               </RouterLink>
             </div>
             <p v-else class="mt-3 mb-0 text-[13px] text-ink-35">这个作品暂时没有未学的词。</p>
+
+            <div v-if="coverage.unknown_top.length" class="mt-4 flex flex-wrap items-center gap-3">
+              <label class="field-label m-0" :for="`prestudy-limit-${s.id}`">预习卡数量</label>
+              <input
+                :id="`prestudy-limit-${s.id}`"
+                v-model.number="prestudyLimit"
+                type="number"
+                min="1"
+                max="500"
+                class="input w-24"
+              />
+              <button class="btn btn-primary" :disabled="prestudyBusy" @click="runPrestudy(s)">
+                {{ prestudyBusy ? '建卡中…' : '把这些做成预习卡' }}
+              </button>
+            </div>
+
             <p v-if="!coverage.has_frequency" class="mt-3 mb-0 text-[11px] text-ink-35">
               未导入频率词典，生词按出现次数排序；导入后按常见度排序。
             </p>
