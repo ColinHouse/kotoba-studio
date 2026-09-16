@@ -75,6 +75,16 @@ api/          客户端与类型。所有网络请求都从这里走。
 - 纯函数（`utils/`）必须有测试，这是目前 vitest 覆盖的部分。
 - 组件测试目前没有铺开；加新的纯逻辑时优先把它放进 `utils/` 或 composable 里，这样能测。
 
+## 依赖升级
+
+Dependabot 每月按生态分组提 PR。**主版本升级不进分组**，会单独开 PR，必须手动验证——
+分组规则只覆盖 minor 和 patch。
+
+验证的方法是真的跑一遍，不是看 peer 范围：`@vue/tsconfig` 与 `vue-tsc` 的 peer 范围都允许
+TypeScript 7，但 `vue-tsc` 依赖 TS 7 已经不再导出的 `typescript/lib/tsc`，`typescript-eslint`
+更是直接拒绝在 TS 7.0 上运行。已知不能升的依赖写在 `.github/dependabot.yml` 的 `ignore` 里，
+并注明原因和重新评估的条件。
+
 ## 数据库变更
 
 ```bash

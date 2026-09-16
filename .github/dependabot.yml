@@ -25,6 +25,18 @@ updates:
         update-types: [minor, patch]
     commit-message:
       prefix: build
+    ignore:
+      # TypeScript 7 is the Go rewrite and drops the JS entry points the Vue
+      # toolchain still loads. Two independent blockers, both upstream:
+      #   - vue-tsc requires typescript/lib/tsc, which TS 7 no longer exports,
+      #     so `npm run typecheck` and `npm run build` crash outright;
+      #   - typescript-eslint refuses to run on TS 7.0 and is tracking support
+      #     for >= 7.1 in typescript-eslint/typescript-eslint#10940.
+      # Revisit when both ship support; until then a monthly PR would only fail
+      # CI. Verified locally on 2026-09-17, not assumed from the peer ranges —
+      # those already allow TS 7 and still do not work.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
