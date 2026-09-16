@@ -10,6 +10,14 @@ from kotoba.models import Source
 from kotoba.schemas.common import Kind, loads
 
 
+class WindowBinding(BaseModel):
+    """The game window a work is played in, with a dialogue box relative to its client area."""
+
+    process: str = Field(min_length=1, max_length=120)
+    title: str | None = Field(default=None, max_length=200)
+    region: dict | None = None
+
+
 class SourceCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     title_ja: str | None = None
@@ -22,6 +30,7 @@ class SourceUpdate(BaseModel):
     title_ja: str | None = None
     kind: Kind | None = None
     region: dict | None = None
+    window: WindowBinding | None = None
 
 
 class SourceDTO(BaseModel):
@@ -30,6 +39,7 @@ class SourceDTO(BaseModel):
     title_ja: str | None
     kind: str
     region: dict | None
+    window: dict | None
     created_at: datetime
     line_count: int = 0
     term_count: int = 0
@@ -45,6 +55,7 @@ class SourceDTO(BaseModel):
             title_ja=s.title_ja,
             kind=s.kind,
             region=loads(s.region_json),
+            window=loads(s.window_json),
             created_at=s.created_at,
             line_count=line_count,
             term_count=term_count,

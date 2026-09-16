@@ -41,6 +41,7 @@ class RegionWatcher:
         provider: OcrProvider,
         *,
         grabber: Callable[[Region], Grab] = grab,
+        region_provider: Callable[[], Region | None] | None = None,
         interval: float = DEFAULT_INTERVAL,
         source_id: int | None = None,
     ) -> None:
@@ -49,6 +50,7 @@ class RegionWatcher:
         self._session_factory = session_factory
         self._provider = provider
         self._grabber = grabber
+        self._region_provider = region_provider
         self._interval = interval
         self._tracker = StabilityTracker()
         self._stop = threading.Event()
@@ -89,10 +91,14 @@ class RegionWatcher:
     def _run(self) -> None:
         while not self._stop.wait(self._interval):
             try:
-                png = self._grabber(self.region).png
+                region = self._region_provider() if self._region_provider else self.region
+                if region is None:
+                    self.last_error = "找不到绑定的游戏窗口：确认游戏还在运行"
+                    continue
+                png = self._grabber(region).png
                 image = Image.open(io.BytesIO(png))
                 if self._tracker.update(dhash(image)):
-                    self._recognize(png)
+                    self._recognize(png, region)
             except ApiError as exc:
                 self.last_error = exc.message
                 log.debug("region watcher skipped a frame: %s", exc.message)
@@ -100,7 +106,7 @@ class RegionWatcher:
                 self.last_error = str(exc)
                 log.debug("region watcher failed a frame", exc_info=True)
 
-    def _recognize(self, png: bytes) -> None:
+    def _recognize(self, png: bytes, region: Region) -> None:
         result = self._provider.recognize(png)
         # Only a successful OCR clears the error: clearing it on the next quiet
         # frame would hide a failed engine from /watch/status almost at once.
@@ -122,7 +128,7 @@ class RegionWatcher:
                         text=text,
                         raw_text=result.text,
                         origin="ocr",
-                        position={"region": self.region.to_dict()},
+                        position={"region": region.to_dict()},
                     ),
                 )
             finally:

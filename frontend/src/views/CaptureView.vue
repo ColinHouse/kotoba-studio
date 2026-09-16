@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { api, mediaUrl } from '@/api/client'
-import type { Line, Region, Session, Source } from '@/api/types'
+import type { GameWindow, Line, Region, Session, Source, WindowBinding } from '@/api/types'
 import CapturedLines from '@/components/capture/CapturedLines.vue'
 import EngineCompare from '@/components/capture/EngineCompare.vue'
 import ManualPaste from '@/components/capture/ManualPaste.vue'
@@ -22,6 +22,8 @@ const cmdKey = commandKey(navigator.userAgent)
 
 const sources = ref<Source[]>([])
 const sourceId = ref<number | null>(null)
+const gameWindows = ref<GameWindow[]>([])
+const windowsBusy = ref(false)
 
 const session = computed(() => app.activeSession)
 const sessionId = computed(() => session.value?.id ?? null)
@@ -41,6 +43,67 @@ async function persistRegion(region: Region) {
 const capture = useScreenCapture({ sessionId, persistRegion, onLine: upsert })
 const compare = useOcrCompare()
 
+/** The live window behind the saved binding, so the region can follow it. */
+const boundWindow = computed(() => {
+  const bound = currentSource.value?.window
+  if (!bound) return null
+  return gameWindows.value.find((w) => w.process === bound.process) ?? null
+})
+
+async function loadWindows() {
+  windowsBusy.value = true
+  try {
+    gameWindows.value = await api.get<GameWindow[]>('/api/capture/windows')
+  } catch {
+    gameWindows.value = []
+  } finally {
+    windowsBusy.value = false
+  }
+}
+
+/** The absolute region the backend will use for this window binding. */
+function windowRegion(win: GameWindow, relative: NonNullable<WindowBinding['region']>): Region {
+  return {
+    left: win.client[0] + relative.left,
+    top: win.client[1] + relative.top,
+    width: relative.width,
+    height: relative.height,
+    display: win.display,
+  }
+}
+
+async function pickWindow(event: Event) {
+  const handle = Number((event.target as HTMLSelectElement).value)
+  const win = gameWindows.value.find((w) => w.handle === handle)
+  const source = currentSource.value
+  if (!win || !source) return
+  try {
+    const updated = await api.patch<Source>(`/api/sources/${source.id}`, {
+      window: { process: win.process, title: win.title },
+    })
+    source.window = updated.window
+    const relative = updated.window?.region
+    if (relative) {
+      capture.display.value = win.display
+      capture.region.value = windowRegion(win, relative)
+    }
+    await capture.takeShot()
+  } catch (e) {
+    app.fail(e)
+  }
+}
+
+async function clearWindow() {
+  const source = currentSource.value
+  if (!source) return
+  try {
+    const updated = await api.patch<Source>(`/api/sources/${source.id}`, { window: null })
+    source.window = updated.window
+  } catch (e) {
+    app.fail(e)
+  }
+}
+
 async function runCompare() {
   const region = capture.region.value
   if (region) await compare.run(region)
@@ -56,9 +119,18 @@ onMounted(async () => {
     sources.value = await api.get<Source[]>('/api/sources')
     await app.refreshSettings()
     await capture.init()
+    await loadWindows()
     if (session.value) {
       await loadLines()
-      capture.region.value = currentSource.value?.region ?? null
+      const bound = currentSource.value?.window
+      const win = bound ? gameWindows.value.find((w) => w.process === bound.process) : undefined
+      if (win && bound?.region) {
+        // The window may have moved since the region was saved; follow it now.
+        capture.display.value = win.display
+        capture.region.value = windowRegion(win, bound.region)
+      } else {
+        capture.region.value = currentSource.value?.region ?? null
+      }
       if (!capture.shot.value) await capture.takeShot()
     }
     sourceId.value = session.value?.source_id ?? sources.value[0]?.id ?? null
@@ -188,12 +260,35 @@ const elapsed = computed(() =>
             </option>
           </select>
         </label>
+        <label class="flex items-center gap-1.5">
+          游戏窗口
+          <select
+            class="max-w-64 border-0 border-b border-divider bg-transparent text-[12px] text-ink-50"
+            :value="boundWindow?.handle ?? ''"
+            @change="pickWindow"
+          >
+            <option value="" disabled>选一个窗口，区域跟着它走</option>
+            <option v-for="w in gameWindows" :key="w.handle" :value="w.handle">
+              {{ w.process }} · {{ w.title }}（{{ w.width }}×{{ w.height }}）
+            </option>
+          </select>
+        </label>
+        <button class="btn-quiet" :disabled="windowsBusy" @click="loadWindows">
+          {{ windowsBusy ? '正在枚举…' : '刷新窗口' }}
+        </button>
+        <button v-if="currentSource?.window" class="btn-quiet" @click="clearWindow">
+          取消跟随
+        </button>
         <button class="btn-quiet" :disabled="busy" @click="capture.takeShot">重新截取预览</button>
         <ManualPaste @submit="addManual" />
         <span class="ml-auto" :class="framed ? 'text-accent' : 'text-ink-35'">
           {{
             framed
-              ? `区域已随 ${currentSource?.title ?? '该作品'} 保存`
+              ? boundWindow
+                ? `跟随窗口 ${boundWindow.process}`
+                : currentSource?.window
+                  ? '窗口不在运行，暂用保存的区域'
+                  : `区域已随 ${currentSource?.title ?? '该作品'} 保存`
               : `${currentSource?.title ?? '该作品'} 还没设过对话区域`
           }}
         </span>

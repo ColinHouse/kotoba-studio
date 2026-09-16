@@ -8,7 +8,6 @@ thread keeps OCR off the keyboard hook so the next press is never delayed.
 
 from __future__ import annotations
 
-import json
 import logging
 import queue
 import sys
@@ -21,9 +20,10 @@ from sqlalchemy.orm import Session
 
 from kotoba.core.config import Paths
 from kotoba.core.errors import ApiError
-from kotoba.models import CaptureSession, Source
+from kotoba.models import CaptureSession
 from kotoba.services import settings_store
 from kotoba.services.capture import collect as collect_service
+from kotoba.services.capture import windows
 from kotoba.services.capture.gate import gate
 from kotoba.services.capture.screen import Grab, Region, grab
 from kotoba.services.capture.watcher import RegionWatcher
@@ -278,8 +278,10 @@ def make_collector(
 ) -> Callable[[], bool]:
     """The hotkey action: screenshot the active region, OCR it, store the line.
 
-    The region is the running watcher's, else the active source's saved one; a
-    source with no region yields a readable error instead of a silent miss.
+    The region is the running watcher's, else the active source's -- resolved
+    through its bound window, so the hotkey still finds the dialogue box after
+    the game window moved. A source with nothing saved yields a readable error
+    instead of a silent miss.
     """
 
     def collect_current() -> bool:
@@ -292,8 +294,8 @@ def make_collector(
                 session_id = settings_store.get(db, "active_session_id")
                 source_id = _source_of(db, session_id)
                 region = watcher.region if watcher is not None and watcher.running else None
-                if region is None:
-                    region = _saved_region(db, source_id)
+                if region is None and source_id is not None:
+                    region = windows.resolve_region(db, source_id)
                 if region is None:
                     raise ApiError(
                         "no_region", "还没有对话区域：先在采集页框选一次，快捷键只认已保存的区域"
@@ -319,12 +321,3 @@ def _source_of(db: Session, session_id: int | None) -> int | None:
         return None
     session = db.get(CaptureSession, session_id)
     return session.source_id if session is not None else None
-
-
-def _saved_region(db: Session, source_id: int | None) -> Region | None:
-    if source_id is None:
-        return None
-    source = db.get(Source, source_id)
-    if source is None or not source.region_json:
-        return None
-    return Region(**json.loads(source.region_json))

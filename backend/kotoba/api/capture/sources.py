@@ -13,6 +13,7 @@ from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.models import Encounter, Line, Source, Term
 from kotoba.schemas import SourceCreate, SourceDTO, SourceUpdate
+from kotoba.services.capture import windows
 from kotoba.services.learning import coverage as coverage_service
 from kotoba.services.learning import prestudy as prestudy_service
 
@@ -92,12 +93,52 @@ def start_prestudy(
     return result
 
 
+def _save_region(src: Source, region: dict | None) -> None:
+    """Store the absolute region and keep the bound window's relative box in step.
+
+    The UI keeps working in screen coordinates; translating to the window here
+    means every later fix (moving the window, changing resolution) still lands on
+    the same dialogue box without the frontend knowing about it.
+    """
+    absolute = windows.region_or_none(region)
+    src.region_json = json.dumps(region) if absolute else None
+    binding = windows.parse_binding(src.window_json)
+    if binding is None or absolute is None or not windows.available():
+        return
+    window = windows.find_window(str(binding["process"]), binding.get("title"))
+    relative = windows.relative_from_region(absolute, window) if window else None
+    if relative is not None:
+        binding["region"] = relative
+        src.window_json = json.dumps(binding)
+
+
+def _bind_window(src: Source, window: dict | None) -> None:
+    """Bind (or unbind) the game window; an empty relative box becomes the default band."""
+    if window is None:
+        src.window_json = None
+        return
+    process = str(window.get("process") or "").strip()
+    if not process:
+        raise ApiError("invalid_value", "窗口进程名不能为空")
+    title = window.get("title") or None
+    relative = window.get("region")
+    found = windows.find_window(process, title) if windows.available() else None
+    if not isinstance(relative, dict) or not relative.get("width"):
+        saved = windows.saved_region(src)
+        relative = windows.relative_from_region(saved, found) if saved and found else None
+        if relative is None and found is not None:
+            relative = windows.default_relative_region(*found.client[2:])
+    src.window_json = json.dumps({"process": process, "title": title, "region": relative})
+
+
 @router.patch("/{source_id}")
 def update_source(source_id: int, body: SourceUpdate, db: Session = Depends(get_db)) -> SourceDTO:
     src = get_source_or_404(db, source_id)
     data = body.model_dump(exclude_unset=True)
+    if "window" in data:
+        _bind_window(src, data.pop("window"))
     if "region" in data:
-        src.region_json = json.dumps(data.pop("region")) if data["region"] else None
+        _save_region(src, data.pop("region"))
     for key, value in data.items():
         setattr(src, key, value)
     db.commit()

@@ -1,0 +1,206 @@
+import io
+import json
+import os
+
+import pytest
+from PIL import Image
+
+from kotoba.services.capture import windows
+from kotoba.services.capture.screen import Grab, Region
+from kotoba.services.capture.watcher import RegionWatcher
+from kotoba.services.ocr.base import OcrResult
+
+MONITORS = [{"index": 0, "left": 0, "top": 0, "width": 1920, "height": 1080}]
+
+
+class FakeProvider:
+    name = "fake"
+
+    def available(self):
+        return True
+
+    def recognize(self, png):
+        return OcrResult("", [], "fake", 1)
+
+
+def fake_grab(region: Region) -> Grab:
+    buf = io.BytesIO()
+    Image.new("RGB", (region.width, region.height), (20, 20, 30)).save(buf, format="PNG")
+    return Grab(png=buf.getvalue(), width=region.width, height=region.height, scale=1.0)
+
+
+@pytest.fixture()
+def capture_client(client):
+    client.app.state.capture_grabber = fake_grab
+    client.app.state.capture_displays = lambda: MONITORS
+    client.app.state.ocr_provider = FakeProvider()
+    return client
+
+
+def raw_window(**overrides):
+    entry = {
+        "handle": 1,
+        "title": "PARQUET",
+        "process": "PARQUET.exe",
+        "pid": 4242,
+        "left": 100,
+        "top": 50,
+        "width": 1280,
+        "height": 720,
+        "client_left": 108,
+        "client_top": 78,
+        "client_width": 1264,
+        "client_height": 680,
+    }
+    entry.update(overrides)
+    return entry
+
+
+def window_info(**overrides):
+    entry = raw_window(**overrides)
+    return windows._window_info(entry, MONITORS)
+
+
+def test_list_windows_filters_self_and_tiny_windows():
+    raw = [
+        raw_window(handle=1),
+        raw_window(handle=2, pid=99, width=100, height=80, title="小窗"),
+        raw_window(handle=3, title="其他", process="other.exe"),
+    ]
+    own = raw_window(handle=4, pid=os.getpid())
+    listed = windows.list_windows(fetch=lambda: [*raw, own], displays_fn=lambda: MONITORS)
+    assert [w.handle for w in listed] == [1, 3]  # biggest first, own/tiny dropped
+
+
+def test_display_picks_the_monitor_with_the_largest_overlap():
+    monitors = [
+        {"index": 0, "left": 0, "top": 0, "width": 1000, "height": 1000},
+        {"index": 1, "left": 1000, "top": 0, "width": 1000, "height": 1000},
+    ]
+    right = raw_window(handle=1, left=900, top=100, width=800, height=600)
+    left = raw_window(handle=2, left=10, top=10, width=400, height=300)
+    listed = windows.list_windows(fetch=lambda: [right, left], displays_fn=lambda: monitors)
+    by_handle = {w.handle: w.display for w in listed}
+    assert by_handle == {1: 1, 2: 0}
+
+
+def test_find_window_matches_process_case_insensitively_and_prefers_title():
+    raw = [
+        raw_window(handle=1, title="PARQUET"),
+        raw_window(handle=2, title="PARQUET - 设置"),
+    ]
+    found = windows.find_window(
+        "parquet.exe", "PARQUET - 设置", fetch=lambda: raw, displays_fn=lambda: MONITORS
+    )
+    assert found is not None and found.handle == 2
+    assert windows.find_window("nope.exe", fetch=lambda: raw, displays_fn=lambda: MONITORS) is None
+    assert (
+        windows.find_window("PARQUET.EXE", fetch=lambda: raw, displays_fn=lambda: MONITORS).handle
+        == 1
+    )
+
+
+def test_relative_and_absolute_regions_round_trip():
+    window = window_info()
+    relative = windows.default_relative_region(*window.client[2:])
+    assert relative["height"] > 0 and relative["top"] > 0
+
+    absolute = windows.region_for(window, relative)
+    assert absolute.left == window.client[0] + relative["left"]
+    assert absolute.top == window.client[1] + relative["top"]
+    assert absolute.display == window.display
+    assert windows.relative_from_region(absolute, window) == relative
+
+
+def test_region_for_clamps_to_the_client_area():
+    window = window_info()
+    region = windows.region_for(window, {"left": 1200, "top": 600, "width": 400, "height": 400})
+    assert region.width == window.client[2] - 1200
+    assert region.height == window.client[3] - 600
+    assert windows.region_for(window, {"left": 5000, "top": 0, "width": 10, "height": 10}) is None
+
+
+def test_resolve_region_prefers_the_live_window(db, client):
+    from kotoba.models import Source
+
+    src = Source(
+        title="作品", region_json=json.dumps({"left": 1, "top": 2, "width": 30, "height": 40})
+    )
+    db.add(src)
+    db.commit()
+    src.window_json = json.dumps(
+        {
+            "process": "PARQUET.exe",
+            "title": "PARQUET",
+            "region": {"left": 10, "top": 20, "width": 300, "height": 100},
+        }
+    )
+    db.commit()
+
+    window = window_info()
+    region = windows.resolve_region(db, src.id, finder=lambda *a, **k: window)
+    assert (region.left, region.top, region.width, region.height) == (
+        window.client[0] + 10,
+        window.client[1] + 20,
+        300,
+        100,
+    )
+
+    db.refresh(src)
+    assert windows.resolve_region(db, src.id, finder=lambda *a, **k: None) == Region(
+        left=1, top=2, width=30, height=40
+    )
+
+
+def test_source_window_binding_round_trip(capture_client, monkeypatch):
+    window = window_info()
+    monkeypatch.setattr(windows, "available", lambda: True)
+    monkeypatch.setattr(windows, "find_window", lambda *a, **k: window)
+
+    src = capture_client.post("/api/sources", json={"title": "作品"}).json()
+    bound = capture_client.patch(
+        f"/api/sources/{src['id']}", json={"window": {"process": "PARQUET.exe", "title": "PARQUET"}}
+    ).json()
+    assert bound["window"]["process"] == "PARQUET.exe"
+    assert bound["window"]["region"]["width"] > 0
+    assert bound["window"]["region"]["left"] > 0
+
+    region = {"left": 300, "top": 400, "width": 500, "height": 120}
+    saved = capture_client.patch(f"/api/sources/{src['id']}", json={"region": region}).json()
+    assert saved["region"] == region
+    assert saved["window"]["region"] == {"left": 192, "top": 322, "width": 500, "height": 120}
+
+    cleared = capture_client.patch(f"/api/sources/{src['id']}", json={"window": None}).json()
+    assert cleared["window"] is None and cleared["region"] == region
+
+
+def test_list_game_windows_endpoint(capture_client, monkeypatch):
+    monkeypatch.setattr(windows, "available", lambda: True)
+    monkeypatch.setattr(windows, "list_windows", lambda: [window_info()])
+    listed = capture_client.get("/api/capture/windows").json()
+    assert listed[0]["process"] == "PARQUET.exe" and listed[0]["client"][2] == 1264
+
+
+def test_watch_start_resolves_the_bound_window_each_cycle(capture_client, monkeypatch):
+    window = window_info()
+    monkeypatch.setattr(windows, "available", lambda: True)
+    monkeypatch.setattr(windows, "find_window", lambda *a, **k: window)
+
+    src = capture_client.post("/api/sources", json={"title": "作品"}).json()
+    capture_client.patch(
+        f"/api/sources/{src['id']}", json={"window": {"process": "PARQUET.exe", "title": "PARQUET"}}
+    )
+    capture_client.post(
+        "/api/capture/watch/start",
+        json={"region": {"left": 0, "top": 0, "width": 100, "height": 50}, "source_id": src["id"]},
+    )
+    watcher: RegionWatcher = capture_client.app.state.region_watcher
+    try:
+        resolved = watcher._region_provider()
+        stored = capture_client.get(f"/api/sources/{src['id']}").json()
+        relative = stored["window"]["region"]
+        assert resolved.left == window.client[0] + relative["left"]
+        assert resolved.top == window.client[1] + relative["top"]
+        assert (resolved.width, resolved.height) == (relative["width"], relative["height"])
+    finally:
+        watcher.stop()
