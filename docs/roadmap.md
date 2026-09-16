@@ -13,6 +13,10 @@
 
 ## M1 · 持续伴读与音频
 
+M1 已拆成 [issue 队列](https://github.com/ColinHouse/kotoba-studio/milestone/1)，一个 issue 一个 PR。
+标了 `agent-ready` 的规格完整，AI agent 可以直接接单（规矩见 [AGENTS.md](../AGENTS.md) §7）；
+标了 `needs-hardware` 的必须有人在真机上验证，agent 不要碰。
+
 - 区域监视器：图像哈希变化检测 + 文本稳定后 OCR + 自动去重，"收藏这句"全局快捷键（pynput）。
 - 主动连接 Textractor（6677）/ Agent（9001）/ LunaTranslator（2333）WebSocket，剪贴板监听。
 - Hook 文本到达后延迟抓图；系统音频回环（Windows PyAudioWPatch，macOS ScreenCaptureKit）+ silero-vad 裁剪原声；听音卡与听音短测。
