@@ -39,6 +39,8 @@ export interface DictStatus {
     title: string
     kind: string
     revision: string | null
+    author: string | null
+    attribution: string | null
     entry_count: number
     imported_at: string
   }[]

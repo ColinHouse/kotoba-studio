@@ -125,6 +125,8 @@ def status(db: Session) -> dict:
                 "title": d.title,
                 "kind": d.kind,
                 "revision": d.revision,
+                "author": d.author,
+                "attribution": d.attribution,
                 "entry_count": d.entry_count,
                 "imported_at": d.imported_at.isoformat(),
             }
