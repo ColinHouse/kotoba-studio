@@ -83,6 +83,20 @@ class TermFrequency(Base):
     rank: Mapped[int] = mapped_column(Integer)
 
 
+class Kanji(Base):
+    """One KANJIDIC2 entry. ``grade`` 1-6 = kyōiku, 8 = jōyō, 9 = jinmeiyō."""
+
+    __tablename__ = "kanji"
+
+    character: Mapped[str] = mapped_column(String(4), primary_key=True)
+    on_readings_json: Mapped[str] = mapped_column(Text, default="[]")
+    kun_readings_json: Mapped[str] = mapped_column(Text, default="[]")
+    grade: Mapped[int | None] = mapped_column(Integer, index=True)
+    jlpt: Mapped[int | None] = mapped_column(Integer)
+    stroke_count: Mapped[int | None] = mapped_column(Integer)
+    frequency: Mapped[int | None] = mapped_column(Integer)
+
+
 class TermPitch(Base):
     """Pitch accent of a word; `accent` is the downstep mora, 0 = heiban."""
 

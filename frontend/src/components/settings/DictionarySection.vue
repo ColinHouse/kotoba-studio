@@ -91,13 +91,21 @@ async function installPitch() {
       Yomitan 格式的日中词典。
     </p>
     <p class="text-xs text-ink-3">
-      词典数据来自
+      词典与汉字数据来自
       <a
         class="underline"
         href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project"
         target="_blank"
         rel="noreferrer"
-        >JMdict/EDICT 项目</a
+        >JMdict/EDICT</a
+      >
+      与
+      <a
+        class="underline"
+        href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"
+        target="_blank"
+        rel="noreferrer"
+        >KANJIDIC2</a
       >（电子辞書研究開発グループ，EDRDG），依
       <a
         class="underline"

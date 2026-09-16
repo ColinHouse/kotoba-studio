@@ -154,10 +154,11 @@ Windows 用 `make package-windows ARGS="--installer"` 打出安装包（PyInstal
 [ADR 0002](docs/adr/0002-license.md)：本应用自己提供网络界面（手机通过局域网访问桌面端），
 AGPL 第 13 条正对应这种形态；最接近的同类 Anki、Kamite、jimaku 也都用 AGPL。
 
-词典数据来自 **JMdict/EDICT 项目**，© 电子辞書研究開発グループ（EDRDG），依
+词典与汉字数据来自 **JMdict/EDICT** 与 **KANJIDIC2**，© 电子辞書研究開発グループ（EDRDG），依
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) 授权使用：
 
 - <https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project>
+- <https://www.edrdg.org/wiki/index.php/KANJIDIC_Project>
 
 音高重音数据来自 **Kanjium**（© Uros O.），依
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) 授权使用，仅在用户主动安装时

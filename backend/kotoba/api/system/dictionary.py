@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
-from kotoba.services.dictionary import jmdict, lookup, pitch, yomitan
+from kotoba.services.dictionary import jmdict, kanjidic, lookup, pitch, yomitan
 from kotoba.services.dictionary.yomitan import frequency
 
 router = APIRouter(prefix="/dict", tags=["dictionary"])
@@ -19,6 +19,7 @@ router = APIRouter(prefix="/dict", tags=["dictionary"])
 def dict_status(db: Session = Depends(get_db)) -> dict:
     return {
         **jmdict.status(db),
+        **kanjidic.status(db),
         "install": jmdict.install_job.snapshot(),
         "pitch": pitch.install_job.snapshot(),
         "has_pitch": pitch.has_any(db),
@@ -43,6 +44,12 @@ def install_jmdict(request: Request, url: str | None = None) -> dict:
 def install_pitch(request: Request, url: str | None = None) -> dict:
     started = pitch.install_job.start(request.app.state.db.session, request.app.state.paths, url)
     return {"started": started, **pitch.install_job.snapshot()}
+
+
+@router.post("/kanjidic/install", status_code=202)
+def install_kanjidic(request: Request, url: str | None = None) -> dict:
+    started = kanjidic.install_job.start(request.app.state.db.session, request.app.state.paths, url)
+    return {"started": started, **kanjidic.install_job.snapshot()}
 
 
 @router.post("/yomitan/import")

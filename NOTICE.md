@@ -18,6 +18,10 @@ The repository additionally ships a **derived subset** of JMdict used only as a 
 fixture, at `backend/kotoba/data/jmdict_fixture.json`; that file is a derivative work and
 is therefore also CC BY-SA 4.0.
 
+Kotoba Studio downloads KANJIDIC2 at runtime from
+<https://www.edrdg.org/pub/Nihongo/kanjidic2.xml.gz> when the user installs the kanji table;
+no KANJIDIC data is bundled with the repository.
+
 The acknowledgement EDRDG asks for is shown to users in the app's Settings → 词典 section
 and repeated in the README.
 
