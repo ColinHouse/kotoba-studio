@@ -1,0 +1,192 @@
+"""Outbound WebSocket connections to text hook tools.
+
+Textractor, Agent and LunaTranslator each run their own WebSocket server, so
+instead of waiting for them to connect to /ws/hook we connect to them. They
+are frequently not running; that is normal, so failures log at debug level and
+the client keeps retrying with exponential backoff.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import contextlib
+import logging
+from collections.abc import Callable
+from datetime import datetime
+from typing import Any
+
+import websockets
+from sqlalchemy.orm import Session
+
+from kotoba.core.errors import ApiError
+from kotoba.models import utcnow
+from kotoba.schemas import LineCreate
+from kotoba.services import settings_store
+from kotoba.services.text.hook import parse_hook_message
+from kotoba.services.text.ingest import create_line
+
+log = logging.getLogger(__name__)
+
+PRESETS: dict[str, str] = {
+    "textractor": "ws://127.0.0.1:6677",
+    "agent": "ws://127.0.0.1:9001",
+    "luna": "ws://127.0.0.1:2333",
+}
+
+
+class HookClient:
+    """One outbound WebSocket with exponential backoff between attempts."""
+
+    def __init__(
+        self,
+        url: str,
+        on_text: Callable[[str], None],
+        *,
+        connect: Callable[[str], Any] = websockets.connect,
+        initial_backoff: float = 0.5,
+        max_backoff: float = 30.0,
+    ) -> None:
+        self.url = url
+        self._on_text = on_text
+        self._connect = connect
+        self._initial_backoff = initial_backoff
+        self._max_backoff = max_backoff
+        self._stopped = asyncio.Event()
+        self._task: asyncio.Task[None] | None = None
+        self.connected = False
+        self.last_text_at: datetime | None = None
+        self.error: str | None = None
+
+    @property
+    def running(self) -> bool:
+        return self._task is not None and not self._task.done()
+
+    def start(self) -> None:
+        if self.running:
+            return
+        self._stopped.clear()
+        self._task = asyncio.create_task(self._run(), name=f"hook-client:{self.url}")
+
+    async def stop(self) -> None:
+        """Stop now: set the flag and cancel a task that is blocked on I/O or the backoff."""
+        self._stopped.set()
+        task, self._task = self._task, None
+        if task is not None and not task.done():
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+        self.connected = False
+
+    async def _run(self) -> None:
+        backoff = self._initial_backoff
+        while not self._stopped.is_set():
+            try:
+                async with self._connect(self.url) as ws:
+                    self.connected = True
+                    self.error = None
+                    backoff = self._initial_backoff
+                    async for raw in ws:
+                        if not isinstance(raw, str):
+                            continue
+                        self.last_text_at = utcnow()
+                        try:
+                            self._on_text(raw)
+                        except Exception:  # noqa: BLE001
+                            log.debug("hook message dropped", exc_info=True)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:  # noqa: BLE001
+                self.error = f"{type(exc).__name__}: {exc}"
+                log.debug("hook client %s failed: %s", self.url, exc)
+            finally:
+                self.connected = False
+            if self._stopped.is_set():
+                break
+            if await self._wait(backoff):
+                break
+            backoff = min(backoff * 2, self._max_backoff)
+
+    async def _wait(self, delay: float) -> bool:
+        """Wait out the backoff unless stopped; returns True when stopped meanwhile."""
+        try:
+            await asyncio.wait_for(self._stopped.wait(), timeout=delay)
+            return True
+        except TimeoutError:
+            return False
+
+
+class HookManager:
+    """Owns one HookClient per target name and turns its messages into lines."""
+
+    def __init__(self, session_factory: Callable[[], Session]) -> None:
+        self._session_factory = session_factory
+        self._clients: dict[str, HookClient] = {}
+
+    def get(self, name: str) -> HookClient | None:
+        return self._clients.get(name)
+
+    async def connect(self, name: str, url: str | None = None) -> dict:
+        url = (url or PRESETS.get(name) or "").strip()
+        if not url:
+            raise ApiError("unknown_hook", f"未知的 Hook 目标：{name}")
+        client = self._clients.get(name)
+        if client is not None and client.url != url:
+            await client.stop()
+            client = None
+        if client is None:
+            client = HookClient(url, self._ingest)
+            self._clients[name] = client
+        client.start()
+        return self.describe(name)
+
+    async def disconnect(self, name: str) -> dict:
+        client = self._clients.get(name)
+        if client is None and name not in PRESETS:
+            raise ApiError("not_found", f"未知的 Hook 目标：{name}", 404)
+        if client is not None:
+            await client.stop()
+        return self.describe(name)
+
+    def list(self) -> list[dict]:
+        names = list(dict.fromkeys([*PRESETS, *self._clients]))
+        return [self.describe(name) for name in names]
+
+    def describe(self, name: str) -> dict:
+        client = self._clients.get(name)
+        return {
+            "name": name,
+            "url": client.url if client is not None else PRESETS.get(name, ""),
+            "connected": client.connected if client is not None else False,
+            "last_text_at": (
+                client.last_text_at.isoformat()
+                if client is not None and client.last_text_at is not None
+                else None
+            ),
+            "error": client.error if client is not None else None,
+        }
+
+    async def shutdown(self) -> None:
+        for client in list(self._clients.values()):
+            await client.stop()
+
+    def _ingest(self, raw: str) -> None:
+        message = parse_hook_message(raw)
+        text = message.get("text", "").strip()
+        if not text:
+            return
+        db = self._session_factory()
+        try:
+            session_id = message.get("session_id") or settings_store.get(db, "active_session_id")
+            create_line(
+                db,
+                LineCreate(
+                    session_id=session_id,
+                    text=text,
+                    origin="hook",
+                    speaker=message.get("speaker"),
+                ),
+            )
+        except ApiError as exc:
+            log.debug("hook text skipped: %s", exc.message)
+        finally:
+            db.close()

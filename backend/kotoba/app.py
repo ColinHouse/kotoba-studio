@@ -18,6 +18,7 @@ from kotoba.api import build_api_router, build_websocket_router
 from kotoba.core.config import Settings, get_settings, paths
 from kotoba.core.db import Database, make_engine, upgrade
 from kotoba.core.errors import install_error_handlers
+from kotoba.services.capture.hook_client import HookManager
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -30,9 +31,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.settings = settings
         app.state.paths = resolved_paths
         app.state.db = Database(make_engine(resolved_paths.db_path))
+        app.state.hook_manager = HookManager(app.state.db.session)
         try:
             yield
         finally:
+            await app.state.hook_manager.shutdown()
             app.state.db.dispose()
 
     app = FastAPI(title="Kotoba Studio", version=__version__, lifespan=lifespan)
