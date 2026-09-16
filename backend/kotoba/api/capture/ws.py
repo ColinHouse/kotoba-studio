@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import json
-
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from kotoba.core.errors import ApiError
 from kotoba.core.events import broker
 from kotoba.schemas import LineCreate
 from kotoba.services import settings_store
+from kotoba.services.text.hook import parse_hook_message
 from kotoba.services.text.ingest import create_line
 
 router = APIRouter(tags=["websocket"])
@@ -29,18 +28,6 @@ async def events(ws: WebSocket) -> None:
         broker.unsubscribe(queue)
 
 
-def _parse_hook_message(raw: str) -> dict:
-    raw = raw.strip()
-    if raw.startswith("{"):
-        try:
-            data = json.loads(raw)
-            if isinstance(data, dict) and data.get("text"):
-                return data
-        except json.JSONDecodeError:
-            pass
-    return {"text": raw}
-
-
 @router.websocket("/ws/hook")
 async def hook(ws: WebSocket) -> None:
     """Accepts plain text or JSON {"text": ..., "speaker"?: ..., "session_id"?: ...}."""
@@ -49,7 +36,7 @@ async def hook(ws: WebSocket) -> None:
     try:
         while True:
             raw = await ws.receive_text()
-            message = _parse_hook_message(raw)
+            message = parse_hook_message(raw)
             if not message.get("text", "").strip():
                 await ws.send_json({"ok": False, "error": "empty"})
                 continue
