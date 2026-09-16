@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,39 @@ from kotoba.services.text import dedup
 
 def create_line(db: Session, body: LineCreate) -> tuple[Line, bool]:
     """Create a line (applying session-level dedup). Returns (line, was_duplicate)."""
+    line, duplicate = _stage_line(db, body)
+    db.flush()
+    event = _event(line, duplicate)
+    db.commit()
+    broker.publish(event)
+    return line, duplicate
+
+
+def create_lines(db: Session, bodies: Iterable[LineCreate]) -> tuple[int, int]:
+    """Create a batch of lines with a single commit; returns (created, skipped).
+
+    Book imports must not pay one commit per sentence, and they only treat an
+    exact text hash as a duplicate: the OCR re-capture heuristics would drop a
+    long narration sentence that differs from its neighbour by one character.
+    """
+    created = skipped = 0
+    staged: list[tuple[Line, bool]] = []
+    for body in bodies:
+        line, duplicate = _stage_line(db, body, exact_only=True)
+        staged.append((line, duplicate))
+        if duplicate:
+            skipped += 1
+        else:
+            created += 1
+    db.flush()
+    events = [_event(line, duplicate) for line, duplicate in staged]
+    db.commit()
+    for event in events:
+        broker.publish(event)
+    return created, skipped
+
+
+def _stage_line(db: Session, body: LineCreate, exact_only: bool = False) -> tuple[Line, bool]:
     text = normalize_ocr(body.text)
     if not text:
         raise ApiError("empty_text", "text is empty after normalization")
@@ -26,7 +60,7 @@ def create_line(db: Session, body: LineCreate) -> tuple[Line, bool]:
             raise ApiError("not_found", f"session {body.session_id} not found", 404)
         if source_id is None:
             source_id = session.source_id
-        dup = dedup.find_duplicate(db, body.session_id, text)
+        dup = dedup.find_duplicate(db, body.session_id, text, exact_only=exact_only)
         if dup is not None:
             if len(text) > len(dup.text):
                 dup.text, dup.raw_text = text, body.raw_text or body.text
@@ -37,10 +71,6 @@ def create_line(db: Session, body: LineCreate) -> tuple[Line, bool]:
                 dup.screenshot_path = body.screenshot_path
             if body.audio_path and not dup.audio_path:
                 dup.audio_path = body.audio_path
-            db.commit()
-            broker.publish(
-                {"type": "line.updated", "line": LineDTO.from_model(dup, 0).model_dump(mode="json")}
-            )
             return dup, True
     line = Line(
         session_id=body.session_id,
@@ -59,8 +89,9 @@ def create_line(db: Session, body: LineCreate) -> tuple[Line, bool]:
         end_ms=body.end_ms,
     )
     db.add(line)
-    db.commit()
-    broker.publish(
-        {"type": "line.created", "line": LineDTO.from_model(line, 0).model_dump(mode="json")}
-    )
     return line, False
+
+
+def _event(line: Line, duplicate: bool) -> dict:
+    event = "line.updated" if duplicate else "line.created"
+    return {"type": event, "line": LineDTO.from_model(line, 0).model_dump(mode="json")}

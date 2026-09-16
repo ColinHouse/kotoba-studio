@@ -9,6 +9,7 @@ from fastapi import APIRouter
 from kotoba.api import meta
 from kotoba.api.capture import (
     clipboard,
+    epub,
     hooks,
     hotkeys,
     lines,
@@ -32,6 +33,7 @@ API_MODULES = (
     hooks,
     hotkeys,
     subtitles,
+    epub,
     mokuro,
     dictionary,
     terms,
