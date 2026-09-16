@@ -14,24 +14,79 @@
 
 ## 快速开始
 
+> **现在还没有安装包，只能从源码运行。** 打包与签名（签名的 macOS `.app`、Windows 安装包）
+> 排在 M4，见 [#61](https://github.com/ColinHouse/kotoba-studio/issues/61)。
+
+### 一次性准备
+
+**macOS**
+
 ```bash
-make setup     # 安装两端依赖（Python 3.12 + uv，Node 22 + npm），启用 git hooks
-make run       # 构建前端并在 8720 端口同时提供 API 与网页
-make help      # 全部命令
+brew install uv node        # Python 由 uv 自己装，Node 需要 22 以上
 ```
 
-Windows 上这些命令要在 Git Bash 里运行（`winget install ezwinports.make` 安装 make）；
-PowerShell / CMD 会让 make 回退到 cmd.exe，Unix 风格的 recipe 会失败。
+**Windows**（用 PowerShell 装，装完之后所有命令都在 Git Bash 里跑）
 
-手机访问：`cd backend && uv run python -m kotoba serve --host 0.0.0.0`，然后在设置页扫码。
-开发用 `make dev`（API 自动重载 + Vite 5174），提交前跑 `make check`。
+```powershell
+winget install --id=astral-sh.uv -e
+winget install --id=OpenJS.NodeJS.LTS -e
+winget install --id=Git.Git -e
+winget install --id=ezwinports.make -e
+```
 
-需要改数据目录、端口或接 DeepSeek 时：`cp .env.example .env`，里面列了全部环境变量。
-AI 密钥更推荐在 设置 → AI 解释 里填，会存进系统钥匙串而不是磁盘上的明文文件。
+Windows 上 `make` **必须在 Git Bash 里运行**。PowerShell 与 CMD 会让 make 回退到 cmd.exe，
+Unix 风格的 recipe 会失败。
 
-开发时：`scripts/dev.sh` 同时启动后端（自动重载）与 Vite（端口 5174，代理 `/api` `/media` `/ws`）。
+### 跑起来
 
-首次使用：设置页安装 JMdict（约 25 MB）→ 作品页添加作品 → 开始会话 → 采集页截取预览、框选对话框 → ⌘/Ctrl+Enter 收藏 → 收件箱确认建卡 → 复习。
+```bash
+git clone https://github.com/ColinHouse/kotoba-studio.git
+cd kotoba-studio
+make setup     # 装两端依赖并启用 git hooks
+make run       # 构建前端，在 8720 端口同时提供 API 与网页
+```
+
+浏览器打开 <http://127.0.0.1:8720>。`make help` 看全部命令。
+
+### 头三件事
+
+1. **设置 → 词典 → 安装 JMdict**（约 25 MB）。不装的话，收件箱里点词查不到释义。
+2. **作品 → 添加一部** → 开始会话。
+3. **采集 → 框选对话框区域**。macOS 第一次会因为没有屏幕录制权限只截到壁纸，见下面的平台说明。
+
+之后的日常是：采集页框选后 <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd> 收藏台词 →
+收件箱点词建卡 → 复习页复习。台词也可以不靠截图——直接导入字幕文件，或者接一个
+Hook 工具（见平台说明）。
+
+### 配置
+
+改数据目录、端口或接 DeepSeek：`cp .env.example .env`，里面列了全部环境变量。
+**AI 密钥更推荐在 设置 → AI 解释 里填**——那样会存进系统钥匙串，而不是磁盘上的明文文件。
+不填密钥也能用，AI 解释是可选的。
+
+### 手机
+
+桌面负责采集，手机负责浏览与复习。手机端是 PWA，不用装 App。
+
+```bash
+cd backend && uv run python -m kotoba serve --host 0.0.0.0
+```
+
+然后在桌面端的 **设置 → 连接手机** 里用手机扫码。
+
+- 两台设备要在**同一个局域网**里。很多路由器的访客网络开了 AP 隔离，那样扫码能打开、接口连不上。
+- 第一次加 `--host 0.0.0.0` 时，macOS 会弹「是否允许接受传入连接」，Windows 会弹防火墙对话框——
+  都要**允许专用网络**，否则手机连不上。
+- 手机浏览器里「添加到主屏幕」，之后就能像 App 一样全屏打开。
+- **这个端口没有任何认证。** 同一网络里的任何人都能读写你的学习数据、并触发截屏。
+  只在你信得过的网络上开，用完就关。详见 [SECURITY.md](SECURITY.md)。
+
+一张卡只由一端安排正式复习（默认跟随建卡的那一端），所以两端不会把同一张卡各排一次。
+
+### 改代码
+
+`make dev` 同时起后端（自动重载）与 Vite（5174，代理 `/api` `/media` `/ws`），
+提交前跑 `make check`。详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 架构
 
@@ -72,6 +127,12 @@ Apple Vision / Windows OCR / RapidOCR · Vue 3 + Vite + Tailwind 4 + PWA。
 - [开发约定](docs/conventions.md) · [AI 工具操作规则](AGENTS.md) · [更新日志](CHANGELOG.md)
 - [安全说明](SECURITY.md)——尤其是把服务开放到局域网时的注意事项
 - [ADR 0001 技术栈](docs/adr/0001-tech-stack.md) · [路线图](docs/roadmap.md)
+
+## 打包
+
+Windows 用 `make package-windows ARGS="--installer"` 打出安装包（PyInstaller onedir + Inno Setup）；
+构建后会自动冒烟：真实跑一次内置 OCR 识别与分词，再检查 SPA 与健康检查。体积、耗时与签名做法见
+[packaging/README.md](packaging/README.md) 与 [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md)。
 
 ## 平台说明
 
