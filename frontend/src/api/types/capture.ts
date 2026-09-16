@@ -102,3 +102,13 @@ export interface CollectResult {
   line: Line | null
   duplicate: boolean
 }
+
+export interface HotkeyStatus {
+  available: boolean
+  note: string | null
+  running: boolean
+  hotkey: string | null
+  captured: number
+  last_error: string | null
+  last_captured_at: string | null
+}
