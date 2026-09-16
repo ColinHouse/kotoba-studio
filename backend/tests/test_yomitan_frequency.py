@@ -19,7 +19,10 @@ ENTRIES = [
 def make_zip(title: str, entries: list) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
-        zf.writestr("index.json", json.dumps({"title": title, "format": 3}))
+        zf.writestr(
+            "index.json",
+            json.dumps({"title": title, "format": 3, "attribution": "CC BY-SA 4.0"}),
+        )
         zf.writestr("term_meta_bank_1.json", json.dumps(entries))
     return buf.getvalue()
 
@@ -43,6 +46,11 @@ def test_import_reads_all_frequency_shapes_and_skips_the_rest(client):
     body = r.json()
     assert body["kind"] == "frequency"
     assert body["frequencies"] == 4  # the pitch entry and the numberless entry are skipped
+
+    entry = next(
+        d for d in client.get("/api/dict/status").json()["dictionaries"] if d["title"] == "频率表"
+    )
+    assert entry["attribution"] == "CC BY-SA 4.0"
 
 
 def test_rank_prefers_the_reading_and_the_smallest_rank(client, db):
