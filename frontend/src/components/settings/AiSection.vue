@@ -109,8 +109,10 @@ async function saveKey() {
       <button class="btn-outline" :disabled="saving || !apiKey" @click="saveKey">保存 Key</button>
     </div>
     <p v-if="usage" class="text-xs text-ink-3">
-      已调用 {{ usage.calls }} 次（失败 {{ usage.failed }}）· 估算费用
-      ${{ usage.cost_estimate_usd.toFixed(4) }} · 只发送目标词、当前句和之前 ≤3 句，不发送后续剧情。
+      已调用 {{ usage.calls }} 次（失败 {{ usage.failed }}）· 估算费用 ${{
+        usage.cost_estimate_usd.toFixed(4)
+      }}
+      · 只发送目标词、当前句和之前 ≤3 句，不发送后续剧情。
     </p>
   </SettingsSection>
 </template>

@@ -2,7 +2,12 @@
 import { humanInterval } from '@/utils/format'
 defineProps<{ preview: Record<'again' | 'hard' | 'good' | 'easy', string>; disabled?: boolean }>()
 const emit = defineEmits<{ rate: [rating: 1 | 2 | 3 | 4] }>()
-const buttons: { rating: 1 | 2 | 3 | 4; key: 'again' | 'hard' | 'good' | 'easy'; label: string; cls: string }[] = [
+const buttons: {
+  rating: 1 | 2 | 3 | 4
+  key: 'again' | 'hard' | 'good' | 'easy'
+  label: string
+  cls: string
+}[] = [
   { rating: 1, key: 'again', label: '忘了', cls: 'bg-red-500/90 text-white' },
   { rating: 2, key: 'hard', label: '困难', cls: 'bg-accent text-white' },
   { rating: 3, key: 'good', label: '记得', cls: 'bg-matcha text-white' },
@@ -22,7 +27,9 @@ const buttons: { rating: 1 | 2 | 3 | 4; key: 'again' | 'hard' | 'good' | 'easy';
       @click="emit('rate', b.rating)"
     >
       <span>{{ b.label }}</span>
-      <span class="text-[11px] opacity-80">{{ humanInterval(preview[b.key]) }} · {{ b.rating }}</span>
+      <span class="text-[11px] opacity-80"
+        >{{ humanInterval(preview[b.key]) }} · {{ b.rating }}</span
+      >
     </button>
   </div>
 </template>

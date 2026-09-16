@@ -76,9 +76,7 @@ async function explain() {
   }
 }
 
-const quizSession = computed(() =>
-  inbox.sessionId.value === 'all' ? null : inbox.sessionId.value,
-)
+const quizSession = computed(() => (inbox.sessionId.value === 'all' ? null : inbox.sessionId.value))
 const emptyHint = computed(() =>
   inbox.status.value === 'inbox' ? '这里空空的。去采集页收藏几句台词吧。' : '这里没有句子。',
 )
@@ -193,7 +191,10 @@ const emptyHint = computed(() =>
                 class="jp font-semibold text-accent-2"
                 >{{ lastResult.term.headword }}</RouterLink
               >，第 {{ lastResult.term.encounter_count }} 次遇见
-              <span v-if="lastResult.term.trap" class="chip ml-2 bg-accent/15 text-xs text-accent-2">
+              <span
+                v-if="lastResult.term.trap"
+                class="chip ml-2 bg-accent/15 text-xs text-accent-2"
+              >
                 中日同形：日语＝{{ lastResult.term.trap.ja_meaning }}
               </span>
             </p>

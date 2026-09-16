@@ -103,5 +103,18 @@ export function useScreenCapture({ sessionId, persistRegion, onLine }: Options) 
     }, REGION_SAVE_DELAY_MS)
   })
 
-  return { displays, display, providers, provider, shot, region, ocr, busy, init, takeShot, runOcr, collect }
+  return {
+    displays,
+    display,
+    providers,
+    provider,
+    shot,
+    region,
+    ocr,
+    busy,
+    init,
+    takeShot,
+    runOcr,
+    collect,
+  }
 }

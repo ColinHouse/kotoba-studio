@@ -28,7 +28,7 @@ export const useDeviceStore = defineStore('device', () => {
   const ready = ref(false)
 
   async function ensureRegistered() {
-    let saved: { id: string; name: string; kind: 'desktop' | 'mobile' } | null = null
+    let saved: { id: string; name: string; kind: 'desktop' | 'mobile' } | null
     try {
       saved = JSON.parse(localStorage.getItem(KEY) ?? 'null')
     } catch {
@@ -39,7 +39,10 @@ export const useDeviceStore = defineStore('device', () => {
       device.value = await api.post<Device>('/api/devices/register', body)
       kind.value = device.value.kind
       try {
-        localStorage.setItem(KEY, JSON.stringify({ id: device.value.id, name: device.value.name, kind: device.value.kind }))
+        localStorage.setItem(
+          KEY,
+          JSON.stringify({ id: device.value.id, name: device.value.name, kind: device.value.kind }),
+        )
       } catch {
         /* storage unavailable */
       }
@@ -49,7 +52,11 @@ export const useDeviceStore = defineStore('device', () => {
   }
 
   async function rename(name: string, newKind: 'desktop' | 'mobile') {
-    device.value = await api.post<Device>('/api/devices/register', { id: device.value?.id, name, kind: newKind })
+    device.value = await api.post<Device>('/api/devices/register', {
+      id: device.value?.id,
+      name,
+      kind: newKind,
+    })
     kind.value = device.value.kind
     try {
       localStorage.setItem(KEY, JSON.stringify({ id: device.value.id, name, kind: newKind }))

@@ -24,7 +24,10 @@ onMounted(async () => {
   <SettingsSection title="OCR 引擎">
     <ul class="text-sm">
       <li v-for="p in providers" :key="p.name" class="flex flex-wrap items-center gap-2 py-1">
-        <span class="h-2 w-2 shrink-0 rounded-full" :class="p.available ? 'bg-matcha' : 'bg-line'" />
+        <span
+          class="h-2 w-2 shrink-0 rounded-full"
+          :class="p.available ? 'bg-matcha' : 'bg-line'"
+        />
         <span class="font-mono">{{ p.name }}</span>
         <span class="text-ink-2">{{ p.note }}</span>
         <span v-if="p.recommended" class="chip bg-matcha/15 text-[10px] text-matcha">推荐</span>

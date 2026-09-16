@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-paper: #faf7f1;
@@ -12,13 +12,24 @@
   --color-matcha: #6b8f4e;
   --color-plum: #8c5a7a;
   --color-sky: #4f7fa8;
-  --font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
-  --font-jp: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif;
+  --font-sans:
+    'Inter', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif;
+  --font-jp:
+    'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', 'Meiryo', sans-serif;
 }
 
-html, body { background: var(--color-paper); color: var(--color-ink); }
-body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
-.jp { font-family: var(--font-jp); }
+html,
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+.jp {
+  font-family: var(--font-jp);
+}
 
 @utility btn {
   @apply inline-flex items-center justify-center gap-1 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap transition;
@@ -39,7 +50,13 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 }
 
 @layer components {
-  .btn-primary { @apply btn bg-accent text-white hover:bg-accent-2; }
-  .btn-ghost { @apply btn bg-paper-2 text-ink hover:bg-line; }
-  .btn-outline { @apply btn border border-line bg-white/60 text-ink hover:bg-paper-2; }
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-accent-2;
+  }
+  .btn-ghost {
+    @apply btn bg-paper-2 text-ink hover:bg-line;
+  }
+  .btn-outline {
+    @apply btn border border-line bg-white/60 text-ink hover:bg-paper-2;
+  }
 }

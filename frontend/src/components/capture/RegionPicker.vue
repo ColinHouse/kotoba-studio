@@ -2,7 +2,14 @@
 import { computed, ref } from 'vue'
 import type { Region } from '@/api/types'
 
-const props = defineProps<{ src: string; width: number; height: number; scale: number; display: number; modelValue: Region | null }>()
+const props = defineProps<{
+  src: string
+  width: number
+  height: number
+  scale: number
+  display: number
+  modelValue: Region | null
+}>()
 const emit = defineEmits<{ 'update:modelValue': [region: Region] }>()
 
 const img = ref<HTMLImageElement | null>(null)
@@ -18,7 +25,10 @@ function toLogical(px: number, py: number) {
 
 function pos(e: PointerEvent) {
   const rect = img.value!.getBoundingClientRect()
-  return { x: Math.min(Math.max(e.clientX - rect.left, 0), rect.width), y: Math.min(Math.max(e.clientY - rect.top, 0), rect.height) }
+  return {
+    x: Math.min(Math.max(e.clientX - rect.left, 0), rect.width),
+    y: Math.min(Math.max(e.clientY - rect.top, 0), rect.height),
+  }
 }
 
 function down(e: PointerEvent) {
@@ -48,7 +58,12 @@ const box = computed(() => {
   const el = img.value
   if (drag.value) {
     const d = drag.value
-    return { left: Math.min(d.x0, d.x1), top: Math.min(d.y0, d.y1), width: Math.abs(d.x1 - d.x0), height: Math.abs(d.y1 - d.y0) }
+    return {
+      left: Math.min(d.x0, d.x1),
+      top: Math.min(d.y0, d.y1),
+      width: Math.abs(d.x1 - d.x0),
+      height: Math.abs(d.y1 - d.y0),
+    }
   }
   const r = props.modelValue
   if (!r || !el || !el.clientWidth) return null
@@ -59,9 +74,35 @@ const box = computed(() => {
 </script>
 
 <template>
-  <div class="relative select-none overflow-hidden rounded-xl border border-line bg-black/80" style="touch-action: none">
-    <img ref="img" :src="src" class="block w-full" draggable="false" alt="屏幕预览" @pointerdown="down" @pointermove="move" @pointerup="up" @pointercancel="up" />
-    <div v-if="box" class="pointer-events-none absolute border-2 border-accent bg-accent/15" :style="{ left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' }" />
-    <p class="pointer-events-none absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">在预览图上拖拽框选对话框区域</p>
+  <div
+    class="relative select-none overflow-hidden rounded-xl border border-line bg-black/80"
+    style="touch-action: none"
+  >
+    <img
+      ref="img"
+      :src="src"
+      class="block w-full"
+      draggable="false"
+      alt="屏幕预览"
+      @pointerdown="down"
+      @pointermove="move"
+      @pointerup="up"
+      @pointercancel="up"
+    />
+    <div
+      v-if="box"
+      class="pointer-events-none absolute border-2 border-accent bg-accent/15"
+      :style="{
+        left: box.left + 'px',
+        top: box.top + 'px',
+        width: box.width + 'px',
+        height: box.height + 'px',
+      }"
+    />
+    <p
+      class="pointer-events-none absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white"
+    >
+      在预览图上拖拽框选对话框区域
+    </p>
   </div>
 </template>

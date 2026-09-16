@@ -29,7 +29,10 @@ async function load() {
     index.value = 0
     revealed.value = false
     shownAt.value = Date.now()
-    if (!r.cards.length) forecast.value = (await api.get<{ days: { date: string; count: number }[] }>('/api/reviews/forecast')).days
+    if (!r.cards.length)
+      forecast.value = (
+        await api.get<{ days: { date: string; count: number }[] }>('/api/reviews/forecast')
+      ).days
   } catch (e) {
     app.fail(e)
   } finally {
@@ -41,7 +44,13 @@ async function rate(rating: 1 | 2 | 3 | 4) {
   if (!current.value) return
   const card = current.value
   try {
-    await api.post('/api/reviews', { card_id: card.id, rating, mode: 'scheduled', device_id: device.device?.id ?? null, duration_ms: Date.now() - shownAt.value })
+    await api.post('/api/reviews', {
+      card_id: card.id,
+      rating,
+      mode: 'scheduled',
+      device_id: device.device?.id ?? null,
+      duration_ms: Date.now() - shownAt.value,
+    })
     done.value += 1
     if (rating === 1) queue.value.push({ ...card })
     index.value += 1
@@ -74,23 +83,37 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   <div class="mx-auto max-w-2xl space-y-4">
     <header class="flex items-center justify-between">
       <h1 class="text-2xl font-semibold">复习</h1>
-      <span class="text-sm text-ink-3">本设备（{{ device.kind === 'mobile' ? '手机' : '电脑' }}）· 剩余 {{ Math.max(queue.length - index, 0) }} · 已复习 {{ done }}</span>
+      <span class="text-sm text-ink-3"
+        >本设备（{{ device.kind === 'mobile' ? '手机' : '电脑' }}）· 剩余
+        {{ Math.max(queue.length - index, 0) }} · 已复习 {{ done }}</span
+      >
     </header>
 
     <div v-if="loading" class="card p-8 text-center text-sm text-ink-2">加载中…</div>
 
     <template v-else-if="current">
       <CardFaceView :face="current" :revealed="revealed" />
-      <button v-if="!revealed" class="btn-primary w-full py-3 text-base" @click="revealed = true">显示答案（空格）</button>
+      <button v-if="!revealed" class="btn-primary w-full py-3 text-base" @click="revealed = true">
+        显示答案（空格）
+      </button>
       <RatingBar v-else :preview="current.preview" @rate="rate" />
-      <p class="text-center text-xs text-ink-3">评分会交给 FSRS 安排下次复习；会后短测不影响这里的进度。</p>
+      <p class="text-center text-xs text-ink-3">
+        评分会交给 FSRS 安排下次复习；会后短测不影响这里的进度。
+      </p>
     </template>
 
     <div v-else class="card space-y-3 p-8 text-center">
-      <p class="text-lg font-semibold">{{ done ? `今天的复习完成了，共 ${done} 张。` : '这个设备上没有到期的卡片。' }}</p>
-      <p class="text-sm text-ink-2">卡片按归属端分配：只有归属于本设备（或"任意"）的卡片会出现在这里。可在词条详情或设置中调整。</p>
+      <p class="text-lg font-semibold">
+        {{ done ? `今天的复习完成了，共 ${done} 张。` : '这个设备上没有到期的卡片。' }}
+      </p>
+      <p class="text-sm text-ink-2">
+        卡片按归属端分配：只有归属于本设备（或"任意"）的卡片会出现在这里。可在词条详情或设置中调整。
+      </p>
       <ul v-if="forecast.length" class="mx-auto grid max-w-sm grid-cols-7 gap-1 text-xs">
-        <li v-for="d in forecast" :key="d.date" class="rounded-lg bg-paper-2 p-1"><span class="block text-ink-3">{{ d.date.slice(5) }}</span><span class="font-semibold">{{ d.count }}</span></li>
+        <li v-for="d in forecast" :key="d.date" class="rounded-lg bg-paper-2 p-1">
+          <span class="block text-ink-3">{{ d.date.slice(5) }}</span
+          ><span class="font-semibold">{{ d.count }}</span>
+        </li>
       </ul>
       <div class="flex justify-center gap-2">
         <RouterLink to="/inbox" class="btn-outline">去收件箱建卡</RouterLink>

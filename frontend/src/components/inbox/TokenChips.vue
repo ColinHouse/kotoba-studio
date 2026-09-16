@@ -19,7 +19,15 @@ export interface PickedTerm {
 const props = defineProps<{ analysis: Analysis; selectedStart?: number | null }>()
 const emit = defineEmits<{ pick: [term: PickedTerm] }>()
 
-interface Chip { key: string; text: string; token?: Token; span?: Span; content: boolean; status: KnownStatus | null; start: number }
+interface Chip {
+  key: string
+  text: string
+  token?: Token
+  span?: Span
+  content: boolean
+  status: KnownStatus | null
+  start: number
+}
 
 const chips = computed<Chip[]>(() => {
   const out: Chip[] = []
@@ -28,12 +36,26 @@ const chips = computed<Chip[]>(() => {
   for (let i = 0; i < tokens.length; i++) {
     const span = spanByStart.get(i)
     if (span) {
-      out.push({ key: `s${i}`, text: span.text, span, content: true, status: span.known_status, start: tokens[i]!.start })
+      out.push({
+        key: `s${i}`,
+        text: span.text,
+        span,
+        content: true,
+        status: span.known_status,
+        start: tokens[i]!.start,
+      })
       i = span.end_tok
       continue
     }
     const t = tokens[i]!
-    out.push({ key: `t${i}`, text: t.surface, token: t, content: t.is_content, status: t.known_status, start: t.start })
+    out.push({
+      key: `t${i}`,
+      text: t.surface,
+      token: t,
+      content: t.is_content,
+      status: t.known_status,
+      start: t.start,
+    })
   }
   return out
 })
@@ -98,7 +120,13 @@ function pick(c: Chip) {
       type="button"
       class="rounded-md px-1 transition"
       :class="[cls(c), c.content ? 'cursor-pointer' : 'cursor-default']"
-      :title="c.token ? `${c.token.base}（${c.token.reading_base}）${c.token.pos1}` : c.span ? `${c.span.matched_form}（${c.span.reading}）表达` : ''"
+      :title="
+        c.token
+          ? `${c.token.base}（${c.token.reading_base}）${c.token.pos1}`
+          : c.span
+            ? `${c.span.matched_form}（${c.span.reading}）表达`
+            : ''
+      "
       @click="pick(c)"
     >
       {{ c.text }}

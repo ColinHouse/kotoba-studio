@@ -70,7 +70,10 @@ function confirm() {
     span_end: props.picked.span_end,
     pos: props.picked.pos,
     jmdict_id: candidate.value?.id ?? null,
-    sense: zh || en ? { gloss_zh: zh || null, gloss_en: en || null, origin: zh ? 'user' : 'jmdict' } : null,
+    sense:
+      zh || en
+        ? { gloss_zh: zh || null, gloss_en: en || null, origin: zh ? 'user' : 'jmdict' }
+        : null,
     card_types: cardTypes.value,
   })
 }

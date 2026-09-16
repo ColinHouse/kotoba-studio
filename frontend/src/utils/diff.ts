@@ -1,5 +1,10 @@
 /** Answer-vs-expected diff, ported from vocab_test's highlight logic: split into CJK / kana / latin / punctuation runs. */
-export interface DiffPiece { text: string; ok: boolean; extra?: boolean; missing?: boolean }
+export interface DiffPiece {
+  text: string
+  ok: boolean
+  extra?: boolean
+  missing?: boolean
+}
 
 const TOKEN = /[一-鿿]+|[ぁ-ゖァ-ヶー]+|[\w]+|[^\w\s]/gu
 

@@ -140,7 +140,11 @@ function onKey(event: KeyboardEvent) {
               显示器 {{ d.index + 1 }} · {{ d.width }}×{{ d.height }}
             </option>
           </select>
-          <button class="btn-outline" :disabled="capture.busy.value === 'shot'" @click="capture.takeShot">
+          <button
+            class="btn-outline"
+            :disabled="capture.busy.value === 'shot'"
+            @click="capture.takeShot"
+          >
             {{
               capture.busy.value === 'shot'
                 ? '截取中…'
@@ -208,7 +212,10 @@ function onKey(event: KeyboardEvent) {
         <ManualPaste @submit="addManual" />
       </section>
 
-      <CapturedLines :lines="lines" :inbox-link="session ? `/inbox?session=${session.id}` : '/inbox'" />
+      <CapturedLines
+        :lines="lines"
+        :inbox-link="session ? `/inbox?session=${session.id}` : '/inbox'"
+      />
     </div>
   </div>
 </template>

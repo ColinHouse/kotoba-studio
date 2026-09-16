@@ -35,7 +35,10 @@ export default defineConfig({
           {
             urlPattern: /^\/media\//,
             handler: 'CacheFirst',
-            options: { cacheName: 'media', expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 } },
+            options: {
+              cacheName: 'media',
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
           },
         ],
       },

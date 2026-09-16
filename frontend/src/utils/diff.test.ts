@@ -3,7 +3,15 @@ import { diffAnswer, splitUnits } from './diff'
 
 describe('diff', () => {
   it('splits mixed text into units', () => {
-    expect(splitUnits('今日は俺が奢ってやるよ。')).toEqual(['今日', 'は', '俺', 'が', '奢', 'ってやるよ', '。'])
+    expect(splitUnits('今日は俺が奢ってやるよ。')).toEqual([
+      '今日',
+      'は',
+      '俺',
+      'が',
+      '奢',
+      'ってやるよ',
+      '。',
+    ])
   })
   it('marks wrong, missing and extra units', () => {
     const pieces = diffAnswer('おごる', 'おごって')

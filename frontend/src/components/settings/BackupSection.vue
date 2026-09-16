@@ -44,15 +44,16 @@ async function restore(backup: Backup) {
 </script>
 
 <template>
-  <SettingsSection
-    title="备份"
-    hint="备份保存在数据目录的 backups/ 下；恢复前会自动另存当前数据。"
-  >
+  <SettingsSection title="备份" hint="备份保存在数据目录的 backups/ 下；恢复前会自动另存当前数据。">
     <button class="btn-primary" :disabled="busy === 'create'" @click="create">
       立即备份（数据库 + 截图/音频）
     </button>
     <ul class="divide-y divide-line text-sm">
-      <li v-for="b in backups" :key="b.name" class="flex flex-wrap items-center justify-between gap-2 py-2">
+      <li
+        v-for="b in backups"
+        :key="b.name"
+        class="flex flex-wrap items-center justify-between gap-2 py-2"
+      >
         <span class="font-mono text-xs">
           {{ b.name }}
           <span class="text-ink-3">{{ fmtBytes(b.size) }} · {{ fmtDateTime(b.created_at) }}</span>
