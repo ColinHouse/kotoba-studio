@@ -96,6 +96,13 @@ def test_import_without_attribution_leaves_it_empty(client):
     assert entry["attribution"] is None
 
 
+def test_lookup_reports_the_source_dictionary(client):
+    upload(client, make_zip())
+    entry = client.get("/api/dict/lookup", params={"q": "水"}).json()["entries"][0]
+    assert entry["dict_title"] == "测试词典"
+    assert entry["dict_kind"] == "yomitan"
+
+
 def test_import_replaces_the_same_title(client):
     upload(client, make_zip())
     upload(

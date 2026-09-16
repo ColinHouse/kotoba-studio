@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import type { CardType, DictEntry } from '@/api/types'
 import type { PickedTerm } from './TokenChips.vue'
+import { senseOrigin } from '@/utils/dictionaries'
 import { CARD_TYPE_LABEL } from '@/utils/format'
 import { headwordFor } from '@/utils/headword'
 import { hasKanji } from '@/utils/kana'
@@ -82,7 +83,11 @@ function confirm() {
     jmdict_id: candidate.value?.id ?? null,
     sense:
       zh || en
-        ? { gloss_zh: zh || null, gloss_en: en || null, origin: zh ? 'user' : 'jmdict' }
+        ? {
+            gloss_zh: zh || null,
+            gloss_en: en || null,
+            origin: senseOrigin(candidate.value, !!zh),
+          }
         : null,
     card_types: cardTypes.value,
   })
@@ -172,7 +177,10 @@ function onKey(e: KeyboardEvent) {
           />
         </div>
         <div>
-          <label class="field-label" for="term-gloss-en">英文释义（词典）</label>
+          <label class="field-label" for="term-gloss-en">
+            词典释义
+            <span v-if="candidate" class="text-ink-35">· {{ candidate.dict_title }}</span>
+          </label>
           <input id="term-gloss-en" v-model="glossEn" class="input" />
         </div>
         <div>

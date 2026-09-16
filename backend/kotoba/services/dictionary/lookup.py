@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from kotoba.models import DictEntry, DictForm
+from kotoba.models import DictEntry, DictForm, Dictionary
 from kotoba.services.jp.tokenizer import Token
 
 
@@ -16,6 +16,8 @@ from kotoba.services.jp.tokenizer import Token
 class EntryDTO:
     id: str
     dict_id: int
+    dict_title: str
+    dict_kind: str
     kanji: list[str]
     kana: list[str]
     senses: list[dict]
@@ -42,10 +44,12 @@ class EntryDTO:
         return d
 
 
-def entry_to_dto(entry: DictEntry) -> EntryDTO:
+def entry_to_dto(entry: DictEntry, dictionary: Dictionary | None = None) -> EntryDTO:
     return EntryDTO(
         id=entry.ext_id,
         dict_id=entry.dict_id,
+        dict_title=dictionary.title if dictionary else "",
+        dict_kind=dictionary.kind if dictionary else "jmdict",
         kanji=[f.text for f in entry.forms if f.kind == "kanji"],
         kana=[f.text for f in entry.forms if f.kind == "kana"],
         senses=json.loads(entry.senses_json),
@@ -63,8 +67,9 @@ def lookup(db: Session, q: str, limit: int = 10) -> list[EntryDTO]:
     if not q:
         return []
     stmt = (
-        select(DictEntry)
+        select(DictEntry, Dictionary)
         .join(DictForm, DictForm.entry_id == DictEntry.id)
+        .join(Dictionary, Dictionary.id == DictEntry.dict_id)
         .where(DictForm.text == q)
         .options(selectinload(DictEntry.forms))
         .order_by(DictEntry.common.desc(), DictEntry.id)
@@ -72,11 +77,11 @@ def lookup(db: Session, q: str, limit: int = 10) -> list[EntryDTO]:
     )
     seen: set[int] = set()
     out: list[EntryDTO] = []
-    for entry in db.scalars(stmt).unique():
+    for entry, dictionary in db.execute(stmt).unique():
         if entry.id in seen:
             continue
         seen.add(entry.id)
-        out.append(entry_to_dto(entry))
+        out.append(entry_to_dto(entry, dictionary))
     return out
 
 

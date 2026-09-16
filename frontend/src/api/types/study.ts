@@ -17,6 +17,8 @@ export interface DictSense {
 export interface DictEntry {
   id: string
   dict_id: number
+  dict_title: string
+  dict_kind: string
   kanji: string[]
   kana: string[]
   senses: DictSense[]

@@ -7,6 +7,7 @@ import Furigana from '@/components/common/Furigana.vue'
 import ExplanationBlock from '@/components/review/ExplanationBlock.vue'
 import TrapBlock from '@/components/review/TrapBlock.vue'
 import { useAppStore } from '@/stores/app'
+import { originLabel } from '@/utils/dictionaries'
 import { CARD_TYPE_LABEL, humanInterval, STATUS_LABEL } from '@/utils/format'
 
 const props = defineProps<{ id: string }>()
@@ -105,13 +106,10 @@ function sentenceParts(enc: Encounter) {
           <span v-if="term.pos" class="text-[12px] text-ink-35">{{ term.pos }}</span>
         </div>
         <p v-if="term.senses.some((s) => s.gloss_en)" class="mt-1.5 mb-0 text-[13px] text-ink-50">
-          {{
-            term.senses
-              .map((s) => s.gloss_en)
-              .filter(Boolean)
-              .join('; ')
-          }}
-          <span class="text-[11px] text-ink-35">JMdict</span>
+          <template v-for="(s, i) in term.senses.filter((x) => x.gloss_en)" :key="s.id">
+            <span v-if="i" class="text-ink-35">; </span>{{ s.gloss_en }}
+            <span class="text-[11px] text-ink-35">{{ originLabel(s.origin) }}</span>
+          </template>
         </p>
       </div>
       <div class="shrink-0 md:text-right">
