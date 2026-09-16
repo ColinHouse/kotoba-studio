@@ -660,6 +660,7 @@ dependencies = [
     { name = "sqlalchemy" },
     { name = "unidic-lite" },
     { name = "uvicorn", extra = ["standard"] },
+    { name = "websockets" },
 ]
 
 [package.optional-dependencies]
@@ -704,6 +705,7 @@ requires-dist = [
     { name = "sqlalchemy", specifier = ">=2.0.40" },
     { name = "unidic-lite", specifier = ">=1.0.8" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.53" },
+    { name = "websockets", specifier = ">=14" },
     { name = "winocr", marker = "sys_platform == 'win32' and extra == 'windows'" },
 ]
 provides-extras = ["macos", "windows", "ocr-onnx", "dev"]
