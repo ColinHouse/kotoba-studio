@@ -133,3 +133,29 @@ def test_cost_estimate_uses_cache_hits():
     assert pricing.estimate_cost("deepseek-flash", usage) == pytest.approx(0.006)
     usage = pricing.Usage(prompt_tokens=1_000_000, completion_tokens=1_000_000, cache_hit_tokens=0)
     assert pricing.estimate_cost("deepseek-flash", usage) == pytest.approx(1.50)
+
+
+def test_api_key_sources_are_tried_in_order(monkeypatch, tmp_path):
+    """env var → .env → keyring. The keyring is the intended home; the other two
+    exist for headless setups, so they must not be silently ignored."""
+    from kotoba.core.config import get_settings
+    from kotoba.services.ai import keys
+
+    monkeypatch.setattr(keys, "KEYRING_SERVICE", "kotoba-studio-test")
+    monkeypatch.delenv(keys.ENV_KEY, raising=False)
+
+    env_file = tmp_path / ".env"
+    env_file.write_text("KOTOBA_AI_KEY=from-env-file\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    get_settings.cache_clear()
+    assert keys.get_api_key("deepseek") == ("from-env-file", "env file")
+
+    monkeypatch.setenv(keys.ENV_KEY, "from-real-env")
+    get_settings.cache_clear()
+    assert keys.get_api_key("deepseek") == ("from-real-env", "env")
+
+    monkeypatch.delenv(keys.ENV_KEY)
+    env_file.unlink()
+    get_settings.cache_clear()
+    assert keys.get_api_key("deepseek")[1] in ("keyring", "none")
+    get_settings.cache_clear()

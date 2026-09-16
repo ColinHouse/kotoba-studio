@@ -23,6 +23,9 @@ make help      # 全部命令
 手机访问：`cd backend && uv run python -m kotoba serve --host 0.0.0.0`，然后在设置页扫码。
 开发用 `make dev`（API 自动重载 + Vite 5174），提交前跑 `make check`。
 
+需要改数据目录、端口或接 DeepSeek 时：`cp .env.example .env`，里面列了全部环境变量。
+AI 密钥更推荐在 设置 → AI 解释 里填，会存进系统钥匙串而不是磁盘上的明文文件。
+
 开发时：`scripts/dev.sh` 同时启动后端（自动重载）与 Vite（端口 5174，代理 `/api` `/media` `/ws`）。
 
 首次使用：设置页安装 JMdict（约 25 MB）→ 作品页添加作品 → 开始会话 → 采集页截取预览、框选对话框 → ⌘/Ctrl+Enter 收藏 → 收件箱确认建卡 → 复习。

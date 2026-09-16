@@ -37,6 +37,11 @@ make migrate m="add x to y"   # create an Alembic revision
 
 `make check` is the contract. If you cannot run it, say so instead of guessing.
 
+Configuration is environment variables with a `KOTOBA_` prefix, all optional and all
+documented in [`.env.example`](.env.example); a `.env` at the repository root or in
+`backend/` is read, and real environment variables win over it. When you add a setting, add
+it to `Settings` in `core/config.py` **and** to `.env.example` in the same commit.
+
 ## 3. Layout
 
 | Path | Holds |

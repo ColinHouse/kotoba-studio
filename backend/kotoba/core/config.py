@@ -15,10 +15,25 @@ def default_data_dir() -> Path:
     return Path(platformdirs.user_data_dir("KotobaStudio", appauthor=False))
 
 
-class Settings(BaseSettings):
-    """Process-level settings. Override with KOTOBA_* environment variables."""
+# A .env is read from the repository root and from backend/, in that order, so
+# `make run` (which starts in backend/) and a bare `python -m kotoba` from the
+# root both pick one up. Real environment variables always win over the file.
+ENV_FILES = ("../.env", ".env")
 
-    model_config = SettingsConfigDict(env_prefix="KOTOBA_", extra="ignore")
+
+class Settings(BaseSettings):
+    """Process-level settings.
+
+    Every field maps to a ``KOTOBA_``-prefixed environment variable, which may
+    also be set in a ``.env`` file — see ``.env.example`` for the full list.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="KOTOBA_",
+        env_file=ENV_FILES,
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     data_dir: Path = Field(default_factory=default_data_dir)
     host: str = "127.0.0.1"

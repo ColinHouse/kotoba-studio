@@ -21,7 +21,7 @@ jobs:
         run: |
           bad=$(git ls-files | grep -E \
             '^data/|(^|/)\.venv/|(^|/)node_modules/|^frontend/(dist|dev-dist)/|\.db(-wal|-shm)?$|\.apkg$|^\.env' \
-            || true)
+            | grep -v '^\.env\.example$' || true)
           if [ -n "$bad" ]; then
             echo "::error::these files must not be tracked:"; echo "$bad"; exit 1
           fi
