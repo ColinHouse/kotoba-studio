@@ -15,10 +15,16 @@ def default_data_dir() -> Path:
     return Path(platformdirs.user_data_dir("KotobaStudio", appauthor=False))
 
 
-# A .env is read from the repository root and from backend/, in that order, so
-# `make run` (which starts in backend/) and a bare `python -m kotoba` from the
-# root both pick one up. Real environment variables always win over the file.
-ENV_FILES = ("../.env", ".env")
+def _env_files() -> tuple[Path, ...]:
+    """Where a .env may live, lowest precedence first.
+
+    Anchored to the package rather than the working directory: a relative
+    "../.env" would resolve outside the repository when the server is started
+    from the repository root. The working directory is still consulted last, so
+    an explicit local file wins. Real environment variables beat all of them.
+    """
+    backend_dir = Path(__file__).resolve().parents[2]
+    return (backend_dir.parent / ".env", backend_dir / ".env", Path(".env"))
 
 
 class Settings(BaseSettings):
@@ -30,7 +36,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="KOTOBA_",
-        env_file=ENV_FILES,
+        env_file=_env_files(),
         env_file_encoding="utf-8",
         extra="ignore",
     )
