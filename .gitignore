@@ -14,7 +14,7 @@ web/dev-dist/
 *.tsbuildinfo
 
 # App data (never commit user data, media, dictionaries or backups)
-data/
+/data/
 *.db
 *.db-wal
 *.db-shm
