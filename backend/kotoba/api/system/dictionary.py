@@ -9,14 +9,19 @@ from sqlalchemy.orm import Session
 
 from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
-from kotoba.services.dictionary import jmdict, lookup, yomitan
+from kotoba.services.dictionary import jmdict, lookup, pitch, yomitan
 
 router = APIRouter(prefix="/dict", tags=["dictionary"])
 
 
 @router.get("/status")
 def dict_status(db: Session = Depends(get_db)) -> dict:
-    return {**jmdict.status(db), "install": jmdict.install_job.snapshot()}
+    return {
+        **jmdict.status(db),
+        "install": jmdict.install_job.snapshot(),
+        "pitch": pitch.install_job.snapshot(),
+        "has_pitch": pitch.has_any(db),
+    }
 
 
 @router.get("/lookup")
@@ -30,6 +35,12 @@ def dict_lookup(
 def install_jmdict(request: Request, url: str | None = None) -> dict:
     started = jmdict.install_job.start(request.app.state.db.session, request.app.state.paths, url)
     return {"started": started, **jmdict.install_job.snapshot()}
+
+
+@router.post("/pitch/install", status_code=202)
+def install_pitch(request: Request, url: str | None = None) -> dict:
+    started = pitch.install_job.start(request.app.state.db.session, request.app.state.paths, url)
+    return {"started": started, **pitch.install_job.snapshot()}
 
 
 @router.post("/yomitan/import")
