@@ -18,6 +18,40 @@ def _has_frequency(db: Session) -> bool:
     return db.scalar(select(TermFrequency.id).limit(1)) is not None
 
 
+def unknown_top(db: Session, source_id: int, limit: int = 50) -> list[dict]:
+    """Unknown words of the work, most worth learning first (rank, then count)."""
+    counts = (
+        select(Encounter.term_id.label("term_id"), func.count(Encounter.id).label("count"))
+        .join(Line, Line.id == Encounter.line_id)
+        .where(Line.source_id == source_id)
+        .group_by(Encounter.term_id)
+        .subquery()
+    )
+    rank = (
+        select(func.min(TermFrequency.rank))
+        .where(TermFrequency.headword == Term.headword)
+        .correlate(Term)
+        .scalar_subquery()
+    )
+    rows = db.execute(
+        select(Term, counts.c.count, rank.label("rank"))
+        .join(counts, counts.c.term_id == Term.id)
+        .where(Term.known_status != "known")
+        .order_by(rank.is_(None), rank.asc(), counts.c.count.desc(), Term.id)
+        .limit(limit)
+    ).all()
+    return [
+        {
+            "term_id": term.id,
+            "headword": term.headword,
+            "reading": term.reading,
+            "rank": int(rank) if rank is not None else None,
+            "count": int(count),
+        }
+        for term, count, rank in rows
+    ]
+
+
 def coverage(db: Session, source_id: int, limit: int = 50) -> dict:
     row = db.execute(
         select(
@@ -41,27 +75,6 @@ def coverage(db: Session, source_id: int, limit: int = 50) -> dict:
         or 0
     )
 
-    counts = (
-        select(Encounter.term_id.label("term_id"), func.count(Encounter.id).label("count"))
-        .join(Line, Line.id == Encounter.line_id)
-        .where(Line.source_id == source_id)
-        .group_by(Encounter.term_id)
-        .subquery()
-    )
-    rank = (
-        select(func.min(TermFrequency.rank))
-        .where(TermFrequency.headword == Term.headword)
-        .correlate(Term)
-        .scalar_subquery()
-    )
-    rows = db.execute(
-        select(Term, counts.c.count, rank.label("rank"))
-        .join(counts, counts.c.term_id == Term.id)
-        .where(Term.known_status != "known")
-        .order_by(rank.is_(None), rank.asc(), counts.c.count.desc(), Term.id)
-        .limit(limit)
-    ).all()
-
     return {
         "total_tokens": total_tokens,
         "distinct_terms": distinct_terms,
@@ -70,14 +83,5 @@ def coverage(db: Session, source_id: int, limit: int = 50) -> dict:
         "coverage": known_tokens / total_tokens if total_tokens else 0.0,
         "distinct_coverage": known_terms / distinct_terms if distinct_terms else 0.0,
         "has_frequency": _has_frequency(db),
-        "unknown_top": [
-            {
-                "term_id": term.id,
-                "headword": term.headword,
-                "reading": term.reading,
-                "rank": int(rank) if rank is not None else None,
-                "count": int(count),
-            }
-            for term, count, rank in rows
-        ],
+        "unknown_top": unknown_top(db, source_id, limit),
     }

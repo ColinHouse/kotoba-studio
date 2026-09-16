@@ -20,6 +20,29 @@ def default_owner(db: Session) -> str:
     return "mobile" if has_mobile else "desktop"
 
 
+def ensure_card(
+    db: Session,
+    term_id: int,
+    card_type: str,
+    encounter_id: int | None,
+    owner: str,
+) -> tuple[Card, bool]:
+    """Find or create one card; returns (card, was_created). Encounter may be None."""
+    card = db.scalar(select(Card).where(Card.term_id == term_id, Card.card_type == card_type))
+    if card is not None:
+        if encounter_id is not None and card.primary_encounter_id is None:
+            card.primary_encounter_id = encounter_id
+        return card, False
+    card = Card(
+        term_id=term_id,
+        card_type=card_type,
+        primary_encounter_id=encounter_id,
+        review_owner=owner,
+    )
+    db.add(card)
+    return card, True
+
+
 def create_cards(
     db: Session, encounter_id: int, card_types: list[str], owner: str | None = None
 ) -> list[Card]:
@@ -32,19 +55,7 @@ def create_cards(
     owner = owner or default_owner(db)
     cards: list[Card] = []
     for card_type in dict.fromkeys(card_types):
-        card = db.scalar(
-            select(Card).where(Card.term_id == enc.term_id, Card.card_type == card_type)
-        )
-        if card is None:
-            card = Card(
-                term_id=enc.term_id,
-                card_type=card_type,
-                primary_encounter_id=enc.id,
-                review_owner=owner,
-            )
-            db.add(card)
-        elif card.primary_encounter_id is None:
-            card.primary_encounter_id = enc.id
+        card, _ = ensure_card(db, enc.term_id, card_type, enc.id, owner)
         cards.append(card)
     term = db.get(Term, enc.term_id)
     if term is not None and term.known_status == "unknown":

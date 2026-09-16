@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -13,6 +14,7 @@ from kotoba.core.errors import ApiError
 from kotoba.models import Encounter, Line, Source, Term
 from kotoba.schemas import SourceCreate, SourceDTO, SourceUpdate
 from kotoba.services.learning import coverage as coverage_service
+from kotoba.services.learning import prestudy as prestudy_service
 
 router = APIRouter(prefix="/sources", tags=["sources"])
 
@@ -74,6 +76,20 @@ def get_source(source_id: int, db: Session = Depends(get_db)) -> SourceDTO:
 def source_coverage(source_id: int, limit: int = 50, db: Session = Depends(get_db)) -> dict:
     get_source_or_404(db, source_id)
     return coverage_service.coverage(db, source_id, limit=limit)
+
+
+class PrestudyIn(BaseModel):
+    limit: int = 100
+
+
+@router.post("/{source_id}/prestudy")
+def start_prestudy(
+    source_id: int, body: PrestudyIn | None = None, db: Session = Depends(get_db)
+) -> dict:
+    get_source_or_404(db, source_id)
+    result = prestudy_service.build(db, source_id, (body or PrestudyIn()).limit)
+    db.commit()
+    return result
 
 
 @router.patch("/{source_id}")
