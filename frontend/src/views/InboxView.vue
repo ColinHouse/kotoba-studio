@@ -2,7 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { api, mediaUrl } from '@/api/client'
-import type { Encounter, Explanation, Line, Term } from '@/api/types'
+import type { DictStatus, Encounter, Explanation, Line, Term } from '@/api/types'
+import FrequencyOrder from '@/components/inbox/FrequencyOrder.vue'
 import InboxLineList from '@/components/inbox/InboxLineList.vue'
 import TermEditor, { type ConfirmPayload } from '@/components/inbox/TermEditor.vue'
 import TokenChips, { type PickedTerm } from '@/components/inbox/TokenChips.vue'
@@ -18,6 +19,7 @@ const picked = ref<PickedTerm | null>(null)
 const lastResult = ref<{ term: Term; encounter: Encounter } | null>(null)
 const busy = ref(false)
 const explaining = ref(false)
+const hasFrequencies = ref(false)
 /** 手机上列表与整理是同一层级的两屏，返回即回列表。 */
 const showDetailOnMobile = ref(false)
 
@@ -28,6 +30,10 @@ const FILTERS: { value: LineStatus; label: string }[] = [
 ]
 
 onMounted(async () => {
+  api
+    .get<DictStatus>('/api/dict/status')
+    .then((status) => (hasFrequencies.value = status.has_frequencies))
+    .catch(() => undefined)
   try {
     const preferred = typeof route.query.session === 'string' ? route.query.session : null
     await inbox.loadSessions(preferred)
@@ -197,6 +203,13 @@ const emptyHint = computed(() =>
                 >{{ c.form }} ← {{ c.full }}</span
               >
             </div>
+
+            <FrequencyOrder
+              v-if="hasFrequencies && inbox.analysis.value"
+              :tokens="inbox.analysis.value.tokens"
+              class="mt-4"
+              @pick="picked = $event"
+            />
 
             <div class="mt-4 flex gap-4">
               <button class="btn-quiet" @click="inbox.setStatus(inbox.selected.value, 'discarded')">

@@ -35,6 +35,7 @@ export interface ConnectInfo {
 export interface DictStatus {
   installed: boolean
   has_pitch: boolean
+  has_frequencies: boolean
   dictionaries: {
     id: number
     title: string

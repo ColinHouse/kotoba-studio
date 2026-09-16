@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from kotoba.models import Encounter, Line, Term
 from kotoba.services.dictionary import lookup
+from kotoba.services.dictionary.yomitan import frequency
 from kotoba.services.jp import contractions, expressions
 from kotoba.services.jp.tokenizer import tokenize
 
@@ -68,6 +69,15 @@ def attach_learner_state(db: Session, analysis: dict) -> dict:
         if s["matched_form"] not in keys:
             keys.append(s["matched_form"])
     state = _term_state(db, keys)
+    ranks = frequency.ranks_for(
+        db,
+        [
+            (t["base"] or t["lemma"] or t["surface"], t["reading_base"] or t["reading"])
+            for t in analysis["tokens"]
+        ],
+    )
+    for t, rank in zip(analysis["tokens"], ranks, strict=True):
+        t["frequency_rank"] = rank
     for t in analysis["tokens"]:
         hit = state.get(t["base"]) or state.get(t["lemma"]) or state.get(t["surface"])
         t["term_id"] = hit["term_id"] if hit else None

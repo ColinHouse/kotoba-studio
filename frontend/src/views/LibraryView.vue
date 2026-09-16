@@ -2,15 +2,18 @@
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { api } from '@/api/client'
-import type { KnownStatus, Term } from '@/api/types'
+import type { DictStatus, KnownStatus, Term } from '@/api/types'
 import Furigana from '@/components/common/Furigana.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useAppStore } from '@/stores/app'
+import { frequencyBand } from '@/utils/frequency'
 
 const app = useAppStore()
 const route = useRoute()
 const q = ref('')
 const status = ref<KnownStatus | ''>('')
+const sort = ref<'recent' | 'frequency'>('recent')
+const hasFrequencies = ref(false)
 const terms = ref<Term[]>([])
 const counts = ref<Record<string, number>>({})
 const loading = ref(false)
@@ -23,12 +26,18 @@ const FILTERS: { value: KnownStatus | ''; label: string }[] = [
   { value: 'known', label: '已掌握' },
 ]
 
+const SORTS: { value: 'recent' | 'frequency'; label: string }[] = [
+  { value: 'recent', label: '最近' },
+  { value: 'frequency', label: '按频率' },
+]
+
 async function load() {
   loading.value = true
   try {
     const params = new URLSearchParams({ limit: '200' })
     if (q.value.trim()) params.set('q', q.value.trim())
     if (status.value) params.set('status', status.value)
+    if (sort.value === 'frequency') params.set('sort', 'frequency')
     const source = route.query.source
     if (typeof source === 'string') params.set('source_id', source)
     terms.value = await api.get<Term[]>(`/api/terms?${params}`)
@@ -45,8 +54,15 @@ async function load() {
     loading.value = false
   }
 }
-onMounted(load)
-watch([q, status], () => {
+onMounted(async () => {
+  try {
+    hasFrequencies.value = (await api.get<DictStatus>('/api/dict/status')).has_frequencies
+  } catch {
+    /* the sort control simply stays unavailable */
+  }
+  await load()
+})
+watch([q, status, sort], () => {
   window.clearTimeout(timer)
   timer = window.setTimeout(load, 200)
 })
@@ -95,6 +111,21 @@ const glossOf = (t: Term) =>
             {{ f.label }}<span v-if="counts[f.value]" class="num"> {{ counts[f.value] }}</span>
           </button>
         </div>
+        <div v-if="hasFrequencies" class="seg">
+          <button
+            v-for="s in SORTS"
+            :key="s.value"
+            type="button"
+            class="seg-opt"
+            :aria-pressed="sort === s.value"
+            @click="sort = s.value"
+          >
+            {{ s.label }}
+          </button>
+        </div>
+        <span v-else class="text-[11px] text-ink-35" title="在设置页导入 Yomitan 频率词典后可用">
+          频率排序需先导入频率词典
+        </span>
       </div>
     </header>
 
@@ -129,9 +160,15 @@ const glossOf = (t: Term) =>
           <span class="num w-[96px] shrink-0 text-[11px] text-ink-35 md:text-right">
             {{ t.encounter_count }} 次 · {{ t.source_count }} 部
           </span>
-          <span class="flex w-[120px] shrink-0 justify-end gap-1.5">
+          <span class="flex w-[184px] shrink-0 items-center justify-end gap-1.5">
             <span v-if="t.trap" class="tag tag-warn">同形</span>
             <span v-else-if="seenAgain(t)" class="tag tag-fact">再见词</span>
+            <span
+              v-if="hasFrequencies"
+              class="tag tag-state"
+              :class="frequencyBand(t.frequency_rank).className"
+              >{{ frequencyBand(t.frequency_rank).label }}</span
+            >
             <StatusBadge :status="t.known_status" />
           </span>
         </RouterLink>

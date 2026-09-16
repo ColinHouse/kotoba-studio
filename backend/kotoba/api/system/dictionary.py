@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.services.dictionary import jmdict, lookup, pitch, yomitan
+from kotoba.services.dictionary.yomitan import frequency
 
 router = APIRouter(prefix="/dict", tags=["dictionary"])
 
@@ -21,6 +22,7 @@ def dict_status(db: Session = Depends(get_db)) -> dict:
         "install": jmdict.install_job.snapshot(),
         "pitch": pitch.install_job.snapshot(),
         "has_pitch": pitch.has_any(db),
+        "has_frequencies": frequency.has_any(db),
     }
 
 
