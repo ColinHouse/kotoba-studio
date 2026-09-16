@@ -16,7 +16,7 @@ ENTRIES = [
 ]
 
 
-def make_zip(title: str, entries: list) -> bytes:
+def make_zip(title: str, entries: list, *, extra_banks: tuple = ()) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         zf.writestr(
@@ -24,6 +24,12 @@ def make_zip(title: str, entries: list) -> bytes:
             json.dumps({"title": title, "format": 3, "attribution": "CC BY-SA 4.0"}),
         )
         zf.writestr("term_meta_bank_1.json", json.dumps(entries))
+        # A str bank is written verbatim, so a test can supply a truncated file.
+        for i, bank in enumerate(extra_banks, start=2):
+            zf.writestr(
+                f"term_meta_bank_{i}.json",
+                bank if isinstance(bank, str) else json.dumps(bank),
+            )
     return buf.getvalue()
 
 
@@ -117,3 +123,26 @@ def test_term_banks_still_dispatch_to_the_term_importer(client):
         zf.writestr("term_bank_1.json", json.dumps([["水", "みず", "n", "", 0, ["water"], 5, []]]))
     body = upload(client, buf.getvalue()).json()
     assert body["kind"] == "terms" and body["entries"] == 1
+
+
+def test_a_truncated_bank_leaves_no_half_imported_table(client):
+    """Batches commit as they go, so a failure must undo what it already wrote.
+
+    The first bank has to exceed BATCH, or the failure lands before anything is
+    committed and the bug this guards against cannot reproduce.
+    """
+    from kotoba.services.dictionary.yomitan.frequency import BATCH
+
+    big = [[f"語{i}", "freq", i + 1] for i in range(BATCH + 500)]
+    response = upload(client, make_zip("大频率表", big, extra_banks=("{truncated",)))
+    assert response.status_code >= 400
+    assert response.json()["error"]["code"] == "bad_dictionary"
+
+    db = client.app.state.db.session()
+    try:
+        assert (
+            db.scalars(select(Dictionary).where(Dictionary.kind == "yomitan-freq")).first() is None
+        )
+        assert db.scalar(select(func.count(TermFrequency.id))) == 0
+    finally:
+        db.close()
