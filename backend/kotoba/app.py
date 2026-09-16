@@ -18,6 +18,7 @@ from kotoba.api import build_api_router, build_websocket_router
 from kotoba.core.config import Settings, get_settings, paths
 from kotoba.core.db import Database, make_engine, upgrade
 from kotoba.core.errors import install_error_handlers
+from kotoba.services import overlay as overlay_service
 from kotoba.services import settings_store
 from kotoba.services.capture.buffer import MediaBuffer
 from kotoba.services.capture.clipboard import ClipboardWatcher
@@ -51,17 +52,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 lambda: getattr(app.state, "region_watcher", None),
             )
         )
+        app.state.overlay = overlay_service.OverlayController(lambda: app.state.db.session())
+        app.state.overlay_hotkey = HotkeyListener(app.state.overlay.toggle)
         db = app.state.db.session()
         try:
             if settings_store.get(db, "capture_hotkey_enabled"):
                 app.state.hotkey_listener.start(
                     settings_store.get(db, "capture_hotkey") or DEFAULT_HOTKEY
                 )
+            if settings_store.get(db, "overlay_enabled"):
+                app.state.overlay.start()
+                app.state.overlay_hotkey.start(
+                    settings_store.get(db, "overlay_hotkey") or overlay_service.DEFAULT_HOTKEY
+                )
         finally:
             db.close()
         try:
             yield
         finally:
+            app.state.overlay_hotkey.stop()
+            app.state.overlay.stop()
             app.state.hotkey_listener.stop()
             watcher = app.state.region_watcher
             if watcher is not None:

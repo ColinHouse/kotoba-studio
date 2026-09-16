@@ -52,6 +52,13 @@ def put_settings(body: dict[str, Any], db: Session = Depends(get_db)) -> dict[st
         except ValueError as exc:
             raise ApiError("invalid_value", f"快捷键无效：{exc}") from exc
         body["capture_hotkey"] = hotkey
+    if "overlay_hotkey" in body:
+        hotkey = str(body["overlay_hotkey"]).strip()
+        try:
+            hotkeys.normalize_hotkey(hotkey)
+        except ValueError as exc:
+            raise ApiError("invalid_value", f"覆盖层快捷键无效：{exc}") from exc
+        body["overlay_hotkey"] = hotkey
     if "backfill_tolerance_s" in body:
         value = float(body["backfill_tolerance_s"])
         if not 0 <= value <= 120:

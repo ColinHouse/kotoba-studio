@@ -137,3 +137,13 @@ export interface HotkeyStatus {
   last_error: string | null
   last_captured_at: string | null
 }
+
+export interface OverlayStatus {
+  available: boolean
+  note: string | null
+  running: boolean
+  visible: boolean
+  last_error: string | null
+  hotkey: string | null
+  hotkey_running: boolean
+}

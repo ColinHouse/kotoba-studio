@@ -140,6 +140,8 @@ Windows 用 `make package-windows ARGS="--installer"` 打出安装包（PyInstal
 - Windows：内置 OCR 需要日语语言包（`Add-WindowsCapability -Online -Name Language.OCR~~~ja-JP~0.0.1.0`），
   该路径已在 Windows 11 真机验证；没有语言包时自动回退到 RapidOCR（安装 `--extra ocr-onnx`）。
   全局快捷键（默认 `Ctrl+Shift+S`，设置页可改）也已在 Windows 11 真机验证。
+- 游戏内覆盖层：Windows 下窗口化/无边框窗口可用（独占全屏显示不出来），默认 `Ctrl+Shift+O`
+  呼出或隐藏；面板显示当前句分词，点词看释义、可直接收藏。
 - 行尾：仓库用 `.gitattributes` 在所有平台检出 LF；早于该文件的旧检出如果 `format:check` 全红，
   在无未提交改动时运行 `git read-tree --reset -u HEAD` 重新检出即可，不必重新 clone。
 - Hook 工具（Textractor / Agent / LunaTranslator）可把文本发送到 `ws://<host>:8720/ws/hook`（纯文本或 `{"text": "..."}`）。
