@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #faf7f1;
+  --color-paper-2: #f2ecdf;
+  --color-ink: #2b2a28;
+  --color-ink-2: #6b665c;
+  --color-ink-3: #a29b8d;
+  --color-line: #e4dccb;
+  --color-accent: #d9773b;
+  --color-accent-2: #b5541c;
+  --color-matcha: #6b8f4e;
+  --color-plum: #8c5a7a;
+  --color-sky: #4f7fa8;
+  --font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --font-jp: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif;
+}
+
+html, body { background: var(--color-paper); color: var(--color-ink); }
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+.jp { font-family: var(--font-jp); }
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-1 rounded-xl px-3 py-2 text-sm font-medium transition;
+  @apply active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none;
+}
+@utility card {
+  @apply rounded-2xl border border-line bg-white/70;
+  box-shadow: 0 2px 10px rgba(60, 40, 20, 0.05);
+}
+@utility input {
+  @apply w-full rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none focus:border-accent;
+}
+@utility chip {
+  @apply inline-flex items-center rounded-lg px-2 py-1 text-sm leading-tight;
+}
+@utility label {
+  @apply text-xs font-semibold uppercase tracking-wide text-ink-3;
+}
+
+@layer components {
+  .btn-primary { @apply btn bg-accent text-white hover:bg-accent-2; }
+  .btn-ghost { @apply btn bg-paper-2 text-ink hover:bg-line; }
+  .btn-outline { @apply btn border border-line bg-white/60 text-ink hover:bg-paper-2; }
+}

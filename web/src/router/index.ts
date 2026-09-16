@@ -1,0 +1,16 @@
+import { createRouter, createWebHistory } from 'vue-router'
+
+export const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', name: 'dashboard', component: () => import('@/views/DashboardView.vue') },
+    { path: '/sources', name: 'sources', component: () => import('@/views/SourcesView.vue') },
+    { path: '/capture', name: 'capture', component: () => import('@/views/CaptureView.vue') },
+    { path: '/inbox', name: 'inbox', component: () => import('@/views/InboxView.vue') },
+    { path: '/review', name: 'review', component: () => import('@/views/ReviewView.vue') },
+    { path: '/quiz/:sessionId', name: 'quiz', component: () => import('@/views/QuizView.vue'), props: true },
+    { path: '/library', name: 'library', component: () => import('@/views/LibraryView.vue') },
+    { path: '/terms/:id', name: 'term', component: () => import('@/views/TermDetailView.vue'), props: true },
+    { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
+  ],
+})
