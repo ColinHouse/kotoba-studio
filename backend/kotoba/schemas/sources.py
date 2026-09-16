@@ -33,9 +33,12 @@ class SourceDTO(BaseModel):
     created_at: datetime
     line_count: int = 0
     term_count: int = 0
+    known_term_count: int = 0
 
     @classmethod
-    def from_model(cls, s: Source, line_count: int = 0, term_count: int = 0) -> SourceDTO:
+    def from_model(
+        cls, s: Source, line_count: int = 0, term_count: int = 0, known_term_count: int = 0
+    ) -> SourceDTO:
         return cls(
             id=s.id,
             title=s.title,
@@ -45,6 +48,7 @@ class SourceDTO(BaseModel):
             created_at=s.created_at,
             line_count=line_count,
             term_count=term_count,
+            known_term_count=known_term_count,
         )
 
 

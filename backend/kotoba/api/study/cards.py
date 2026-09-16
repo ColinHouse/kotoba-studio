@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Literal
 
 from fastapi import APIRouter, Depends
@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
-from kotoba.models import Card
+from kotoba.models import Card, ReviewLog
 from kotoba.services import learning
 
 router = APIRouter(prefix="/cards", tags=["cards"])
@@ -52,6 +52,26 @@ def list_cards(
     return [learning.card_to_dict(c) for c in db.scalars(stmt).all()]
 
 
+def review_streak(db: Session, today: date | None = None) -> int:
+    """Consecutive days ending today (or yesterday, if today has no review yet)
+    on which at least one scheduled review happened."""
+    today = today or datetime.now(UTC).date()
+    days = {
+        d.date()
+        for (d,) in db.execute(
+            select(ReviewLog.reviewed_at).where(ReviewLog.mode == "scheduled")
+        ).all()
+    }
+    if not days:
+        return 0
+    cursor = today if today in days else today - timedelta(days=1)
+    streak = 0
+    while cursor in days:
+        streak += 1
+        cursor -= timedelta(days=1)
+    return streak
+
+
 @router.get("/stats")
 def card_stats(db: Session = Depends(get_db)) -> dict:
     now = datetime.now(UTC)
@@ -75,6 +95,7 @@ def card_stats(db: Session = Depends(get_db)) -> dict:
         "total": total,
         "new": new,
         "due_now": due,
+        "streak_days": review_streak(db),
         "by_owner": by_owner,
         "by_state": {str(k): v for k, v in by_state.items()},
     }

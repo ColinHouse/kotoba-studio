@@ -141,3 +141,37 @@ def test_settings_validation(client):
     assert (
         client.put("/api/settings", json={"nope": 1}).json()["error"]["code"] == "unknown_setting"
     )
+
+
+def test_stats_reports_the_review_streak(client, db):
+    from datetime import UTC, date, datetime, timedelta
+
+    from kotoba.api.study.cards import review_streak
+    from kotoba.models import ReviewLog
+
+    card_id = _card(client)[0]["id"]
+    assert client.get("/api/cards/stats").json()["streak_days"] == 0
+
+    today = date(2026, 9, 16)
+    for offset in (0, 1, 2, 5):  # a three-day run, then a gap
+        db.add(
+            ReviewLog(
+                card_id=card_id,
+                rating=3,
+                mode="scheduled",
+                reviewed_at=datetime(2026, 9, 16, 9, tzinfo=UTC) - timedelta(days=offset),
+            )
+        )
+    # a quiz answer must not extend the streak
+    db.add(
+        ReviewLog(
+            card_id=card_id,
+            rating=3,
+            mode="session_quiz",
+            reviewed_at=datetime(2026, 9, 13, 9, tzinfo=UTC),
+        )
+    )
+    db.commit()
+    assert review_streak(db, today) == 3
+    assert review_streak(db, today + timedelta(days=1)) == 3  # counts back from yesterday
+    assert review_streak(db, today + timedelta(days=2)) == 0

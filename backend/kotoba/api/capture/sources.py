@@ -10,23 +10,31 @@ from sqlalchemy.orm import Session
 
 from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
-from kotoba.models import Encounter, Line, Source
+from kotoba.models import Encounter, Line, Source, Term
 from kotoba.schemas import SourceCreate, SourceDTO, SourceUpdate
 
 router = APIRouter(prefix="/sources", tags=["sources"])
 
 
-def _counts(db: Session, source_id: int) -> tuple[int, int]:
+def _counts(db: Session, source_id: int) -> tuple[int, int, int]:
+    """(lines, distinct terms met here, of which already mastered)."""
     lines = db.scalar(select(func.count(Line.id)).where(Line.source_id == source_id)) or 0
-    terms = (
+    met = (
+        select(func.distinct(Encounter.term_id))
+        .join(Line, Line.id == Encounter.line_id)
+        .where(Line.source_id == source_id)
+        .subquery()
+    )
+    terms = db.scalar(select(func.count()).select_from(met)) or 0
+    known = (
         db.scalar(
-            select(func.count(func.distinct(Encounter.term_id)))
-            .join(Line, Line.id == Encounter.line_id)
-            .where(Line.source_id == source_id)
+            select(func.count(Term.id)).where(
+                Term.id.in_(select(met.c[0])), Term.known_status == "known"
+            )
         )
         or 0
     )
-    return lines, terms
+    return lines, terms, known
 
 
 def get_source_or_404(db: Session, source_id: int) -> Source:

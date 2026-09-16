@@ -13,6 +13,7 @@ def test_source_crud(client):
     )
     assert r.json()["region"] == {"left": 1, "top": 2, "width": 3, "height": 4}
     assert client.get("/api/sources").json()[0]["title"] == "Summer Pockets"
+    assert client.get(f"/api/sources/{sid}").json()["known_term_count"] == 0
     assert client.delete(f"/api/sources/{sid}").status_code == 204
     assert client.get(f"/api/sources/{sid}").status_code == 404
 
