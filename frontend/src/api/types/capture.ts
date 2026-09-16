@@ -72,6 +72,13 @@ export interface Provider {
   recommended: boolean
 }
 
+export interface CompareResult {
+  provider: string
+  text: string
+  ms: number
+  error: string | null
+}
+
 export interface Display {
   index: number
   left: number
