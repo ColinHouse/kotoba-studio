@@ -89,7 +89,9 @@ function active(to: string) {
 
       <main class="flex-1">
         <div class="mx-auto w-full page-shell">
-          <RouterView />
+          <RouterView v-slot="{ Component }">
+            <component :is="Component" :key="route.path" class="page-enter" />
+          </RouterView>
         </div>
       </main>
 
@@ -118,18 +120,20 @@ function active(to: string) {
     <div
       class="pointer-events-none fixed inset-x-0 top-3 z-50 flex flex-col items-center gap-2 px-4"
     >
-      <p
-        v-for="t in app.toasts"
-        :key="t.id"
-        class="pointer-events-auto m-0 rounded-ui border px-4 py-2 text-[13px] shadow-[var(--shadow)]"
-        :class="
-          t.kind === 'error'
-            ? 'border-accent bg-accent-100 text-gold'
-            : 'border-divider bg-paper text-ink'
-        "
-      >
-        {{ t.text }}
-      </p>
+      <TransitionGroup name="rise">
+        <p
+          v-for="t in app.toasts"
+          :key="t.id"
+          class="pointer-events-auto m-0 rounded-ui border px-4 py-2 text-[13px] shadow-[var(--shadow)]"
+          :class="
+            t.kind === 'error'
+              ? 'border-accent bg-accent-100 text-gold'
+              : 'border-divider bg-paper text-ink'
+          "
+        >
+          {{ t.text }}
+        </p>
+      </TransitionGroup>
     </div>
   </div>
 </template>

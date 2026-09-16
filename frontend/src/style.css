@@ -37,6 +37,18 @@
   --mobile-pad: 20px;
   --tab-bar-h: 62px;
 
+  /* Motion — 纸不会弹跳.
+     取自 MUJI／Aesop 的动效性格（淡入为主、位移极小、绝不回弹），但时长按
+     「每天用几小时的工具」缩放：营销页可以 600ms 慢慢化开，这里要脆。
+     位移预算 8px 封顶——墨是"显出来"的，不是飞进来的。 */
+  --mo-quick: 120ms; /* 指下反馈：hover、按下 */
+  --mo-base: 200ms; /* 状态变化、列表增删 */
+  --mo-slow: 320ms; /* 视图切换、抽屉 */
+  --mo-reveal: 420ms; /* 揭晓——全应用唯一一个刻意放慢的节拍 */
+  --ease-paper: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --rise: 6px;
+
   color-scheme: light;
 }
 
@@ -161,6 +173,7 @@ rt {
 @utility framed {
   border: 1px solid var(--divider);
   border-radius: var(--radius-ui);
+  transition: border-color var(--mo-base) var(--ease-soft);
 }
 
 /* 第三层：一屏最多一处——复习卡、词条编辑器、选中的句子。 */
@@ -212,7 +225,10 @@ rt {
   background: transparent;
   color: var(--ink);
   cursor: pointer;
-  transition: background 0.12s ease;
+  transition:
+    background var(--mo-quick) var(--ease-soft),
+    border-color var(--mo-quick) var(--ease-soft),
+    color var(--mo-quick) var(--ease-soft);
   white-space: nowrap;
 }
 @utility btn-primary {
@@ -302,6 +318,11 @@ rt {
   color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
+.seg-opt {
+  transition:
+    background var(--mo-quick) var(--ease-soft),
+    color var(--mo-quick) var(--ease-soft);
+}
 .seg-opt:hover:not(.is-on):not([aria-pressed='true']) {
   background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
@@ -358,6 +379,10 @@ input[type='range'] {
   padding: 1px 2px;
   border-radius: var(--radius-chip);
   background: none;
+  transition:
+    color var(--mo-base) var(--ease-paper),
+    background var(--mo-quick) var(--ease-soft),
+    border-color var(--mo-base) var(--ease-paper);
   border: 0;
   font: inherit;
   line-height: inherit;
@@ -440,6 +465,99 @@ input[type='range'] {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--divider) transparent;
+}
+
+/* ── Motion ───────────────────────────────────────────────────────────────
+   三条规矩，和纸墨那三条并列：
+   1. 不透明度带头，位移跟随，且位移不超过 --rise；
+   2. 一律 ease-out（--ease-paper）—— 没有回弹，纸落下就停；
+   3. 状态是用墨色编码的，所以墨色变化必须是过渡，不是跳变。
+   下面的 reduced-motion 块会把这一整层关掉，不必逐条再判断。 */
+
+@keyframes paper-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rise));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ink-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 页面进入：每个 .page-shell 挂上，视图切换就有了呼吸 */
+@utility page-enter {
+  animation: paper-rise var(--mo-slow) var(--ease-paper) both;
+}
+
+/* 揭晓的逐层递进：答案 → 同形 → 原句 → 注释，依次显出而不是一起砸下来。
+   --step 由模板传入（style="--step: 1"），错开 70ms —— 再多就拖沓了。 */
+@utility reveal-step {
+  animation: paper-rise var(--mo-reveal) var(--ease-paper) both;
+  animation-delay: calc(var(--step, 0) * 70ms);
+}
+
+/* Vue <Transition name="fade"> —— 纯淡入淡出，用于替换同一位置的内容 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--mo-base) var(--ease-soft);
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Vue <Transition name="rise"> —— 淡入 + 极小上浮，用于卡片、面板出现 */
+.rise-enter-active {
+  transition:
+    opacity var(--mo-base) var(--ease-paper),
+    transform var(--mo-base) var(--ease-paper);
+}
+.rise-leave-active {
+  transition:
+    opacity var(--mo-quick) var(--ease-soft),
+    transform var(--mo-quick) var(--ease-soft);
+  position: absolute;
+  width: 100%;
+}
+.rise-enter-from {
+  opacity: 0;
+  transform: translateY(var(--rise));
+}
+.rise-leave-to {
+  opacity: 0;
+  transform: translateY(calc(var(--rise) * -0.5));
+}
+
+/* <TransitionGroup name="list"> —— 收件箱、词库这类会增删的列表。
+   move 让剩下的行"让位"而不是瞬间跳上去，这是列表最容易露怯的地方。 */
+.list-move,
+.list-enter-active,
+.list-leave-active {
+  transition:
+    opacity var(--mo-base) var(--ease-paper),
+    transform var(--mo-base) var(--ease-paper);
+}
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(var(--rise));
+}
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(calc(var(--rise) * 2));
+}
+.list-leave-active {
+  position: absolute;
+  width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
