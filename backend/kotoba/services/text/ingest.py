@@ -52,6 +52,8 @@ def create_line(db: Session, body: LineCreate) -> tuple[Line, bool]:
         audio_path=body.audio_path,
         position_json=json.dumps(body.position) if body.position else None,
         speaker=body.speaker,
+        start_ms=body.start_ms,
+        end_ms=body.end_ms,
     )
     db.add(line)
     db.commit()

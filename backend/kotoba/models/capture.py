@@ -58,6 +58,8 @@ class Line(Base):
     audio_path: Mapped[str | None] = mapped_column(String(300))
     position_json: Mapped[str | None] = mapped_column(Text)
     speaker: Mapped[str | None] = mapped_column(String(100))
+    start_ms: Mapped[int | None] = mapped_column(Integer)
+    end_ms: Mapped[int | None] = mapped_column(Integer)
     translation_zh: Mapped[str | None] = mapped_column(Text)
     tokens_json: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(16), default="inbox", index=True)

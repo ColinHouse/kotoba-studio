@@ -107,6 +107,46 @@ def test_hook_websocket_creates_line_and_broadcasts(capture_client):
     assert len(lines) == 1 and lines[0]["text"] == "今日は俺が奢ってやるよ。"
 
 
+def test_ocr_compare_runs_available_providers_and_isolates_failures(capture_client, monkeypatch):
+    class FailingProvider:
+        name = "boom"
+        note = "test"
+
+        def available(self):
+            return True
+
+        def recognize(self, png):
+            raise ApiError("ocr_failed", "引擎崩了")
+
+    class UnavailableProvider:
+        name = "off"
+        note = "test"
+
+        def available(self):
+            return False
+
+        def recognize(self, png):
+            raise AssertionError("unavailable provider must not run")
+
+    monkeypatch.setattr(
+        registry,
+        "PROVIDERS",
+        {"good": FakeProvider, "boom": FailingProvider, "off": UnavailableProvider},
+    )
+    region = {"left": 0, "top": 0, "width": 120, "height": 40}
+    rows = capture_client.post("/api/capture/ocr/compare", json={"region": region}).json()
+    assert [row["provider"] for row in rows] == ["good", "boom"]
+    assert rows[0]["text"] == "え、本当に？"
+    assert rows[0]["error"] is None and rows[0]["ms"] >= 0
+    assert rows[1]["text"] == "" and rows[1]["error"] == "引擎崩了"
+
+
+def test_ocr_compare_requires_a_region_or_path(capture_client):
+    r = capture_client.post("/api/capture/ocr/compare", json={})
+    assert r.status_code == 422
+    assert r.json()["error"]["code"] == "validation_error"
+
+
 @pytest.mark.skipif(sys.platform != "darwin", reason="Apple Vision only on macOS")
 def test_vision_provider_reads_japanese_dialog():
     from kotoba.services.ocr.providers.vision_macos import VisionProvider
