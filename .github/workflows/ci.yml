@@ -39,6 +39,13 @@ jobs:
           if [ -n "$bad" ]; then
             echo "::error::prompt or agent-tooling files must not be tracked:"; echo "$bad"; exit 1
           fi
+          runner=$(git ls-files | grep -E \
+            '(^|/)opencode\.jsonc?$|(^|/)\.opencode/|(^|/)\.mcp\.json$|(^|/)\.codex/|(^|/)\.goose/|(^|/)\.gemini/' \
+            || true)
+          if [ -n "$runner" ]; then
+            echo "::error::agent runner config is personal setup, not project state:"
+            echo "$runner"; exit 1
+          fi
           for f in $(git ls-files '*.md'); do
             case "$f" in AGENTS.md|CONTRIBUTING.md) continue ;; esac
             if grep -qEi 'REQUIRED SUB-SKILL|superpowers:|^You are an? |作为一名|请你扮演|你是一个|<system-reminder>' "$f"; then

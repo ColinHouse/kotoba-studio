@@ -26,11 +26,19 @@ frontend/dev-dist/
 /private/
 
 # Agent and editor tooling configuration is personal, not project state.
+# How you drive an agent is your setup; what the project expects from one is AGENTS.md.
 .claude/
 .cursor/
 .aider*
 .windsurf*
 .continue/
+.opencode/
+opencode.json
+opencode.jsonc
+.codex/
+.goose/
+.gemini/
+.mcp.json
 
 # OS / editors
 .DS_Store
@@ -41,6 +49,3 @@ Thumbs.db
 .env
 .env.*
 !.env.example
-
-# opencode local session state
-.opencode/
