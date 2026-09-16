@@ -12,6 +12,7 @@ process is made DPI aware before anything is measured.
 from __future__ import annotations
 
 import ctypes
+import io
 import json
 import logging
 import os
@@ -22,7 +23,7 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session
 
 from kotoba.models import Source
-from kotoba.services.capture.screen import Region, displays
+from kotoba.services.capture.screen import Grab, Region, displays
 
 log = logging.getLogger(__name__)
 
@@ -171,6 +172,133 @@ def resolve_region(
                 return region_for(window, relative)
             return region_for(window, default_relative_region(*window.client[2:]))
     return saved_region(source)
+
+
+def window_for_source(
+    db: Session,
+    source_id: int,
+    *,
+    finder: Callable[..., WindowInfo | None] | None = None,
+) -> WindowInfo | None:
+    """The living window a source is bound to, if any."""
+    source = db.get(Source, source_id)
+    if source is None:
+        return None
+    binding = parse_binding(source.window_json)
+    if binding is None:
+        return None
+    return (finder or find_window)(str(binding["process"]), binding.get("title"))
+
+
+PW_RENDERFULLCONTENT = 0x00000002
+
+
+def grab_from_window(window: WindowInfo, region: Region | None = None) -> Grab | None:
+    """The window's own pixels, whatever is on top of it -- including our overlay.
+
+    PrintWindow with PW_RENDERFULLCONTENT asks the window to render itself into
+    a device context, which is the only way to read a game that another window
+    covers. Returns None when the engine renders nothing (an all-black frame is
+    treated as failure) or the region falls outside the client area; the caller
+    then falls back to the screen grab.
+    """
+    if not available():
+        return None
+    import ctypes.wintypes as wt
+
+    from PIL import Image
+
+    user32 = ctypes.windll.user32
+    gdi32 = ctypes.windll.gdi32
+    width, height = window.width, window.height
+    if width <= 0 or height <= 0 or not user32.IsWindow(window.handle):
+        return None
+
+    user32.GetWindowDC.argtypes = [wt.HWND]
+    user32.GetWindowDC.restype = wt.HDC
+    user32.ReleaseDC.argtypes = [wt.HWND, wt.HDC]
+    user32.PrintWindow.argtypes = [wt.HWND, wt.HDC, wt.UINT]
+    user32.PrintWindow.restype = wt.BOOL
+    user32.IsWindow.argtypes = [wt.HWND]
+    gdi32.CreateCompatibleDC.argtypes = [wt.HDC]
+    gdi32.CreateCompatibleDC.restype = wt.HDC
+    gdi32.CreateCompatibleBitmap.argtypes = [wt.HDC, ctypes.c_int, ctypes.c_int]
+    gdi32.CreateCompatibleBitmap.restype = wt.HBITMAP
+    gdi32.SelectObject.argtypes = [wt.HDC, wt.HGDIOBJ]
+    gdi32.SelectObject.restype = wt.HGDIOBJ
+    gdi32.DeleteObject.argtypes = [wt.HGDIOBJ]
+    gdi32.DeleteDC.argtypes = [wt.HDC]
+    gdi32.GetDIBits.argtypes = [
+        wt.HDC,
+        wt.HBITMAP,
+        ctypes.c_uint,
+        ctypes.c_uint,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_uint,
+    ]
+
+    class BitmapInfoHeader(ctypes.Structure):
+        _fields_ = [
+            ("biSize", wt.DWORD),
+            ("biWidth", wt.LONG),
+            ("biHeight", wt.LONG),
+            ("biPlanes", wt.WORD),
+            ("biBitCount", wt.WORD),
+            ("biCompression", wt.DWORD),
+            ("biSizeImage", wt.DWORD),
+            ("biXPelsPerMeter", wt.LONG),
+            ("biYPelsPerMeter", wt.LONG),
+            ("biClrUsed", wt.DWORD),
+            ("biClrImportant", wt.DWORD),
+        ]
+
+    class BitmapInfo(ctypes.Structure):
+        _fields_ = [("bmiHeader", BitmapInfoHeader), ("bmiColors", wt.DWORD * 3)]
+
+    header = BitmapInfo()
+    header.bmiHeader.biSize = ctypes.sizeof(BitmapInfoHeader)
+    header.bmiHeader.biWidth = width
+    header.bmiHeader.biHeight = -height  # top-down rows
+    header.bmiHeader.biPlanes = 1
+    header.bmiHeader.biBitCount = 32
+    buffer = ctypes.create_string_buffer(width * height * 4)
+
+    window_dc = user32.GetWindowDC(window.handle)
+    if not window_dc:
+        return None
+    memory_dc = gdi32.CreateCompatibleDC(window_dc)
+    bitmap = gdi32.CreateCompatibleBitmap(window_dc, width, height)
+    if not memory_dc or not bitmap:
+        user32.ReleaseDC(window.handle, window_dc)
+        return None
+    previous = gdi32.SelectObject(memory_dc, bitmap)
+    try:
+        if not user32.PrintWindow(window.handle, memory_dc, PW_RENDERFULLCONTENT):
+            return None
+        gdi32.GetDIBits(memory_dc, bitmap, 0, height, buffer, ctypes.byref(header), 0)
+    finally:
+        gdi32.SelectObject(memory_dc, previous)
+        gdi32.DeleteObject(bitmap)
+        gdi32.DeleteDC(memory_dc)
+        user32.ReleaseDC(window.handle, window_dc)
+
+    image = Image.frombuffer("RGBA", (width, height), buffer, "raw", "BGRA", 0, 1).convert("RGB")
+    client_left, client_top, client_width, client_height = window.client
+    offset_x, offset_y = client_left - window.left, client_top - window.top
+    image = image.crop((offset_x, offset_y, offset_x + client_width, offset_y + client_height))
+    if region is not None:
+        left, top = region.left - client_left, region.top - client_top
+        right, bottom = left + region.width, top + region.height
+        if left < 0 or top < 0 or right > client_width or bottom > client_height:
+            return None
+        image = image.crop((left, top, right, bottom))
+
+    if image.getextrema() == ((0, 0), (0, 0), (0, 0)):
+        return None  # the engine painted nothing; let the caller grab the screen
+    out = io.BytesIO()
+    image.save(out, format="PNG", optimize=False)
+    return Grab(png=out.getvalue(), width=image.width, height=image.height, scale=1.0)
 
 
 def list_windows(

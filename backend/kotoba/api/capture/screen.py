@@ -154,6 +154,9 @@ def collect(body: CollectIn, request: Request, db: Session = Depends(get_db)) ->
     session_id = body.session_id
     if session_id is None:
         session_id = settings_store.get(db, "active_session_id")
+    window = None
+    if body.source_id is not None and windows_service.available():
+        window = windows_service.window_for_source(db, body.source_id)
     return collect_service.collect(
         db,
         request.app.state.paths,
@@ -162,6 +165,7 @@ def collect(body: CollectIn, request: Request, db: Session = Depends(get_db)) ->
         provider,
         grabber=_grabber(request),
         source_id=body.source_id,
+        window=window,
     )
 
 
@@ -181,6 +185,22 @@ def watch_start(body: WatchIn, request: Request, db: Session = Depends(get_db)) 
     if watcher is not None and watcher.running:
         return _watcher_status(watcher)
 
+    def source_window() -> windows_service.WindowInfo | None:
+        if body.source_id is None or not windows_service.available():
+            return None
+        session = request.app.state.db.session()
+        try:
+            return windows_service.window_for_source(session, body.source_id)
+        finally:
+            session.close()
+
+    base_grabber = _grabber(request)
+
+    def grabber(region: screen.Region) -> screen.Grab:
+        window = source_window()
+        shot = windows_service.grab_from_window(window, region) if window else None
+        return shot if shot is not None else base_grabber(region)
+
     def region_provider() -> screen.Region | None:
         """Re-resolve every cycle: the game window may have moved or resized."""
         session = request.app.state.db.session()
@@ -193,7 +213,7 @@ def watch_start(body: WatchIn, request: Request, db: Session = Depends(get_db)) 
         body.region.to_region(),
         lambda: request.app.state.db.session(),
         _provider(request, db, None),
-        grabber=_grabber(request),
+        grabber=grabber,
         region_provider=region_provider if body.source_id is not None else None,
         source_id=body.source_id,
         buffer=getattr(request.app.state, "media_buffer", None),

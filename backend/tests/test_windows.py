@@ -152,6 +152,75 @@ def test_resolve_region_prefers_the_live_window(db, client):
     )
 
 
+def test_grab_from_window_is_none_off_windows(monkeypatch):
+    monkeypatch.setattr(windows, "available", lambda: False)
+    assert windows.grab_from_window(window_info()) is None
+
+
+def test_collect_prefers_the_window_pixels(client, db, monkeypatch):
+    from kotoba.services.capture import collect as collect_service
+    from kotoba.services.ocr.base import OcrBlock, OcrResult
+
+    class TextProvider:
+        name = "fake"
+
+        def recognize(self, png):
+            return OcrResult("行けって", [OcrBlock("行けって", 1.0, (0, 0, 1, 1))], "fake", 1)
+
+    window_shot = io.BytesIO()
+    Image.new("RGB", (60, 20), (255, 0, 0)).save(window_shot, format="PNG")
+    calls = {"window": 0, "screen": 0}
+
+    def fake_window_grab(window, region):
+        calls["window"] += 1
+        return Grab(png=window_shot.getvalue(), width=60, height=20, scale=1.0)
+
+    def fake_screen_grab(region):
+        calls["screen"] += 1
+        return fake_grab(region)
+
+    monkeypatch.setattr(collect_service, "grab_from_window", fake_window_grab)
+    payload = collect_service.collect(
+        db,
+        client.app.state.paths,
+        None,
+        Region(left=0, top=0, width=60, height=20),
+        TextProvider(),
+        grabber=fake_screen_grab,
+        window=window_info(),
+    )
+    assert calls == {"window": 1, "screen": 0}
+    assert payload["line"]["text"] == "行けって"
+
+
+def test_collect_falls_back_to_the_screen_when_the_window_paints_nothing(client, db, monkeypatch):
+    from kotoba.services.capture import collect as collect_service
+
+    class TextProvider:
+        name = "fake"
+
+        def recognize(self, png):
+            return OcrResult("行けって", [], "fake", 1)
+
+    calls = {"screen": 0}
+
+    def fake_screen_grab(region):
+        calls["screen"] += 1
+        return fake_grab(region)
+
+    monkeypatch.setattr(collect_service, "grab_from_window", lambda window, region: None)
+    collect_service.collect(
+        db,
+        client.app.state.paths,
+        None,
+        Region(left=0, top=0, width=60, height=20),
+        TextProvider(),
+        grabber=fake_screen_grab,
+        window=window_info(),
+    )
+    assert calls["screen"] == 1
+
+
 def test_source_window_binding_round_trip(capture_client, monkeypatch):
     window = window_info()
     monkeypatch.setattr(windows, "available", lambda: True)
@@ -202,5 +271,16 @@ def test_watch_start_resolves_the_bound_window_each_cycle(capture_client, monkey
         assert resolved.left == window.client[0] + relative["left"]
         assert resolved.top == window.client[1] + relative["top"]
         assert (resolved.width, resolved.height) == (relative["width"], relative["height"])
+
+        # The watcher must read the game's own pixels, not whatever covers it.
+        window_png = io.BytesIO()
+        Image.new("RGB", (60, 20), (0, 255, 0)).save(window_png, format="PNG")
+        monkeypatch.setattr(
+            windows,
+            "grab_from_window",
+            lambda w, r: Grab(png=window_png.getvalue(), width=60, height=20, scale=1.0),
+        )
+        shot = watcher._grabber(resolved)
+        assert (shot.width, shot.height) == (60, 20)
     finally:
         watcher.stop()
