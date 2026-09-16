@@ -149,23 +149,33 @@ in §4 is relaxed.
 
 ```bash
 git switch main && git pull --ff-only
-gh pr list --state open --author @me          # if this is not empty, stop — see below
+
+# Is a queue PR still open? If this prints anything, stop — see below.
+gh pr list --state open --json headRefName --jq '.[].headRefName | select(startswith("agent/"))'
+
+# Otherwise take the lowest-numbered ready issue.
 gh issue list --state open --label agent-ready --json number,title --jq 'sort_by(.number)[0]'
-git switch -c feat/<short-slug>               # feat|fix|docs|refactor|test|build|ci
+
+git switch -c agent/<type>-<slug>   # agent/feat-subtitle-parser, agent/fix-dedup-growth
 #   ... implement only what the issue's acceptance criteria ask for ...
 make check
-git commit                                    # Conventional Commits, Assisted-by: trailer
-git push -u origin feat/<short-slug>
+git commit                          # Conventional Commits, Assisted-by: trailer
+git push -u origin agent/<type>-<slug>
 gh pr create --fill --body "...Closes #<n>..."
 ```
 
 Then **stop and report**. Do not start the next issue.
 
+**Branches from this loop are always prefixed `agent/`.** That prefix is not decoration: it is
+how you tell your own unreviewed work from everyone else's, and how a human reviewing the branch
+list can see at a glance what came from an unattended run. Do not use `--author` to find your
+PRs — you and the human share one GitHub account, so that matches their work too.
+
 ### Rules that hold throughout
 
-1. **One open pull request at a time.** If a PR you opened is still unmerged, the queue is
-   blocked on a human, not on you. Do not open a second one, and do not stack a branch on top
-   of an unreviewed branch.
+1. **One open `agent/` pull request at a time.** If one is still unmerged, the queue is blocked
+   on a human, not on you. Do not open a second one, and do not branch off an unreviewed branch —
+   always branch from `main`.
 2. **Never merge anything** — not your PR, not anyone's. Never approve, never enable auto-merge,
    never push to `main`. A human merges; that review is the whole point of the loop.
 3. **Only issues labelled `agent-ready`.** That label means a human decided the description is
