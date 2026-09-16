@@ -15,8 +15,18 @@
 
 1. **你自己读过、跑过。** 提交前在本机跑通下面的命令，并实际打开应用点一遍你改的地方。
    不接受没验证过就丢过来的补丁——无论作者是人还是模型。
-2. **在 PR 里说明用了 AI。** 一句话就够（"用 Claude Code 写的，我核对并测试过"）。这不是
-   减分项，只是让 review 时知道该重点看什么。
+2. **说明用了 AI。** 在提交信息末尾加一行 trailer：
+
+   ```
+   Assisted-by: Claude Code (claude-opus-5)
+   ```
+
+   这不是减分项，只是让 review 知道该重点看什么。用 `Assisted-by:` 而不是
+   `Co-Authored-By:`：后者在 GitHub 上会被算作共同作者，而工具不是作者——你才是，
+   责任也在你。（本仓库早期提交带的是 `Co-Authored-By:`，那是 Claude Code 的默认行为；
+   两种都接受，新提交请优先用 `Assisted-by:`。）Linux 内核 2026 年的
+   [coding-assistants 政策](https://docs.kernel.org/process/coding-assistants.html)
+   同样要求：AI 绝不能自己添加 `Signed-off-by:`。
 3. **一个 PR 只做一件事。** 不要批量提交自动生成的大范围改动（重命名、格式化、依赖升级
    全糊在一起）。这类 PR 会被关掉。
 

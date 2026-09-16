@@ -90,6 +90,10 @@ Committing without being asked each time is fine. Doing the following is not.
 3. Carry a Conventional Commits subject under 72 characters, saying **why**, not just what:
    - good: `fix(jp): match contractions on token boundaries`
    - bad: `update contractions.py`
+
+   Record the tool with an `Assisted-by: <tool> (<model>)` trailer rather than
+   `Co-Authored-By:` — a tool assists, it does not author, and the human who sends the patch
+   carries the responsibility. Never add `Signed-off-by:` on a human's behalf.
 4. Come with a test when it changes behaviour — one that fails before the change and passes
    after. Bug fixes especially.
 5. Include an Alembic revision when it changes a model.

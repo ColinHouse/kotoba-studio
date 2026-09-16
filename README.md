@@ -66,7 +66,8 @@ Apple Vision / Windows OCR / RapidOCR · Vue 3 + Vite + Tailwind 4 + PWA。
 
 ## 文档
 
-- [开发约定](docs/conventions.md) · [AI 工具操作规则](AGENTS.md)
+- [开发约定](docs/conventions.md) · [AI 工具操作规则](AGENTS.md) · [更新日志](CHANGELOG.md)
+- [安全说明](SECURITY.md)——尤其是把服务开放到局域网时的注意事项
 - [ADR 0001 技术栈](docs/adr/0001-tech-stack.md) · [路线图](docs/roadmap.md)
 
 ## 平台说明

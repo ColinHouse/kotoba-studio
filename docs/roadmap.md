@@ -19,6 +19,15 @@
 - 字幕导入（.srt/.ass + 视频路径 → ffmpeg 切片），沿用 anki_mpv 的媒体逻辑。
 - 引擎对比面板（同一区域多引擎结果并排）。
 
+## 工程化待办（不绑定里程碑）
+
+- **前端类型从 OpenAPI 生成。** `frontend/src/api/types/` 目前是手写的，改后端字段时容易忘记
+  同步——本轮就漏过一次（`streak_days`、`known_term_count`），靠 `vue-tsc` 才发现。
+  用 `openapi-typescript` 或 `@hey-api/openapi-ts` 从 FastAPI 的 schema 生成，并在 CI 里
+  校验生成结果是最新的，可以整类消除这种漂移。现在没做是因为手写类型按域组织得更好读，
+  而且类型检查已经能抓住漏字段；等接口稳定、字段变动变频繁时再换。
+- **打包与签名。** 见 M2；届时补一份 `CODE_SIGNING.md`（参考 localsend）。
+
 ## M2 · 桌面壳、词典与作品统计
 
 - pywebview 窗口 + 托盘 + PyInstaller 打包（签名的 macOS .app、Windows 安装包）。
