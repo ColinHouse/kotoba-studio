@@ -15,19 +15,13 @@
 ## 快速开始
 
 ```bash
-# 后端（Python 3.12，uv）
-cd backend
-uv sync --extra macos --extra dev      # Windows: --extra windows；跨平台 OCR：--extra ocr-onnx
-uv run pytest                          # 52 tests
-
-# 前端（Node 22）
-cd ../frontend
-npm ci && npm run build                # 产物在 frontend/dist，由后端托管
-
-# 运行（单端口；--host 0.0.0.0 后手机可扫码访问）
-cd ../backend
-uv run python -m kotoba serve --open
+make setup     # 安装两端依赖（Python 3.12 + uv，Node 22 + npm），启用 git hooks
+make run       # 构建前端并在 8720 端口同时提供 API 与网页
+make help      # 全部命令
 ```
+
+手机访问：`cd backend && uv run python -m kotoba serve --host 0.0.0.0`，然后在设置页扫码。
+开发用 `make dev`（API 自动重载 + Vite 5174），提交前跑 `make check`。
 
 开发时：`scripts/dev.sh` 同时启动后端（自动重载）与 Vite（端口 5174，代理 `/api` `/media` `/ws`）。
 
@@ -60,13 +54,16 @@ Apple Vision / Windows OCR / RapidOCR · Vue 3 + Vite + Tailwind 4 + PWA。
 
 ## 参与
 
-欢迎参与，也**明确欢迎用 AI 工具写的贡献**——这个项目本身就是这么开发的。
-给 AI 工具看的约定在 [AGENTS.md](AGENTS.md)，给人看的在 [CONTRIBUTING.md](CONTRIBUTING.md)。
+欢迎参与，也**明确欢迎用 AI 工具写的贡献**——这个项目本身就是这么开发的。前提是有约束：
+[AGENTS.md](AGENTS.md) 写明了 AI 工具的操作规则（必须跑通 `make check`、不得绕过 hook、
+不得为了让检查通过而削弱检查、一次提交只做一件事），[docs/conventions.md](docs/conventions.md)
+是代码约定，[CONTRIBUTING.md](CONTRIBUTING.md) 是给人看的入口。
+
 最需要帮助的是 Windows 实机验证、日语分词的错例，以及中日同形词表的扩充。
 
 ## 文档
 
-- [UI 设计说明](docs/ui-design-brief.md)
+- [UI 设计说明](docs/ui-design-brief.md) · [开发约定](docs/conventions.md)
 - [设计规格](docs/superpowers/specs/2026-09-15-kotoba-studio-design.md) · [M0 实施计划](docs/superpowers/plans/2026-09-15-m0-skeleton.md)
 - [ADR 0001 技术栈](docs/adr/0001-tech-stack.md) · [路线图](docs/roadmap.md)
 

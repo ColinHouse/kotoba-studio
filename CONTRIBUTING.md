@@ -27,19 +27,31 @@ locally, mention the tool in the PR, and keep one PR to one thing.
 ## 开发环境
 
 ```bash
-cd backend  && uv sync --extra dev --extra macos   # Windows 用 --extra windows
-cd frontend && npm ci
-./scripts/dev.sh                                   # API 8720 + Vite 5174，均自动重载
+make setup     # 安装两端依赖，并启用仓库自带的 git hooks
+make dev       # API 8720 + Vite 5174，都自动重载
+make help      # 看全部命令
 ```
 
 ## 提交前必须通过
 
 ```bash
-cd backend  && uv run ruff check . && uv run ruff format --check . && uv run pytest -q
-cd frontend && npm run typecheck && npx vitest run && npm run build
+make check
 ```
 
-CI 会在 Ubuntu / macOS / Windows 上跑同样的命令。
+一条命令跑完两端的 lint、格式、类型、测试和构建，和 CI 一模一样（CI 还会在 macOS 与 Windows 上
+再跑一遍后端）。`make fix` 能自动修掉大部分格式和 lint 问题。
+
+仓库自带两个 git hook（`make setup` 或 `make hooks` 启用）：
+
+- **pre-commit**：拦截运行时数据、构建产物、密钥和大文件，并对暂存的文件跑 lint。
+- **commit-msg**：要求 Conventional Commits 格式，例如 `fix(jp): match contractions on token boundaries`。
+
+不要用 `--no-verify` 绕过它们。hook 拦住你的时候，要修的是原因。
+
+## 代码约定
+
+写代码前请看 [docs/conventions.md](docs/conventions.md)：分层怎么分、事务边界在哪、
+日语处理有哪些反直觉的坑。如果你用 AI 工具，让它先读 [AGENTS.md](AGENTS.md)。
 
 ## 特别欢迎的贡献
 
