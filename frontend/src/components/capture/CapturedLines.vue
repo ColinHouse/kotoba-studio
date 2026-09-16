@@ -3,8 +3,11 @@ import { RouterLink } from 'vue-router'
 import { mediaUrl } from '@/api/client'
 import type { Line } from '@/api/types'
 import { relTime } from '@/utils/format'
+import { confirmShortcut } from '@/utils/platform'
 
 defineProps<{ lines: Line[]; inboxLink: string; elapsed?: string | null }>()
+
+const shortcut = confirmShortcut(navigator.userAgent)
 </script>
 
 <template>
@@ -48,7 +51,7 @@ defineProps<{ lines: Line[]; inboxLink: string; elapsed?: string | null }>()
 
     <div class="mt-auto border-t border-rule pt-[18px] text-[11px] leading-[1.9] text-ink-35">
       <p class="kicker m-0 text-ink-50">键盘</p>
-      <p class="num m-0">⌘↵ 收藏这句</p>
+      <p class="num m-0">{{ shortcut }} 收藏这句</p>
     </div>
   </section>
 </template>

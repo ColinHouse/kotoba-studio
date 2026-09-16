@@ -5,6 +5,7 @@ import type { PickedTerm } from './TokenChips.vue'
 import { CARD_TYPE_LABEL } from '@/utils/format'
 import { headwordFor } from '@/utils/headword'
 import { hasKanji } from '@/utils/kana'
+import { confirmShortcut } from '@/utils/platform'
 
 export interface ConfirmPayload {
   headword: string
@@ -20,6 +21,8 @@ export interface ConfirmPayload {
 
 const props = defineProps<{ picked: PickedTerm; busy: boolean }>()
 const emit = defineEmits<{ confirm: [payload: ConfirmPayload]; cancel: [] }>()
+
+const shortcut = confirmShortcut(navigator.userAgent)
 
 const headword = ref('')
 const reading = ref('')
@@ -195,7 +198,9 @@ function onKey(e: KeyboardEvent) {
         {{ cardTypes.length ? '确认并建卡' : '只记录语境' }}
       </button>
       <button class="btn btn-secondary" @click="$emit('cancel')">取消</button>
-      <span class="num ml-auto hidden text-[11px] text-ink-35 md:inline">⌘↵ 确认 · Esc 取消</span>
+      <span class="num ml-auto hidden text-[11px] text-ink-35 md:inline"
+        >{{ shortcut }} 确认 · Esc 取消</span
+      >
     </footer>
   </section>
 </template>
