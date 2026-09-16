@@ -10,12 +10,34 @@ export interface Region {
   display: number
 }
 
+/** The game window a work is bound to; its box is relative to the client area. */
+export interface WindowBinding {
+  process: string
+  title: string | null
+  region: { left: number; top: number; width: number; height: number } | null
+}
+
+/** One visible top-level window, as `GET /api/capture/windows` reports it. */
+export interface GameWindow {
+  handle: number
+  title: string
+  process: string
+  pid: number
+  left: number
+  top: number
+  width: number
+  height: number
+  client: [number, number, number, number]
+  display: number
+}
+
 export interface Source {
   id: number
   title: string
   title_ja: string | null
   kind: Kind
   region: Region | null
+  window: WindowBinding | null
   created_at: string
   line_count: number
   term_count: number
