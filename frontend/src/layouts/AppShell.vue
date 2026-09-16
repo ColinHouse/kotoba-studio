@@ -21,6 +21,7 @@ const NAV: NavItem[] = [
   { to: '/inbox', label: '收件箱', mobile: true },
   { to: '/review', label: '复习', mobile: true },
   { to: '/library', label: '词库', mobile: true },
+  { to: '/kanji', label: '汉字', mobile: false },
   { to: '/sources', label: '作品', mobile: false },
   { to: '/settings', label: '设置', mobile: true },
 ]

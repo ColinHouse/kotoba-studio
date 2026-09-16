@@ -31,6 +31,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - 采集：媒体缓冲（默认最近 60 秒、按内存上限 200MB，纯内存不落盘）。事后可用
   `POST /api/lines/{id}/backfill` 给已经过去的台词补上截图；对不上的时间点报 `buffer_miss`，
   容差由设置 `backfill_tolerance_s`（默认 5 秒）控制，音频接口预留、声源尚未接入。
+- 学习：汉字进度网格。导入 KANJIDIC2（EDRDG，CC BY-SA 4.0，运行时从 EDRDG 下载、不随仓库分发）
+  后，常用汉字按掌握度用墨色深浅排布，点字列出含它的词；作品页可看超出常用汉字表的字及出现次数。
 - Classical 设计语言：纸墨金三层、墨色编码学习状态、中日双字体、明暗两套主题。
 
 ### Notes

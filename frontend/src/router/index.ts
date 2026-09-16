@@ -15,6 +15,7 @@ export const router = createRouter({
       props: true,
     },
     { path: '/library', name: 'library', component: () => import('@/views/LibraryView.vue') },
+    { path: '/kanji', name: 'kanji', component: () => import('@/views/KanjiView.vue') },
     {
       path: '/terms/:id',
       name: 'term',
