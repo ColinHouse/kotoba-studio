@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from kotoba.core.errors import ApiError
 from kotoba.schemas import LineCreate
 from kotoba.services import settings_store
+from kotoba.services.capture.buffer import MediaBuffer
 from kotoba.services.capture.framehash import StabilityTracker, dhash
 from kotoba.services.capture.gate import gate
 from kotoba.services.capture.screen import Grab, Region, grab
@@ -44,6 +45,7 @@ class RegionWatcher:
         region_provider: Callable[[], Region | None] | None = None,
         interval: float = DEFAULT_INTERVAL,
         source_id: int | None = None,
+        buffer: MediaBuffer | None = None,
     ) -> None:
         self.region = region
         self.source_id = source_id
@@ -52,6 +54,7 @@ class RegionWatcher:
         self._grabber = grabber
         self._region_provider = region_provider
         self._interval = interval
+        self._buffer = buffer
         self._tracker = StabilityTracker()
         self._stop = threading.Event()
         self._lock = threading.Lock()
@@ -79,7 +82,11 @@ class RegionWatcher:
             return True
 
     def stop(self, timeout: float = 2.0) -> None:
-        """Signal the loop and wait for the thread; never leaves it behind."""
+        """Signal the loop and wait for the thread; never leaves it behind.
+
+        Stopping also releases the media buffer: a few hundred MB must not sit
+        in memory for a watcher nobody is running.
+        """
         thread = self._thread
         if thread is None:
             return
@@ -87,6 +94,8 @@ class RegionWatcher:
         thread.join(timeout)
         if not thread.is_alive():
             self._thread = None
+        if self._buffer is not None:
+            self._buffer.clear()
 
     def _run(self) -> None:
         while not self._stop.wait(self._interval):
@@ -96,6 +105,8 @@ class RegionWatcher:
                     self.last_error = "找不到绑定的游戏窗口：确认游戏还在运行"
                     continue
                 png = self._grabber(region).png
+                if self._buffer is not None:
+                    self._buffer.add_frame(png)
                 image = Image.open(io.BytesIO(png))
                 if self._tracker.update(dhash(image)):
                     self._recognize(png, region)

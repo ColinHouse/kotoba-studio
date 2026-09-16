@@ -52,6 +52,11 @@ def put_settings(body: dict[str, Any], db: Session = Depends(get_db)) -> dict[st
         except ValueError as exc:
             raise ApiError("invalid_value", f"快捷键无效：{exc}") from exc
         body["capture_hotkey"] = hotkey
+    if "backfill_tolerance_s" in body:
+        value = float(body["backfill_tolerance_s"])
+        if not 0 <= value <= 120:
+            raise ApiError("invalid_value", "backfill_tolerance_s must be between 0 and 120")
+        body["backfill_tolerance_s"] = value
     for key, value in body.items():
         settings_store.set_value(db, key, value)
     db.commit()

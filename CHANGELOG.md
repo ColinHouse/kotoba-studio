@@ -26,6 +26,9 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   卡片暂时没有漫画页截图。
 - Windows 分发：`make package-windows` 构建 PyInstaller onedir 与 Inno Setup 安装包（含前端与分词词典），
   构建后自动冒烟（内置 OCR 实拍识别、分词、SPA）；签名脚本与证书说明见 `docs/CODE_SIGNING.md`（仓库暂无证书，签名未实测）。
+- 采集：媒体缓冲（默认最近 60 秒、按内存上限 200MB，纯内存不落盘）。事后可用
+  `POST /api/lines/{id}/backfill` 给已经过去的台词补上截图；对不上的时间点报 `buffer_miss`，
+  容差由设置 `backfill_tolerance_s`（默认 5 秒）控制，音频接口预留、声源尚未接入。
 - Classical 设计语言：纸墨金三层、墨色编码学习状态、中日双字体、明暗两套主题。
 
 ### Notes
