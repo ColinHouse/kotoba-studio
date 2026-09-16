@@ -27,7 +27,7 @@ async def import_subtitles(
     db.commit()
 
     created = skipped = 0
-    for cue in cues:
+    for position, cue in enumerate(cues, start=1):
         _, duplicate = create_line(
             db,
             LineCreate(
@@ -38,6 +38,8 @@ async def import_subtitles(
                 speaker=cue.speaker,
                 start_ms=cue.start_ms,
                 end_ms=cue.end_ms,
+                locator={"kind": "time", "start_ms": cue.start_ms, "end_ms": cue.end_ms},
+                ord=position,
             ),
         )
         if duplicate:

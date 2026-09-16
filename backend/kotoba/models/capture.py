@@ -57,6 +57,8 @@ class Line(Base):
     screenshot_path: Mapped[str | None] = mapped_column(String(300))
     audio_path: Mapped[str | None] = mapped_column(String(300))
     position_json: Mapped[str | None] = mapped_column(Text)
+    locator_json: Mapped[str | None] = mapped_column(Text)
+    ord: Mapped[int | None] = mapped_column(Integer, index=True)
     speaker: Mapped[str | None] = mapped_column(String(100))
     start_ms: Mapped[int | None] = mapped_column(Integer)
     end_ms: Mapped[int | None] = mapped_column(Integer)

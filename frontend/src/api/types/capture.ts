@@ -44,6 +44,8 @@ export interface Line {
   screenshot_path: string | null
   audio_path: string | null
   position: unknown
+  locator: Record<string, unknown> | null
+  ord: number | null
   speaker: string | null
   translation_zh: string | null
   status: 'inbox' | 'kept' | 'discarded'

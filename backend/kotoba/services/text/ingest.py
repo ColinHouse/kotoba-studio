@@ -52,6 +52,8 @@ def create_line(db: Session, body: LineCreate) -> tuple[Line, bool]:
         screenshot_path=body.screenshot_path,
         audio_path=body.audio_path,
         position_json=json.dumps(body.position) if body.position else None,
+        locator_json=json.dumps(body.locator) if body.locator else None,
+        ord=body.ord,
         speaker=body.speaker,
         start_ms=body.start_ms,
         end_ms=body.end_ms,
