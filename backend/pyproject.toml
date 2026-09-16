@@ -51,7 +51,12 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
+# BLE is here because the codebase already carries 25 `# noqa: BLE001` comments and the
+# rule was never enabled — they suppressed nothing, and a reviewer reading one would
+# reasonably believe blind excepts were being checked. Enabling it costs zero new errors
+# (every real site is already marked) and turns those marks into an enforced decision.
+# ASYNC matters because capture runs websockets, asyncio tasks and threads side by side.
+select = ["E", "F", "I", "UP", "B", "BLE", "ASYNC", "C4", "SIM", "PTH"]
 ignore = ["B008"]
 
 [tool.pytest.ini_options]

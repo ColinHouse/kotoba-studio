@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import threading
 from typing import Any
 
@@ -27,10 +28,9 @@ class Broker:
         with self._lock:
             subs = list(self._subs)
         for loop, queue in subs:
-            try:
+            # RuntimeError here means that subscriber's loop has already closed.
+            with contextlib.suppress(RuntimeError):
                 loop.call_soon_threadsafe(queue.put_nowait, event)
-            except RuntimeError:
-                pass  # loop closed
 
 
 broker = Broker()
