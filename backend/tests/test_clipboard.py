@@ -108,3 +108,46 @@ def test_stop_interrupts_the_poll_and_joins_the_thread(client):
     assert time.monotonic() - began < 1.0  # did not wait out the 30 s interval
 
     assert not any(t.name == "clipboard-watcher" for t in threading.enumerate())
+
+
+def test_ingest_survives_an_unexpected_database_error(client):
+    """A transient failure costs one line, not the whole watcher thread."""
+    calls = {"n": 0}
+
+    def failing_factory():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("database is locked")
+        return client.app.state.db.session()
+
+    watcher = ClipboardWatcher(failing_factory, read=lambda: "", interval=0.01)
+    assert watcher._ingest("最初の台詞") is False  # swallowed, not raised
+    assert watcher._ingest("次の台詞") is True  # the next poll still works
+
+
+def test_watcher_follows_the_database_across_a_restore(client):
+    """app.state.db is replaced by restore; the watcher must not hold the old one."""
+    watcher = client.app.state.clipboard_watcher
+    first = client.app.state.db
+    client.post("/api/backups", json={"name": "before"})
+    client.post("/api/backups/restore", json={"name": "before"})
+    assert client.app.state.db is not first
+    session = watcher._session_factory()
+    try:
+        assert session.get_bind() is client.app.state.db.engine
+    finally:
+        session.close()
+
+
+def test_stop_keeps_a_watcher_that_a_concurrent_start_installed():
+    """stop() must not orphan a thread that started while it was joining."""
+    watcher = ClipboardWatcher(lambda: None, read=lambda: "", interval=0.01)
+    watcher._thread = threading.Thread(target=lambda: None, name="clipboard-watcher")
+    watcher._thread.start()
+    watcher._thread.join()
+    watcher._thread = threading.Thread(target=lambda: time.sleep(0.2), name="clipboard-watcher")
+    watcher._thread.start()
+    live = watcher._thread
+    watcher.stop(timeout=0.01)
+    assert watcher._thread is live, "stop() dropped the handle of a different thread"
+    live.join()

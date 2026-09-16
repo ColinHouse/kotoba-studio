@@ -81,13 +81,16 @@ class ClipboardWatcher:
 
     def stop(self, timeout: float = 2.0) -> None:
         """Signal the loop and wait for the thread; the waiter can never outlive this."""
-        thread = self._thread
-        if thread is None:
-            return
-        self._stop.set()
-        thread.join(timeout)
-        if not thread.is_alive():
-            self._thread = None
+        with self._lock:
+            thread = self._thread
+            if thread is None:
+                return
+            self._stop.set()
+            thread.join(timeout)
+            # Only drop the handle if it is still the thread we just joined: a start()
+            # racing this call would otherwise be left running with no way to stop it.
+            if not thread.is_alive() and self._thread is thread:
+                self._thread = None
 
     def _run(self) -> None:
         last: str | None = None
@@ -100,8 +103,11 @@ class ClipboardWatcher:
                 self._captured += 1
 
     def _ingest(self, text: str) -> bool:
-        db = self._session_factory()
+        db: Session | None = None
         try:
+            # Inside the try: opening the session can fail too, and an escaping
+            # exception would end the polling thread for good.
+            db = self._session_factory()
             session_id = settings_store.get(db, "active_session_id")
             _, duplicate = create_line(
                 db, LineCreate(session_id=session_id, text=text, origin="hook")
@@ -110,5 +116,11 @@ class ClipboardWatcher:
         except ApiError as exc:
             log.debug("clipboard text skipped: %s", exc.message)
             return False
+        except Exception:
+            # A locked database (a JMdict import holds one transaction) must cost us this
+            # line, not the watcher: an exception here would end the thread for good.
+            log.warning("clipboard line could not be stored", exc_info=True)
+            return False
         finally:
-            db.close()
+            if db is not None:
+                db.close()
