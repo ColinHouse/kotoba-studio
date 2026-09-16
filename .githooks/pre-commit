@@ -65,6 +65,17 @@ if [ -n "$scaffolding" ]; then
   fail "move them under private/ (git-ignored) — see private/README.md"
 fi
 
+# 6. Agent *runner* configuration — which model, which provider, which permissions —
+#    is how one person drives an agent, not what this project expects from one.
+#    What the project expects lives in AGENTS.md, which is tool-neutral on purpose.
+runner=$(printf '%s\n' "$staged" | grep -E \
+  '(^|/)opencode\.jsonc?$|(^|/)\.opencode/|(^|/)\.mcp\.json$|(^|/)\.codex/|(^|/)\.goose/|(^|/)\.gemini/' \
+  || true)
+if [ -n "$runner" ]; then
+  printf 'Agent runner configuration must not be committed:\n%s\n' "$runner" >&2
+  fail "keep it in private/ or your global config — the repo stays tool-neutral"
+fi
+
 for f in $(printf '%s\n' "$staged" | grep -E '\.md$' || true); do
   case "$f" in AGENTS.md|CONTRIBUTING.md) continue ;; esac
   [ -f "$f" ] || continue
