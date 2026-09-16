@@ -32,6 +32,7 @@ def create_line(db: Session, body: LineCreate) -> tuple[Line, bool]:
                 dup.text, dup.raw_text = text, body.raw_text or body.text
                 dup.text_hash = text_hash(text)
                 dup.tokens_json = None
+                dup.unknown_count = None
             if body.screenshot_path and not dup.screenshot_path:
                 dup.screenshot_path = body.screenshot_path
             if body.audio_path and not dup.audio_path:

@@ -7,7 +7,7 @@ import InboxLineList from '@/components/inbox/InboxLineList.vue'
 import TermEditor, { type ConfirmPayload } from '@/components/inbox/TermEditor.vue'
 import TokenChips, { type PickedTerm } from '@/components/inbox/TokenChips.vue'
 import ExplanationBlock from '@/components/review/ExplanationBlock.vue'
-import { useInboxLines, type LineStatus } from '@/composables/useInboxLines'
+import { useInboxLines, type LineSort, type LineStatus } from '@/composables/useInboxLines'
 import { useAppStore } from '@/stores/app'
 import { relTime } from '@/utils/format'
 
@@ -25,6 +25,11 @@ const FILTERS: { value: LineStatus; label: string }[] = [
   { value: 'inbox', label: '待整理' },
   { value: 'kept', label: '已确认' },
   { value: 'discarded', label: '已丢弃' },
+]
+
+const SORTS: { value: LineSort; label: string }[] = [
+  { value: 'recent', label: '最新' },
+  { value: 'iplus1', label: 'i+1 优先' },
 ]
 
 onMounted(async () => {
@@ -123,6 +128,19 @@ const emptyHint = computed(() =>
             @click="inbox.status.value = f.value"
           >
             {{ f.label }}
+          </button>
+        </div>
+        <div class="seg">
+          <button
+            v-for="s in SORTS"
+            :key="s.value"
+            type="button"
+            class="seg-opt"
+            :aria-pressed="inbox.sort.value === s.value"
+            :title="s.value === 'iplus1' ? '整句只有一个生词的排最前' : undefined"
+            @click="inbox.sort.value = s.value"
+          >
+            {{ s.label }}
           </button>
         </div>
         <RouterLink v-if="quizSession" :to="`/quiz/${quizSession}`" class="btn btn-primary">

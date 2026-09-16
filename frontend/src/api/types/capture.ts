@@ -49,6 +49,7 @@ export interface Line {
   status: 'inbox' | 'kept' | 'discarded'
   captured_at: string
   encounter_count: number
+  unknown_count: number | null
 }
 
 export interface OcrBlock {

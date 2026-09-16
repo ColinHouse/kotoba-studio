@@ -62,6 +62,7 @@ class Line(Base):
     end_ms: Mapped[int | None] = mapped_column(Integer)
     translation_zh: Mapped[str | None] = mapped_column(Text)
     tokens_json: Mapped[str | None] = mapped_column(Text)
+    unknown_count: Mapped[int | None] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(16), default="inbox", index=True)
     captured_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
 
