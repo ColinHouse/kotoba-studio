@@ -206,3 +206,62 @@ def test_windows_ocr_provider_reads_japanese_dialog():
     assert "奢って" in result.text and " " not in result.text
     x, y, w, h = result.blocks[0].box
     assert 0 <= x < 0.2 and 0 <= y < 0.6 and w > 0.3 and h > 0.1
+
+
+def test_hook_websocket_is_silenced_while_a_restore_holds_the_gate(capture_client):
+    """/ws/hook is a live capture source and must respect the same gate as the rest.
+
+    A hook tool is a program: it has to be told the line was dropped, or it will
+    believe a silent success and move on.
+    """
+    from kotoba.services.capture.gate import gate
+
+    with capture_client.websocket_connect("/ws/hook") as hook:
+        gate.pause()
+        try:
+            hook.send_text("閉じている間の台詞。")
+            assert hook.receive_json() == {"ok": False, "error": "paused"}
+        finally:
+            gate.resume()
+        hook.send_text("開いてからの台詞。")
+        assert hook.receive_json()["ok"] is True
+
+    texts = {line["text"] for line in capture_client.get("/api/lines").json()}
+    assert "閉じている間の台詞。" not in texts
+    assert "開いてからの台詞。" in texts
+
+
+def test_hook_websocket_resolves_the_database_per_message(capture_client):
+    """A Textractor connection stays open all evening and restore replaces app.state.db.
+
+    Asserted structurally rather than by data: SQLite reconnects a disposed engine to
+    the same path, so a captured handle still writes the row here — the real damage is
+    a connection held open across the file swap, which does not reproduce on macOS.
+    Counting resolutions is what actually distinguishes the two implementations.
+    """
+
+    class CountingDatabase:
+        def __init__(self, inner):
+            self._inner = inner
+            self.resolved = 0
+
+        def session(self):
+            self.resolved += 1
+            return self._inner.session()
+
+        def __getattr__(self, name):
+            return getattr(self._inner, name)
+
+    with capture_client.websocket_connect("/ws/hook") as hook:
+        counting = CountingDatabase(capture_client.app.state.db)
+        capture_client.app.state.db = counting
+        try:
+            hook.send_text("一言目。")
+            assert hook.receive_json()["ok"] is True
+            hook.send_text("二言目。")
+            assert hook.receive_json()["ok"] is True
+        finally:
+            capture_client.app.state.db = counting._inner
+
+    # Captured once at connect time this is 0; resolved per message it is 2.
+    assert counting.resolved == 2
