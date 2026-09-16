@@ -22,7 +22,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Notes
 
-- 未在 Windows 真机上验证内置 OCR 路径。
+- Windows 11 实机已验证：内置 OCR（需日语语言包）、屏幕抓取与剪贴板读取；
+  完整采集流程与 Windows 安装步骤尚未逐一走查。
 - 手机端复习需要桌面端在线（同一局域网）；离线复习计划在 M3。
 
 [Unreleased]: https://github.com/ColinHouse/kotoba-studio/commits/main

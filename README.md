@@ -20,6 +20,9 @@ make run       # 构建前端并在 8720 端口同时提供 API 与网页
 make help      # 全部命令
 ```
 
+Windows 上这些命令要在 Git Bash 里运行（`winget install ezwinports.make` 安装 make）；
+PowerShell / CMD 会让 make 回退到 cmd.exe，Unix 风格的 recipe 会失败。
+
 手机访问：`cd backend && uv run python -m kotoba serve --host 0.0.0.0`，然后在设置页扫码。
 开发用 `make dev`（API 自动重载 + Vite 5174），提交前跑 `make check`。
 
@@ -73,7 +76,10 @@ Apple Vision / Windows OCR / RapidOCR · Vue 3 + Vite + Tailwind 4 + PWA。
 ## 平台说明
 
 - macOS：截屏需要在「系统设置 → 隐私与安全性 → 屏幕录制」中授权启动服务器的终端或应用；未授权时只会截到壁纸。
-- Windows：内置 OCR 需要日语语言包（`Add-WindowsCapability -Online -Name Language.OCR~~~ja-JP~0.0.1.0`），或安装 `--extra ocr-onnx` 使用 RapidOCR。Windows 路径尚未在真机验证。
+- Windows：内置 OCR 需要日语语言包（`Add-WindowsCapability -Online -Name Language.OCR~~~ja-JP~0.0.1.0`），
+  该路径已在 Windows 11 真机验证；没有语言包时自动回退到 RapidOCR（安装 `--extra ocr-onnx`）。
+- 行尾：仓库用 `.gitattributes` 在所有平台检出 LF；早于该文件的旧检出如果 `format:check` 全红，
+  在无未提交改动时运行 `git read-tree --reset -u HEAD` 重新检出即可，不必重新 clone。
 - Hook 工具（Textractor / Agent / LunaTranslator）可把文本发送到 `ws://<host>:8720/ws/hook`（纯文本或 `{"text": "..."}`）。
 
 ## 来源

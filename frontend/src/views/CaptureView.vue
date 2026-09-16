@@ -13,10 +13,12 @@ import { useSessionLines } from '@/composables/useSessionLines'
 import { useAppStore } from '@/stores/app'
 import { useDeviceStore } from '@/stores/device'
 import { fmtDuration } from '@/utils/format'
+import { commandKey } from '@/utils/platform'
 
 const app = useAppStore()
 const device = useDeviceStore()
 const router = useRouter()
+const cmdKey = commandKey(navigator.userAgent)
 
 const sources = ref<Source[]>([])
 const sourceId = ref<number | null>(null)
@@ -240,7 +242,8 @@ const elapsed = computed(() =>
               </span>
             </span>
             <span class="hidden items-center gap-2.5 font-head text-[22px] sm:flex">
-              <kbd class="key">⌘</kbd><kbd class="key">↵</kbd>
+              <kbd class="key">{{ cmdKey }}</kbd
+              ><kbd class="key">↵</kbd>
             </span>
           </button>
 

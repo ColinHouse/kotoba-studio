@@ -91,7 +91,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
+        include:
+          # The Windows extra pulls winocr, which no other runner installs. The
+          # OCR test skips without the Japanese language pack, but the import,
+          # availability check and provider listing still get exercised.
+          - os: windows-latest
+            extra: --extra windows
     defaults:
       run:
         working-directory: backend
@@ -101,7 +107,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: uv sync --extra dev
+        run: uv sync --extra dev ${{ matrix.extra }}
       - name: Lint
         run: uv run ruff check .
       - name: Format

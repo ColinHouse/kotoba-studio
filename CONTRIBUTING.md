@@ -42,6 +42,11 @@ make dev       # API 8720 + Vite 5174，都自动重载
 make help      # 看全部命令
 ```
 
+Windows 上 make 需要在 Git Bash 里运行（`winget install ezwinports.make` 安装）；
+PowerShell / CMD 会让 make 回退到 cmd.exe，Unix 风格的 recipe 会失败。仓库用
+`.gitattributes` 在所有平台检出 LF；如果旧检出的 `format:check` 全红，在确认没有未提交
+改动后运行 `git read-tree --reset -u HEAD` 重新检出。
+
 ## 提交前必须通过
 
 ```bash
@@ -65,7 +70,8 @@ make check
 
 ## 特别欢迎的贡献
 
-- **Windows 上的实机反馈。** 内置 OCR（需要日语语言包）这条路径从没在真机上跑过。
+- **Windows 上的实机反馈。** 内置 OCR（日语语言包）已在 Windows 11 上验证；仍然需要真机的是
+  全局快捷键（#13）、系统音频回环（#14），以及各个 Galgame 对话框的识别效果。
 - **日语处理的细节。** 分词边界、口语缩约、表达式合并出错的具体例子，附上原句最有用。
 - **中日同形词表。** `backend/kotoba/data/homograph_traps_zh.json`，纯数据，加词条不用改代码。
 - **游戏兼容性。** 哪个 Galgame 的对话框 OCR 识别不好、Hook 工具接不上，欢迎开 issue 说明。
