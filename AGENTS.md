@@ -94,6 +94,9 @@ Committing without being asked each time is fine. Doing the following is not.
    after. Bug fixes especially.
 5. Include an Alembic revision when it changes a model.
 6. Use Simplified Chinese for any new user-facing string, English for identifiers and comments.
+7. Keep `backend/pyproject.toml` and `frontend/package.json` on the same version when you
+   bump either — CI fails if they disagree. The Python package reads its own version from
+   the manifest, so there is no third copy to update.
 
 ### Stop and ask instead of improvising when
 

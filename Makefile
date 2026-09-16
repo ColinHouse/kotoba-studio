@@ -70,3 +70,10 @@ clean: ## Remove build output and caches (never touches your data directory)
 	rm -rf $(FRONTEND)/dist $(FRONTEND)/dev-dist $(FRONTEND)/node_modules/.tmp
 	find $(BACKEND) -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null || true
 	rm -rf $(BACKEND)/.pytest_cache $(BACKEND)/.ruff_cache
+
+version: ## Print the version declared in each manifest (they must agree)
+	@printf 'backend  %s\n' "$$(grep -m1 '^version' $(BACKEND)/pyproject.toml | cut -d'"' -f2)"
+	@printf 'frontend %s\n' "$$(node -p "require('./$(FRONTEND)/package.json').version")"
+	@test "$$(grep -m1 '^version' $(BACKEND)/pyproject.toml | cut -d'"' -f2)" = \
+	      "$$(node -p "require('./$(FRONTEND)/package.json').version")" \
+	  && echo 'in sync' || { echo 'OUT OF SYNC'; exit 1; }

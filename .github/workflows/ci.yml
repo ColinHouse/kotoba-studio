@@ -25,6 +25,12 @@ jobs:
           if [ -n "$bad" ]; then
             echo "::error::these files must not be tracked:"; echo "$bad"; exit 1
           fi
+      - name: Manifest versions agree
+        run: |
+          py=$(grep -m1 '^version' backend/pyproject.toml | cut -d'"' -f2)
+          js=$(node -p "require('./frontend/package.json').version")
+          [ "$py" = "$js" ] || { echo "::error::backend $py != frontend $js"; exit 1; }
+
       - name: No prompts or agent scaffolding in the repository
         run: |
           bad=$(git ls-files | grep -E \
