@@ -8,6 +8,7 @@ from kotoba.core.errors import ApiError
 from kotoba.core.events import broker
 from kotoba.schemas import LineCreate
 from kotoba.services import settings_store
+from kotoba.services.capture.gate import gate
 from kotoba.services.text.hook import parse_hook_message
 from kotoba.services.text.ingest import create_line
 
@@ -32,7 +33,6 @@ async def events(ws: WebSocket) -> None:
 async def hook(ws: WebSocket) -> None:
     """Accepts plain text or JSON {"text": ..., "speaker"?: ..., "session_id"?: ...}."""
     await ws.accept()
-    db_factory = ws.app.state.db.session
     try:
         while True:
             raw = await ws.receive_text()
@@ -40,24 +40,33 @@ async def hook(ws: WebSocket) -> None:
             if not message.get("text", "").strip():
                 await ws.send_json({"ok": False, "error": "empty"})
                 continue
-            db = db_factory()
-            try:
-                session_id = message.get("session_id") or settings_store.get(
-                    db, "active_session_id"
-                )
-                line, duplicate = create_line(
-                    db,
-                    LineCreate(
-                        session_id=session_id,
-                        text=message["text"],
-                        origin="hook",
-                        speaker=message.get("speaker"),
-                    ),
-                )
-                await ws.send_json({"ok": True, "line_id": line.id, "duplicate": duplicate})
-            except ApiError as exc:
-                await ws.send_json({"ok": False, "error": exc.code, "message": exc.message})
-            finally:
-                db.close()
+            with gate.ingest() as allowed:
+                if not allowed:
+                    # The hook tool is a program, not a person: tell it the line was
+                    # dropped so it does not believe a silent success.
+                    await ws.send_json({"ok": False, "error": "paused"})
+                    continue
+                # Resolve the database per message, never once per connection: a
+                # Textractor session stays open all evening and restore_backup()
+                # replaces app.state.db underneath it.
+                db = ws.app.state.db.session()
+                try:
+                    session_id = message.get("session_id") or settings_store.get(
+                        db, "active_session_id"
+                    )
+                    line, duplicate = create_line(
+                        db,
+                        LineCreate(
+                            session_id=session_id,
+                            text=message["text"],
+                            origin="hook",
+                            speaker=message.get("speaker"),
+                        ),
+                    )
+                    await ws.send_json({"ok": True, "line_id": line.id, "duplicate": duplicate})
+                except ApiError as exc:
+                    await ws.send_json({"ok": False, "error": exc.code, "message": exc.message})
+                finally:
+                    db.close()
     except WebSocketDisconnect:
         pass
