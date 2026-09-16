@@ -11,6 +11,7 @@ from kotoba.core.errors import ApiError
 from kotoba.services import settings_store
 from kotoba.services.capture import collect as collect_service
 from kotoba.services.capture import screen
+from kotoba.services.capture.watcher import RegionWatcher
 from kotoba.services.jp.normalize import normalize_ocr
 from kotoba.services.ocr import registry
 
@@ -44,6 +45,11 @@ class CollectIn(BaseModel):
     session_id: int | None = None
     source_id: int | None = None
     provider: str | None = None
+
+
+class WatchIn(BaseModel):
+    region: RegionIn
+    source_id: int | None = None
 
 
 class OcrCompareIn(BaseModel):
@@ -148,3 +154,43 @@ def collect(body: CollectIn, request: Request, db: Session = Depends(get_db)) ->
         grabber=_grabber(request),
         source_id=body.source_id,
     )
+
+
+def _watcher_status(watcher: RegionWatcher | None) -> dict:
+    if watcher is None:
+        return {"running": False, "captured": 0, "last_error": None}
+    return {
+        "running": watcher.running,
+        "captured": watcher.captured,
+        "last_error": watcher.last_error,
+    }
+
+
+@router.post("/watch/start")
+def watch_start(body: WatchIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    watcher = getattr(request.app.state, "region_watcher", None)
+    if watcher is not None and watcher.running:
+        return _watcher_status(watcher)
+    watcher = RegionWatcher(
+        body.region.to_region(),
+        lambda: request.app.state.db.session(),
+        _provider(request, db, None),
+        grabber=_grabber(request),
+        source_id=body.source_id,
+    )
+    request.app.state.region_watcher = watcher
+    watcher.start()
+    return _watcher_status(watcher)
+
+
+@router.post("/watch/stop")
+def watch_stop(request: Request) -> dict:
+    watcher = getattr(request.app.state, "region_watcher", None)
+    if watcher is not None:
+        watcher.stop()
+    return _watcher_status(watcher)
+
+
+@router.get("/watch/status")
+def watch_status(request: Request) -> dict:
+    return _watcher_status(getattr(request.app.state, "region_watcher", None))
