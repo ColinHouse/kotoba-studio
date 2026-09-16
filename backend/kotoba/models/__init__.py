@@ -6,7 +6,7 @@ SQLAlchemy's string-based relationship resolution both rely on.
 
 from kotoba.models.base import Base, UTCDateTime, utcnow
 from kotoba.models.capture import CaptureSession, Line, Source
-from kotoba.models.reference import DictEntry, DictForm, Dictionary, TermFrequency
+from kotoba.models.reference import DictEntry, DictForm, Dictionary, TermFrequency, TermPitch
 from kotoba.models.review import Card, Device, ReviewLog
 from kotoba.models.system import LlmCall, Setting
 from kotoba.models.vocabulary import Encounter, Sense, Term
@@ -28,6 +28,7 @@ __all__ = [
     "Source",
     "Term",
     "TermFrequency",
+    "TermPitch",
     "UTCDateTime",
     "utcnow",
 ]

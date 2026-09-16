@@ -12,6 +12,7 @@ from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.models import Encounter, Line, Source, Term
 from kotoba.schemas import SourceCreate, SourceDTO, SourceUpdate
+from kotoba.services.learning import coverage as coverage_service
 
 router = APIRouter(prefix="/sources", tags=["sources"])
 
@@ -67,6 +68,12 @@ def create_source(body: SourceCreate, db: Session = Depends(get_db)) -> SourceDT
 def get_source(source_id: int, db: Session = Depends(get_db)) -> SourceDTO:
     src = get_source_or_404(db, source_id)
     return SourceDTO.from_model(src, *_counts(db, src.id))
+
+
+@router.get("/{source_id}/coverage")
+def source_coverage(source_id: int, limit: int = 50, db: Session = Depends(get_db)) -> dict:
+    get_source_or_404(db, source_id)
+    return coverage_service.coverage(db, source_id, limit=limit)
 
 
 @router.patch("/{source_id}")

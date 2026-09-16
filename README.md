@@ -91,4 +91,8 @@ AGPL 第 13 条正对应这种形态；最接近的同类 Anki、Kamite、jimaku
 
 - <https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project>
 
+音高重音数据来自 **Kanjium**（© Uros O.），依
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) 授权使用，仅在用户主动安装时
+下载：<https://github.com/mifunetoshiro/kanjium>。
+
 其余第三方组件的授权见 [NOTICE.md](NOTICE.md)。

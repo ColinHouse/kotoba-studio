@@ -43,6 +43,7 @@ export interface Token {
   term_id: number | null
   known_status: KnownStatus | null
   encountered: boolean
+  frequency_rank: number | null
 }
 
 export interface Span {
@@ -99,7 +100,27 @@ export interface Term {
   encounter_count: number
   source_count: number
   card_count: number
+  frequency_rank: number | null
   trap: Trap | null
+}
+
+export interface CoverageWord {
+  term_id: number
+  headword: string
+  reading: string
+  rank: number | null
+  count: number
+}
+
+export interface Coverage {
+  total_tokens: number
+  distinct_terms: number
+  known_tokens: number
+  known_terms: number
+  coverage: number
+  distinct_coverage: number
+  has_frequency: boolean
+  unknown_top: CoverageWord[]
 }
 
 export interface Explanation {

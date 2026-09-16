@@ -31,6 +31,25 @@ async function install() {
     app.fail(e)
   }
 }
+
+const pitchBusy = () => ['downloading', 'importing'].includes(dict.value?.pitch.state ?? '')
+
+async function installPitch() {
+  window.clearInterval(poll)
+  try {
+    await api.post('/api/dict/pitch/install')
+    poll = window.setInterval(async () => {
+      await refresh()
+      if (['done', 'error', 'idle'].includes(dict.value?.pitch.state ?? '')) {
+        window.clearInterval(poll)
+        if (dict.value?.pitch.state === 'done') app.toast('音高数据已安装', 'success')
+        if (dict.value?.pitch.state === 'error') app.toast(dict.value.pitch.message, 'error')
+      }
+    }, 1500)
+  } catch (e) {
+    app.fail(e)
+  }
+}
 </script>
 
 <template>
@@ -82,5 +101,37 @@ async function install() {
       >
       授权使用。
     </p>
+    <div class="space-y-2 border-t border-divider pt-3">
+      <p class="text-sm">
+        音高重音：{{ dict?.has_pitch ? '已安装' : '未安装' }}
+        <span class="text-ink-50">（用于卡面音高线与音高小测）</span>
+      </p>
+      <div class="flex flex-wrap items-center gap-2">
+        <button class="btn btn-secondary" :disabled="pitchBusy()" @click="installPitch">
+          {{ pitchBusy() ? '安装中…' : dict?.has_pitch ? '更新音高数据' : '安装音高数据' }}
+        </button>
+        <span v-if="dict && dict.pitch.state !== 'idle'" class="text-sm text-ink-50">{{
+          dict.pitch.message
+        }}</span>
+      </div>
+      <p class="text-xs text-ink-50">
+        音高数据来自
+        <a
+          class="underline"
+          href="https://github.com/mifunetoshiro/kanjium"
+          target="_blank"
+          rel="noreferrer"
+          >Kanjium</a
+        >（Uros O.），依
+        <a
+          class="underline"
+          href="https://creativecommons.org/licenses/by-sa/4.0/"
+          target="_blank"
+          rel="noreferrer"
+          >CC BY-SA 4.0</a
+        >
+        授权使用。
+      </p>
+    </div>
   </SettingsSection>
 </template>

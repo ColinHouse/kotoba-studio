@@ -81,3 +81,16 @@ class TermFrequency(Base):
     headword: Mapped[str] = mapped_column(String(200))
     reading: Mapped[str | None] = mapped_column(String(200))
     rank: Mapped[int] = mapped_column(Integer)
+
+
+class TermPitch(Base):
+    """Pitch accent of a word; `accent` is the downstep mora, 0 = heiban."""
+
+    __tablename__ = "term_pitches"
+    __table_args__ = (UniqueConstraint("headword", "reading", "accent", name="uq_term_pitches"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    headword: Mapped[str] = mapped_column(String(200), index=True)
+    reading: Mapped[str] = mapped_column(String(200))
+    accent: Mapped[int] = mapped_column(Integer)
+    source: Mapped[str] = mapped_column(String(40), default="kanjium")

@@ -21,6 +21,14 @@ is therefore also CC BY-SA 4.0.
 The acknowledgement EDRDG asks for is shown to users in the app's Settings → 词典 section
 and repeated in the README.
 
+## Pitch accent data
+
+**Kanjium** — © Uros O., licensed under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). This is downloaded at runtime
+from <https://github.com/mifunetoshiro/kanjium> only when the user installs pitch data in
+Settings → 词典. No pitch data is bundled with the repository, and the acknowledgement is shown
+next to the install control.
+
 ## Japanese morphological analysis
 
 - **fugashi** (MIT) — Cython wrapper around **MeCab** (BSD 3-clause).
