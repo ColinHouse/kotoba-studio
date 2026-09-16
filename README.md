@@ -73,6 +73,12 @@ Apple Vision / Windows OCR / RapidOCR · Vue 3 + Vite + Tailwind 4 + PWA。
 - [安全说明](SECURITY.md)——尤其是把服务开放到局域网时的注意事项
 - [ADR 0001 技术栈](docs/adr/0001-tech-stack.md) · [路线图](docs/roadmap.md)
 
+## 打包
+
+Windows 用 `make package-windows ARGS="--installer"` 打出安装包（PyInstaller onedir + Inno Setup）；
+构建后会自动冒烟：真实跑一次内置 OCR 识别与分词，再检查 SPA 与健康检查。体积、耗时与签名做法见
+[packaging/README.md](packaging/README.md) 与 [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md)。
+
 ## 平台说明
 
 - macOS：截屏需要在「系统设置 → 隐私与安全性 → 屏幕录制」中授权启动服务器的终端或应用；未授权时只会截到壁纸。全局快捷键还需要同一处的「辅助功能」授权，未授权时设置页会给出提示。
