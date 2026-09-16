@@ -7,24 +7,13 @@ from sqlalchemy.orm import Session
 
 from kotoba.api.capture.sources import get_source_or_404
 from kotoba.core.db import get_db
-from kotoba.core.errors import ApiError
 from kotoba.models import CaptureSession
 from kotoba.schemas import LineCreate
+from kotoba.services.text.encoding import decode_text
 from kotoba.services.text.ingest import create_line
 from kotoba.services.text.subtitles import parse_subtitles
 
 router = APIRouter(prefix="/sources", tags=["capture"])
-
-_ENCODINGS = ("utf-8", "utf-8-sig", "cp932")
-
-
-def _decode(data: bytes) -> str:
-    for encoding in _ENCODINGS:
-        try:
-            return data.decode(encoding)
-        except UnicodeDecodeError:
-            continue
-    raise ApiError("bad_encoding", "字幕文件编码无法识别（支持 UTF-8 与 Shift_JIS）")
 
 
 @router.post("/{source_id}/subtitles")
@@ -32,7 +21,7 @@ async def import_subtitles(
     source_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)
 ) -> dict:
     get_source_or_404(db, source_id)
-    cues = parse_subtitles(_decode(await file.read()))
+    cues = parse_subtitles(decode_text(await file.read()))
     session = CaptureSession(source_id=source_id, mode="import", text_source="subtitle")
     db.add(session)
     db.commit()

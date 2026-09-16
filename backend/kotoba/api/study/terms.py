@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,7 @@ from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.models import Term
 from kotoba.services import learning
+from kotoba.services.learning import known_import
 
 router = APIRouter(prefix="/terms", tags=["terms"])
 
@@ -46,6 +47,17 @@ def bulk_known(body: BulkKnown, db: Session = Depends(get_db)) -> dict:
     count = learning.bulk_set_status(db, body.headwords, body.status)
     db.commit()
     return {"updated": count}
+
+
+@router.post("/known/import")
+async def import_known(
+    file: UploadFile = File(...),
+    format: str = Form(...),
+    field: int | None = Form(None),
+    db: Session = Depends(get_db),
+) -> dict:
+    result = known_import.import_data(db, await file.read(), format, field=field)
+    return result.to_dict()
 
 
 @router.get("/{term_id}")
