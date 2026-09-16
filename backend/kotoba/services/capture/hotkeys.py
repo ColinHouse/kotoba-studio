@@ -300,6 +300,11 @@ def make_collector(
                     raise ApiError(
                         "no_region", "还没有对话区域：先在采集页框选一次，快捷键只认已保存的区域"
                     )
+                window = (
+                    windows.window_for_source(db, source_id)
+                    if source_id is not None and windows.available()
+                    else None
+                )
                 payload = collect_service.collect(
                     db,
                     paths,
@@ -308,6 +313,7 @@ def make_collector(
                     provider_for(db),
                     grabber=grabber,
                     source_id=source_id,
+                    window=window,
                 )
                 return payload["line"] is not None
             finally:

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from kotoba.core.config import Paths
 from kotoba.schemas import LineCreate, LineDTO
 from kotoba.services.capture.screen import Grab, Region, grab, save_screenshot
+from kotoba.services.capture.windows import WindowInfo, grab_from_window
 from kotoba.services.jp.normalize import normalize_ocr
 from kotoba.services.ocr.base import OcrProvider
 from kotoba.services.text.ingest import create_line
@@ -25,8 +26,14 @@ def collect(
     grabber: Grabber = grab,
     source_id: int | None = None,
     save: bool = True,
+    window: WindowInfo | None = None,
 ) -> dict:
-    shot = grabber(region)
+    # A bound window is read from its own pixels first: the game may be covered
+    # by another window (or by our future overlay) and the screen grab would
+    # then contain the wrong picture.
+    shot = grab_from_window(window, region) if window is not None else None
+    if shot is None:
+        shot = grabber(region)
     result = provider.recognize(shot.png)
     text = normalize_ocr(result.text)
     # Only keep the screenshot when there is text to attach it to (no orphan files).
