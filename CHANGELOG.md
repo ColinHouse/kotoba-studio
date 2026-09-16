@@ -22,6 +22,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   未设置对话区域、macOS 缺少「辅助功能」授权等失败都会说明原因，不会静默失效。
 - Windows 分发：`make package-windows` 构建 PyInstaller onedir 与 Inno Setup 安装包（含前端与分词词典），
   构建后自动冒烟（内置 OCR 实拍识别、分词、SPA）；签名脚本与证书说明见 `docs/CODE_SIGNING.md`（仓库暂无证书，签名未实测）。
+- 采集：导入 EPUB 轻小说，按 spine 顺序切成句子收进作品；振假名单独保留不混进正文，
+  10 万字级长篇按批入库（实测 3441 句 / 3.8 秒，峰值内存 2.2 MiB 不随书增长）。
 - Classical 设计语言：纸墨金三层、墨色编码学习状态、中日双字体、明暗两套主题。
 
 ### Notes

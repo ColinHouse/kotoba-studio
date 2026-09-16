@@ -25,11 +25,16 @@ def is_growth(previous: str, current: str) -> bool:
     return a.startswith(b) or b.startswith(a)
 
 
-def find_duplicate(db: Session, session_id: int, text: str) -> Line | None:
+def find_duplicate(
+    db: Session, session_id: int, text: str, *, exact_only: bool = False
+) -> Line | None:
     """Return an existing line of the session that `text` duplicates, if any.
 
     Rules: identical normalized hash anywhere in the session; or, against the most
     recent line only, prefix growth or similarity >= SIMILARITY_THRESHOLD.
+    ``exact_only`` skips the growth and similarity rules: clean batch imports
+    (a novel) must not drop a sentence that differs from its neighbour by one
+    character, which those OCR re-capture heuristics would treat as a duplicate.
     """
     h = text_hash(text)
     same = db.scalar(
@@ -38,7 +43,7 @@ def find_duplicate(db: Session, session_id: int, text: str) -> Line | None:
         .order_by(Line.id.desc())
         .limit(1)
     )
-    if same is not None:
+    if same is not None or exact_only:
         return same
     last = db.scalar(
         select(Line).where(Line.session_id == session_id).order_by(Line.id.desc()).limit(1)
