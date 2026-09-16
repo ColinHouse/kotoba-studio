@@ -14,9 +14,19 @@ help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
+# Platform extras. Written as conditionals rather than $(shell ... case ...) because
+# make ends a $(shell ...) at the first unmatched ")", and "Darwin)" is one.
+UNAME_S := $(shell uname -s)
+PLATFORM_EXTRA :=
+ifeq ($(UNAME_S),Darwin)
+PLATFORM_EXTRA := --extra macos
+endif
+ifneq (,$(findstring MINGW,$(UNAME_S))$(findstring MSYS,$(UNAME_S))$(findstring CYGWIN,$(UNAME_S)))
+PLATFORM_EXTRA := --extra windows
+endif
+
 setup: ## Install backend + frontend dependencies and enable git hooks
-	cd $(BACKEND) && uv sync --extra dev $(shell \
-		case "$$(uname -s)" in Darwin) echo --extra macos;; MINGW*|MSYS*|CYGWIN*) echo --extra windows;; esac)
+	cd $(BACKEND) && uv sync --extra dev $(PLATFORM_EXTRA)
 	cd $(FRONTEND) && npm ci
 	$(MAKE) hooks
 
