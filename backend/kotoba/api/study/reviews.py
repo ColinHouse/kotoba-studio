@@ -15,6 +15,7 @@ from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.models import Card, Device, utcnow
 from kotoba.services import learning
+from kotoba.services.dictionary import pitch
 from kotoba.services.review import optimize, scheduler
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
@@ -64,6 +65,7 @@ def card_face(db: Session, card: Card) -> dict:
         "encounter": encounter,
         "other_encounters": max(len(timeline) - (1 if encounter else 0), 0),
         "cloze_text": cloze_text,
+        "pitches": pitch.pitches_for(db, card.term.headword, card.term.reading),
         "preview": scheduler.preview(db, card),
     }
 

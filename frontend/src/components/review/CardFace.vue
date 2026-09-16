@@ -4,6 +4,7 @@ import { mediaUrl } from '@/api/client'
 import type { CardFace } from '@/api/types'
 import Furigana from '@/components/common/Furigana.vue'
 import ExplanationBlock from './ExplanationBlock.vue'
+import PitchLine from './PitchLine.vue'
 import TrapBlock from './TrapBlock.vue'
 import { CARD_TYPE_LABEL } from '@/utils/format'
 
@@ -115,6 +116,15 @@ const prompt = computed(
               {{ glosses.join('；') }}
             </p>
             <p v-else class="mt-1.5 mb-0 text-[15px] text-ink-35">还没有填释义。</p>
+            <div v-if="face.pitches.length" class="mt-3.5 flex flex-wrap gap-x-5 gap-y-2">
+              <PitchLine
+                v-for="p in face.pitches"
+                :key="`${p.reading}-${p.accent}`"
+                :reading="p.reading"
+                :accent="p.accent"
+                :label="p.label"
+              />
+            </div>
           </div>
 
           <TrapBlock

@@ -29,6 +29,7 @@ const KIND_LABEL: Record<string, string> = {
   cloze: '语境填空',
   meaning: '语境释义',
   listening: '听音理解',
+  pitch: '音高型',
 }
 
 const current = computed(() => items.value[index.value] ?? null)
@@ -92,6 +93,11 @@ async function next() {
     setTimeout(() => input.value?.focus(), 0)
   }
 }
+
+function pick(choice: string) {
+  given.value = choice
+  submit()
+}
 </script>
 
 <template>
@@ -131,6 +137,18 @@ async function next() {
               <button class="btn btn-primary" @click="submit(true)">想起来了</button>
             </div>
           </template>
+        </template>
+        <template v-else-if="current.kind === 'pitch'">
+          <div class="flex flex-wrap gap-2.5">
+            <button
+              v-for="choice in current.choices"
+              :key="choice"
+              class="btn btn-secondary"
+              @click="pick(choice)"
+            >
+              {{ choice }}
+            </button>
+          </div>
         </template>
         <form v-else class="flex gap-2.5" @submit.prevent="submit()">
           <input ref="input" v-model="given" class="input jp text-[18px]" placeholder="输入答案…" />

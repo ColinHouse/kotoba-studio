@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 import random
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kotoba.core.errors import ApiError
 from kotoba.models import Card, Encounter, Line, Term
+from kotoba.services.dictionary.pitch import PATTERN_LABELS, pitches_for
 from kotoba.services.jp.kana import has_kanji, kana_equal
 from kotoba.services.jp.normalize import normalize_ocr
 
-KINDS = ("reading", "cloze", "meaning", "listening")
+KINDS = ("reading", "cloze", "meaning", "listening", "pitch")
 
 
 @dataclass(slots=True)
@@ -30,6 +31,7 @@ class QuizItem:
     surface: str
     hint: str | None = None
     audio_path: str | None = None
+    choices: list[str] = field(default_factory=list)
 
     def public(self) -> dict:
         """What the client sees before answering (answers hidden unless self-graded)."""
@@ -58,7 +60,9 @@ def _cloze(text: str, surface: str, start: int, end: int) -> str:
     return text
 
 
-def make_item(card: Card, enc: Encounter, line: Line, kind: str) -> QuizItem | None:
+def make_item(
+    card: Card, enc: Encounter, line: Line, kind: str, pitches: list[dict] | None = None
+) -> QuizItem | None:
     term = card.term
     if kind == "reading":
         if not term.reading or not has_kanji(term.headword):
@@ -124,6 +128,27 @@ def make_item(card: Card, enc: Encounter, line: Line, kind: str) -> QuizItem | N
             hint="听音频，写出你听到的句子",
             audio_path=line.audio_path,
         )
+    if kind == "pitch":
+        # Multiple recorded accents make "which pattern" ambiguous, so skip them.
+        if not term.reading or not pitches:
+            return None
+        if len({p["accent"] for p in pitches}) != 1:
+            return None
+        label = pitches[0]["label"]
+        return QuizItem(
+            card_id=card.id,
+            term_id=term.id,
+            encounter_id=enc.id,
+            kind=kind,
+            prompt=f"{term.headword}（{term.reading}）",
+            answer=label,
+            accept=[label],
+            headword=term.headword,
+            reading=term.reading,
+            surface=enc.surface,
+            hint="选这个词的音高型",
+            choices=list(PATTERN_LABELS.values()),
+        )
     return None
 
 
@@ -152,9 +177,10 @@ def build(
         if not cards:
             continue
         by_type = {c.card_type: c for c in cards}
+        term_pitches = pitches_for(db, enc.term.headword, enc.term.reading)
         for kind in kinds:
             card = by_type.get(kind) or cards[0]
-            item = make_item(card, enc, line, kind)
+            item = make_item(card, enc, line, kind, pitches=term_pitches)
             if item is not None:
                 items.append(item)
         seen_terms.add(enc.term_id)
@@ -180,7 +206,9 @@ def expected_for(db: Session, card_id: int, encounter_id: int, kind: str) -> Qui
     if card is None or enc is None:
         raise ApiError("not_found", "card or encounter not found", 404)
     line = db.get(Line, enc.line_id)
-    item = make_item(card, enc, line, kind)
+    item = make_item(
+        card, enc, line, kind, pitches=pitches_for(db, card.term.headword, card.term.reading)
+    )
     if item is None:
         raise ApiError("invalid_kind", f"kind {kind} is not available for this card")
     return item

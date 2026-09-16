@@ -35,6 +35,13 @@ _NUMBER = re.compile(r"\d+")
 
 Pattern = Literal["heiban", "atamadaka", "nakadaka", "odaka"]
 
+PATTERN_LABELS: dict[str, str] = {
+    "heiban": "平板",
+    "atamadaka": "头高",
+    "nakadaka": "中高",
+    "odaka": "尾高",
+}
+
 
 def pattern(reading: str, accent: int) -> Pattern:
     """0 = heiban, 1 = atamadaka, accent == mora count = odaka, else nakadaka."""
@@ -124,6 +131,36 @@ def _replace(db: Session, source: str, rows: list[dict]) -> int:
 
 def has_any(db: Session) -> bool:
     return db.scalar(select(TermPitch.id).limit(1)) is not None
+
+
+def pitches_for(db: Session, headword: str, reading: str = "") -> list[dict]:
+    """Recorded pitches for a word; a given reading narrows to its own rows."""
+    rows = db.scalars(
+        select(TermPitch)
+        .where(TermPitch.headword == headword)
+        .order_by(TermPitch.reading, TermPitch.accent)
+    ).all()
+    if reading:
+        exact = [row for row in rows if row.reading == reading]
+        if exact:
+            rows = exact
+    seen: set[tuple[str, int]] = set()
+    out: list[dict] = []
+    for row in rows:
+        key = (row.reading, row.accent)
+        if key in seen:
+            continue
+        seen.add(key)
+        name = pattern(row.reading, row.accent)
+        out.append(
+            {
+                "reading": row.reading,
+                "accent": row.accent,
+                "pattern": name,
+                "label": PATTERN_LABELS[name],
+            }
+        )
+    return out
 
 
 def download_text(url: str, dest: Path) -> Path:
