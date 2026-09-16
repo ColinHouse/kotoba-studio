@@ -19,6 +19,7 @@ from kotoba.core.config import Settings, get_settings, paths
 from kotoba.core.db import Database, make_engine, upgrade
 from kotoba.core.errors import install_error_handlers
 from kotoba.services import settings_store
+from kotoba.services.capture.buffer import MediaBuffer
 from kotoba.services.capture.clipboard import ClipboardWatcher
 from kotoba.services.capture.hook_client import HookManager
 from kotoba.services.capture.hotkeys import DEFAULT_HOTKEY, HotkeyListener, make_collector
@@ -41,6 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.clipboard_watcher = ClipboardWatcher(lambda: app.state.db.session())
         app.state.hook_manager = HookManager(lambda: app.state.db.session())
         app.state.region_watcher = None
+        app.state.media_buffer = MediaBuffer()
         app.state.hotkey_listener = HotkeyListener(
             make_collector(
                 lambda: app.state.db.session(),

@@ -2,16 +2,21 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Literal
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from kotoba.core.config import Paths
 from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.models import Encounter, Line
 from kotoba.schemas import LineCreate, LineCreated, LineDTO, LineUpdate
+from kotoba.services import settings_store
+from kotoba.services.capture import screen
 from kotoba.services.jp.normalize import normalize_ocr, text_hash
 from kotoba.services.learning import ranking
 from kotoba.services.text import analysis
@@ -106,3 +111,49 @@ def delete_line(line_id: int, db: Session = Depends(get_db)) -> None:
 def analyze(line_id: int, force: bool = False, db: Session = Depends(get_db)) -> dict:
     line = get_line_or_404(db, line_id)
     return analysis.analyze_line(db, line, force=force)
+
+
+def _save_audio(data: bytes, paths: Paths) -> str:
+    """Write a buffered chunk under media/audio/YYYYMMDD/ and return the media-relative path."""
+    day = datetime.now(UTC).strftime("%Y%m%d")
+    folder = paths.audio_dir / day
+    folder.mkdir(parents=True, exist_ok=True)
+    name = f"{uuid4().hex}.bin"
+    (folder / name).write_bytes(data)
+    return f"audio/{day}/{name}"
+
+
+@router.post("/{line_id}/backfill")
+def backfill_line(
+    line_id: int, request: Request, force: bool = False, db: Session = Depends(get_db)
+) -> dict:
+    """Fill a line's screenshot/audio from the rolling buffer, after the fact.
+
+    Frames are matched to `captured_at`: the most recent frame not later than
+    the line, within `backfill_tolerance_s`. Existing media is kept unless
+    `force` is set. A wanted screenshot with no matching frame -> buffer_miss;
+    audio is best-effort until an audio source exists.
+    """
+    line = get_line_or_404(db, line_id)
+    wanted_shot = force or not line.screenshot_path
+    wanted_audio = force or not line.audio_path
+    if not wanted_shot and not wanted_audio:
+        return {"line": LineDTO.from_model(line, _encounter_count(db, line.id)), "updated": False}
+
+    buffer = getattr(request.app.state, "media_buffer", None)
+    tolerance = float(settings_store.get(db, "backfill_tolerance_s") or 5.0)
+    updated = False
+    frame = buffer.frame_at(line.captured_at, tolerance) if (wanted_shot and buffer) else None
+    if frame is not None:
+        line.screenshot_path = screen.save_screenshot(frame.data, request.app.state.paths)
+        updated = True
+    if wanted_audio and buffer is not None:
+        audio = buffer.audio_at(line.captured_at, tolerance)
+        if audio is not None:
+            line.audio_path = _save_audio(audio.data, request.app.state.paths)
+            updated = True
+    if wanted_shot and frame is None:
+        raise ApiError("buffer_miss", "缓冲里没有该时间点附近的画面", 404)
+    if updated:
+        db.commit()
+    return {"line": LineDTO.from_model(line, _encounter_count(db, line.id)), "updated": updated}

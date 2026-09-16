@@ -196,6 +196,7 @@ def watch_start(body: WatchIn, request: Request, db: Session = Depends(get_db)) 
         grabber=_grabber(request),
         region_provider=region_provider if body.source_id is not None else None,
         source_id=body.source_id,
+        buffer=getattr(request.app.state, "media_buffer", None),
     )
     request.app.state.region_watcher = watcher
     watcher.start()

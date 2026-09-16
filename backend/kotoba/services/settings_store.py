@@ -23,6 +23,7 @@ DEFAULTS: dict[str, Any] = {
     "ui_language": "zh-CN",
     "capture_hotkey": "Ctrl+Shift+S",
     "capture_hotkey_enabled": False,
+    "backfill_tolerance_s": 5.0,
 }
 
 
