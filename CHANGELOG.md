@@ -24,6 +24,9 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   构建后自动冒烟（内置 OCR 实拍识别、分词、SPA）；签名脚本与证书说明见 `docs/CODE_SIGNING.md`（仓库暂无证书，签名未实测）。
 - 采集：导入 EPUB 轻小说，按 spine 顺序切成句子收进作品；振假名单独保留不混进正文，
   10 万字级长篇按批入库（实测 3441 句 / 3.8 秒，峰值内存 2.2 MiB 不随书增长）。
+- 采集：媒体缓冲（默认最近 60 秒、按内存上限 200MB，纯内存不落盘）。事后可用
+  `POST /api/lines/{id}/backfill` 给已经过去的台词补上截图；对不上的时间点报 `buffer_miss`，
+  容差由设置 `backfill_tolerance_s`（默认 5 秒）控制，音频接口预留、声源尚未接入。
 - Classical 设计语言：纸墨金三层、墨色编码学习状态、中日双字体、明暗两套主题。
 
 ### Notes
