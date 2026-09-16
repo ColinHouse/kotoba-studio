@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -14,7 +15,13 @@ RESERVED_PREFIXES = ("api/", "media/", "ws/", "assets/")
 
 
 def default_dist() -> Path:
-    """`frontend/dist` as laid out in the repository."""
+    """`frontend/dist`, in the repository or next to the frozen executable.
+
+    The PyInstaller build puts it at ``_MEIPASS/frontend/dist``; the repository
+    layout has it two levels above this file (``backend/kotoba/spa.py``).
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys._MEIPASS) / "frontend" / "dist"
     return Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
 

@@ -8,7 +8,7 @@ BACKEND  := backend
 FRONTEND := frontend
 
 .PHONY: help setup hooks check check-backend check-frontend fix test test-backend \
-        test-frontend dev run build migrate clean
+        test-frontend dev run build migrate clean package-windows
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -75,6 +75,9 @@ run: build ## Build, then serve API + web app on one port
 migrate: ## Create a migration from model changes (edit the result before committing)
 	cd $(BACKEND) && uv run alembic revision --autogenerate -m "$(m)"
 	@echo "Now replace kotoba.models.UTCDateTime() with sa.DateTime() in the new revision."
+
+package-windows: ## Build the Windows bundle (ARGS="--installer" adds the setup exe)
+	cd $(BACKEND) && uv run --extra packaging python ../packaging/build.py $(ARGS)
 
 clean: ## Remove build output and caches (never touches your data directory)
 	rm -rf $(FRONTEND)/dist $(FRONTEND)/dev-dist $(FRONTEND)/node_modules/.tmp
