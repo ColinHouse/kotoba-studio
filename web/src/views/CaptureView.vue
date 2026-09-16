@@ -50,15 +50,19 @@ async function boot() {
   connectWs()
 }
 
+function upsertLine(line: Line) {
+  const idx = lines.value.findIndex((l) => l.id === line.id)
+  if (idx >= 0) lines.value[idx] = line
+  else lines.value.unshift(line)
+}
+
 function connectWs() {
   try {
     ws = new WebSocket(wsUrl('/ws/events'))
     ws.onmessage = (ev) => {
       const event = JSON.parse(ev.data) as { type: string; line: Line }
       if (!session.value || event.line.session_id !== session.value.id) return
-      const idx = lines.value.findIndex((l) => l.id === event.line.id)
-      if (idx >= 0) lines.value[idx] = event.line
-      else lines.value.unshift(event.line)
+      upsertLine(event.line)
     }
   } catch {
     ws = null
@@ -137,11 +141,7 @@ async function collect() {
     if (!r.line) app.toast('没有识别到文字', 'error')
     else if (r.duplicate) app.toast('这句已经收藏过了')
     else app.toast('已收藏', 'success')
-    if (r.line) {
-      const idx = lines.value.findIndex((l) => l.id === r.line!.id)
-      if (idx >= 0) lines.value[idx] = r.line
-      else lines.value.unshift(r.line)
-    }
+    if (r.line) upsertLine(r.line)
   } catch (e) {
     app.fail(e)
   } finally {
@@ -156,7 +156,7 @@ async function addManual() {
     const r = await api.post<{ line: Line; duplicate: boolean }>('/api/lines', { session_id: session.value?.id ?? null, source_id: sourceId.value, text, origin: 'manual' })
     manual.value = ''
     if (r.duplicate) app.toast('这句已经收藏过了')
-    else lines.value.unshift(r.line)
+    upsertLine(r.line)
   } catch (e) {
     app.fail(e)
   }
@@ -221,7 +221,10 @@ function onKey(e: KeyboardEvent) {
 
         <div class="card p-3">
           <p class="label">手动粘贴（来自 Textractor / 剪贴板）</p>
-          <textarea v-model="manual" class="input jp mt-1 h-20" placeholder="把台词粘贴到这里，Enter 保存" @keydown.enter.exact.prevent="addManual" />
+          <div class="mt-1 flex gap-2">
+            <textarea v-model="manual" class="input jp h-20" placeholder="把台词粘贴到这里，Enter 保存" @keydown.enter.exact.prevent="addManual" />
+            <button class="btn-outline self-end" :disabled="!manual.trim()" @click="addManual">保存</button>
+          </div>
           <p class="mt-1 text-xs text-ink-3">Hook 工具可直接连接 WebSocket <code>{{ wsUrl('/ws/hook') }}</code>，发送纯文本或 {"text": "…"}。</p>
         </div>
       </section>

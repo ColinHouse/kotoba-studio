@@ -43,7 +43,8 @@ export default defineConfig({
   ],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: {
-    port: 5173,
+    port: 5174,
+    strictPort: true,
     proxy: {
       '/api': API,
       '/media': API,

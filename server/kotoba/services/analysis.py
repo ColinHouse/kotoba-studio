@@ -54,7 +54,7 @@ def analyze_text(db: Session, text: str) -> dict:
         "text": text,
         "tokens": token_dicts,
         "spans": span_dicts,
-        "contractions": contractions.find_in(text),
+        "contractions": contractions.find_in_tokens([t.surface for t in tokens]),
     }
 
 

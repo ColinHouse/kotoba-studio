@@ -22,10 +22,14 @@ class EntryDTO:
     pos: list[str]
     common: bool
     is_expression: bool
+    usually_kana: bool = False
 
     @property
     def headword(self) -> str:
-        return self.kanji[0] if self.kanji else self.kana[0]
+        """Kanji form unless the entry is usually written in kana."""
+        if self.kanji and not self.usually_kana:
+            return self.kanji[0]
+        return self.kana[0] if self.kana else self.kanji[0]
 
     @property
     def reading(self) -> str:
@@ -48,6 +52,9 @@ def entry_to_dto(entry: DictEntry) -> EntryDTO:
         pos=json.loads(entry.pos_json or "[]"),
         common=entry.common,
         is_expression=entry.is_expression,
+        usually_kana=any(
+            "uk" in (sense.get("misc") or []) for sense in json.loads(entry.senses_json)
+        ),
     )
 
 

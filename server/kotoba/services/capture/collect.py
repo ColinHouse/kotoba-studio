@@ -29,7 +29,8 @@ def collect(
     shot = grabber(region)
     result = provider.recognize(shot.png)
     text = normalize_ocr(result.text)
-    screenshot_path = save_screenshot(shot.png, paths) if save else None
+    # Only keep the screenshot when there is text to attach it to (no orphan files).
+    screenshot_path = save_screenshot(shot.png, paths) if (save and text) else None
     payload = {
         "ocr": result.to_dict(),
         "screenshot_path": screenshot_path,

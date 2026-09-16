@@ -25,7 +25,7 @@ export interface Line {
 export interface DictSense { pos: string[]; gloss_en: string[]; misc: string[]; field: string[]; info: string[] }
 export interface DictEntry {
   id: string; dict_id: number; kanji: string[]; kana: string[]; senses: DictSense[]; pos: string[]
-  common: boolean; is_expression: boolean; headword: string; reading: string
+  common: boolean; is_expression: boolean; usually_kana: boolean; headword: string; reading: string
 }
 
 export interface Token {

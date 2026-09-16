@@ -55,7 +55,7 @@ async function rate(rating: 1 | 2 | 3 | 4) {
 
 function onKey(e: KeyboardEvent) {
   if (!current.value) return
-  if (e.key === ' ' || e.key === 'Enter') {
+  if (e.key === ' ' || e.code === 'Space' || e.key === 'Enter') {
     e.preventDefault()
     revealed.value = true
   } else if (revealed.value && ['1', '2', '3', '4'].includes(e.key)) {

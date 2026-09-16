@@ -56,3 +56,13 @@ def test_kana_helpers():
     assert kana.is_kanji("奢") and not kana.is_kanji("あ")
     assert kana.has_kanji("奢る") and not kana.has_kanji("おごる")
     assert kana.is_all_kana("おごって") and not kana.is_all_kana("奢って")
+
+
+def test_contractions_align_to_token_boundaries():
+    surfaces = [t.surface for t in tokenize("しょうがないなぁ…今日は俺が奢ってやるよ。")]
+    forms = [r["form"] for r in contractions.find_in_tokens(surfaces)]
+    assert "しょうがない" in forms
+    assert "って" not in forms  # って inside 奢って is the te-form, not the quotative
+    surfaces = [t.surface for t in tokenize("食べちゃったんだ")]
+    forms = [r["form"] for r in contractions.find_in_tokens(surfaces)]
+    assert "ちゃった" in forms and "んだ" in forms

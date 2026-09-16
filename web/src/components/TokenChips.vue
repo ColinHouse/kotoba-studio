@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Analysis, DictEntry, KnownStatus, Span, Token } from '@/api/types'
+import { headwordFor } from '@/utils/headword'
 
 export interface PickedTerm {
   headword: string
@@ -59,7 +60,7 @@ function pick(c: Chip) {
     const first = c.span.candidates[0]
     const endTok = props.analysis.tokens[c.span.end_tok]!
     emit('pick', {
-      headword: first?.headword ?? c.span.matched_form,
+      headword: headwordFor(first, c.span.text, c.span.matched_form),
       reading: first?.reading ?? c.span.reading,
       surface: c.span.text,
       span_start: c.start,
@@ -75,7 +76,7 @@ function pick(c: Chip) {
   const t = c.token!
   const first = t.candidates[0]
   emit('pick', {
-    headword: first?.headword ?? t.base,
+    headword: headwordFor(first, t.surface, t.base),
     reading: first?.reading ?? t.reading_base,
     surface: t.surface,
     span_start: t.start,

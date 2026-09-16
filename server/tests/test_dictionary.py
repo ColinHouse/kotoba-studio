@@ -13,7 +13,9 @@ def test_import_and_lookup(db, jmdict_fixture):
     assert "仕様がない" in hits[0].kanji and hits[0].is_expression
     assert hits[0].senses[0]["gloss_en"][0] == "there's no (other) way"
 
-    assert lookup.lookup(db, "奢る")[0].headword == "奢る"
+    ogoru = lookup.lookup(db, "奢る")[0]
+    assert "奢る" in ogoru.kanji and ogoru.usually_kana and ogoru.headword == "おごる"
+    assert lookup.lookup(db, "大丈夫")[0].headword == "大丈夫"  # not usually-kana → kanji form
     assert lookup.lookup(db, "存在しない語") == []
 
 

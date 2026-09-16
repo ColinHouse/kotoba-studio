@@ -5,6 +5,7 @@ import { api, mediaUrl } from '@/api/client'
 import type { Analysis, CardType, DictEntry, Encounter, Explanation, Line, Session, Term } from '@/api/types'
 import ExplanationBlock from '@/components/ExplanationBlock.vue'
 import TokenChips, { type PickedTerm } from '@/components/TokenChips.vue'
+import { headwordFor } from '@/utils/headword'
 import { useAppStore } from '@/stores/app'
 import { hasKanji } from '@/utils/kana'
 import { CARD_TYPE_LABEL, relTime } from '@/utils/format'
@@ -72,7 +73,10 @@ function onPick(p: PickedTerm) {
 
 function chooseCandidate(c: DictEntry) {
   candidate.value = c
-  picked.value = picked.value && { ...picked.value, headword: c.headword, reading: c.reading, pos: c.pos[0] ?? null }
+  if (picked.value) {
+    picked.value = { ...picked.value, headword: headwordFor(c, picked.value.surface, c.headword), reading: c.reading, pos: c.pos[0] ?? null }
+    cardTypes.value = hasKanji(picked.value.headword) ? ['reading', 'cloze'] : ['meaning', 'cloze']
+  }
   glossEn.value = c.senses[0]?.gloss_en.slice(0, 3).join('; ') ?? ''
 }
 

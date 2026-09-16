@@ -22,7 +22,10 @@ const nav = computed(() => {
 })
 
 function active(to: string) {
-  return to === '/' ? route.path === '/' : route.path.startsWith(to)
+  if (to === '/') return route.path === '/'
+  if (to === '/inbox') return route.path.startsWith('/inbox') || route.path.startsWith('/quiz')
+  if (to === '/library') return route.path.startsWith('/library') || route.path.startsWith('/terms')
+  return route.path.startsWith(to)
 }
 </script>
 
