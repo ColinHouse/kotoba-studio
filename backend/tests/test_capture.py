@@ -1,5 +1,6 @@
 import io
 import sys
+from pathlib import Path
 
 import pytest
 from PIL import Image, ImageDraw, ImageFont
@@ -7,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 from kotoba.core.errors import ApiError
 from kotoba.services.capture.screen import Grab, Region
 from kotoba.services.ocr import registry
-from kotoba.services.ocr.base import OcrBlock, OcrResult
+from kotoba.services.ocr.base import OcrBlock, OcrResult, join_words
 
 
 class FakeProvider:
@@ -162,5 +163,46 @@ def test_vision_provider_reads_japanese_dialog():
     img.save(buf, format="PNG")
     result = provider.recognize(buf.getvalue())
     assert "奢って" in result.text and result.blocks[0].confidence > 0.5
+    x, y, w, h = result.blocks[0].box
+    assert 0 <= x < 0.2 and 0 <= y < 0.6 and w > 0.3 and h > 0.1
+
+
+def test_join_words_keeps_cjk_tight_and_latin_spaced():
+    assert join_words(["奢", "っ", "て", "やる", "よ", "。"]) == "奢ってやるよ。"
+    assert join_words(["I", "love", "you"]) == "I love you"
+    assert join_words(["iPod", "を", "買った"]) == "iPodを買った"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows OCR only on Windows")
+def test_windows_ocr_provider_reads_japanese_dialog():
+    from kotoba.services.ocr.providers.windows_ocr import WindowsOcrProvider
+
+    provider = WindowsOcrProvider()
+    if not provider.available():
+        pytest.skip("winocr or the Windows Japanese OCR language pack is missing")
+    font_path = next(
+        (
+            p
+            for p in ("C:/Windows/Fonts/meiryo.ttc", "C:/Windows/Fonts/YuGothR.ttc")
+            if Path(p).is_file()
+        ),
+        None,
+    )
+    if font_path is None:
+        pytest.skip("no Japanese font installed")
+    img = Image.new("RGB", (900, 120), (30, 30, 40))
+    d = ImageDraw.Draw(img)
+    d.text(
+        (30, 30),
+        "今日は俺が奢ってやるよ。",
+        font=ImageFont.truetype(font_path, 40),
+        fill=(240, 240, 240),
+    )
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    result = provider.recognize(buf.getvalue())
+    assert result.provider == "winocr"
+    # The engine joins its words with spaces; the provider must have undone that.
+    assert "奢って" in result.text and " " not in result.text
     x, y, w, h = result.blocks[0].box
     assert 0 <= x < 0.2 and 0 <= y < 0.6 and w > 0.3 and h > 0.1
