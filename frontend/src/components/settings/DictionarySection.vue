@@ -35,14 +35,18 @@ async function install() {
 
 <template>
   <SettingsSection title="词典">
-    <p v-if="dict?.installed" class="text-sm">
-      已安装：{{
-        dict.dictionaries
-          .map((d) => `${d.title}（${d.entry_count.toLocaleString()} 条，${d.revision}）`)
-          .join('；')
-      }}
-    </p>
-    <p v-else class="text-sm text-ink-2">
+    <ul v-if="dict?.dictionaries.length" class="space-y-1 text-sm">
+      <li v-for="d in dict.dictionaries" :key="d.id">
+        <span>{{ d.title }}</span>
+        <span class="text-ink-50">
+          （{{ d.entry_count.toLocaleString() }} 条<template v-if="d.revision"
+            >，{{ d.revision }}</template
+          >）
+        </span>
+        <span v-if="d.attribution" class="block text-xs text-ink-35">{{ d.attribution }}</span>
+      </li>
+    </ul>
+    <p v-else-if="dict" class="text-sm text-ink-50">
       尚未安装 JMdict。安装后可查词、识别表达、给出候选释义（约 25 MB 下载）。
     </p>
     <div class="flex flex-wrap items-center gap-2">

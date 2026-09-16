@@ -24,6 +24,8 @@ class Dictionary(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
     revision: Mapped[str | None] = mapped_column(String(100))
+    author: Mapped[str | None] = mapped_column(String(200))
+    attribution: Mapped[str | None] = mapped_column(Text)
     kind: Mapped[str] = mapped_column(String(16), default="jmdict")
     entry_count: Mapped[int] = mapped_column(Integer, default=0)
     imported_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
