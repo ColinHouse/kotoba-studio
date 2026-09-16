@@ -41,7 +41,9 @@ def list_lines(
     sort: Literal["recent", "iplus1"] = "recent",
     db: Session = Depends(get_db),
 ) -> list[LineDTO]:
-    stmt = select(Line).order_by(Line.captured_at.desc(), Line.id.desc())
+    stmt = select(Line).order_by(
+        Line.ord.is_(None), Line.ord.asc(), Line.captured_at.desc(), Line.id.desc()
+    )
     if session_id is not None:
         stmt = stmt.where(Line.session_id == session_id)
     if source_id is not None:

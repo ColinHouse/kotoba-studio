@@ -2,12 +2,30 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 
 from pydantic import BaseModel, Field
 
 from kotoba.models import Line
 from kotoba.schemas.common import LineOrigin, LineStatus, loads
+
+
+def line_locator(line: Line) -> dict | None:
+    """Where the line sits in its work, reading old fields when locator_json is absent."""
+    if line.locator_json:
+        try:
+            data = json.loads(line.locator_json)
+        except json.JSONDecodeError:
+            data = None
+        if isinstance(data, dict) and data.get("kind"):
+            return data
+    if line.start_ms is not None or line.end_ms is not None:
+        return {"kind": "time", "start_ms": line.start_ms, "end_ms": line.end_ms}
+    position = loads(line.position_json)
+    if isinstance(position, dict) and position.get("region"):
+        return {"kind": "region", "region": position["region"]}
+    return None
 
 
 class LineCreate(BaseModel):
@@ -19,6 +37,8 @@ class LineCreate(BaseModel):
     screenshot_path: str | None = None
     audio_path: str | None = None
     position: dict | None = None
+    locator: dict | None = None
+    ord: int | None = None
     speaker: str | None = None
     start_ms: int | None = None
     end_ms: int | None = None
@@ -41,6 +61,8 @@ class LineDTO(BaseModel):
     screenshot_path: str | None
     audio_path: str | None
     position: dict | None
+    locator: dict | None
+    ord: int | None
     speaker: str | None
     start_ms: int | None
     end_ms: int | None
@@ -64,6 +86,8 @@ class LineDTO(BaseModel):
             screenshot_path=line.screenshot_path,
             audio_path=line.audio_path,
             position=loads(line.position_json),
+            locator=line_locator(line),
+            ord=line.ord,
             speaker=line.speaker,
             start_ms=line.start_ms,
             end_ms=line.end_ms,

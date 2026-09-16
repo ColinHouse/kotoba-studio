@@ -20,7 +20,7 @@ def encounter_timeline(db: Session, term_id: int) -> list[dict]:
         .join(Line, Line.id == Encounter.line_id)
         .outerjoin(Source, Source.id == Line.source_id)
         .where(Encounter.term_id == term_id)
-        .order_by(Line.captured_at.asc(), Encounter.id.asc())
+        .order_by(Line.ord.is_(None), Line.ord.asc(), Line.captured_at.asc(), Encounter.id.asc())
     ).all()
     out = []
     for enc, line, source in rows:
