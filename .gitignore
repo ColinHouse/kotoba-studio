@@ -21,8 +21,16 @@ frontend/dev-dist/
 *.apkg
 *.zip
 
-# Competitive research: kept locally, deliberately not published
-docs/product-analysis.md
+# Local-only working material: research, design briefs, prompts, agent plans.
+# Anything that is written *to* a model rather than *for* a reader lives here.
+/private/
+
+# Agent and editor tooling configuration is personal, not project state.
+.claude/
+.cursor/
+.aider*
+.windsurf*
+.continue/
 
 # OS / editors
 .DS_Store

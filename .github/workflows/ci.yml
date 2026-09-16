@@ -25,6 +25,23 @@ jobs:
           if [ -n "$bad" ]; then
             echo "::error::these files must not be tracked:"; echo "$bad"; exit 1
           fi
+      - name: No prompts or agent scaffolding in the repository
+        run: |
+          bad=$(git ls-files | grep -E \
+            '(^|/)superpowers/|^private/|^\.claude/|^\.cursor/|^\.aider|^\.windsurf|^\.continue/|\.prompt(\.md)?$|[-_]prompt\.md$' \
+            || true)
+          if [ -n "$bad" ]; then
+            echo "::error::prompt or agent-tooling files must not be tracked:"; echo "$bad"; exit 1
+          fi
+          for f in $(git ls-files '*.md'); do
+            case "$f" in AGENTS.md|CONTRIBUTING.md) continue ;; esac
+            if grep -qEi 'REQUIRED SUB-SKILL|superpowers:|^You are an? |作为一名|请你扮演|你是一个|<system-reminder>' "$f"; then
+              echo "::error::$f reads as instructions written to a model:"; grep -nEi \
+                'REQUIRED SUB-SKILL|superpowers:|^You are an? |作为一名|请你扮演|你是一个|<system-reminder>' "$f"
+              exit 1
+            fi
+          done
+
       - name: No credentials in the tree
         run: |
           hits=$(grep -rEIn --exclude-dir=.git --exclude-dir=node_modules \

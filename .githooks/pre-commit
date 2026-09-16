@@ -54,4 +54,24 @@ if [ -n "$web" ] && [ -d frontend/node_modules ]; then
     || fail "eslint/prettier failed; run 'make fix' and stage the result"
 fi
 
+# 5. Prompts and agent scaffolding are working material, not project state.
+#    Runtime prompts that ship as product code (services/ai/prompts.py) are fine;
+#    documents written *to* a model are not. Keep those in private/.
+scaffolding=$(printf '%s\n' "$staged" | grep -E \
+  '(^|/)superpowers/|^private/|^\.claude/|^\.cursor/|^\.aider|^\.windsurf|^\.continue/|\.prompt(\.md)?$|[-_]prompt\.md$' \
+  || true)
+if [ -n "$scaffolding" ]; then
+  printf 'Prompt or agent-tooling files must not be committed:\n%s\n' "$scaffolding" >&2
+  fail "move them under private/ (git-ignored) — see private/README.md"
+fi
+
+for f in $(printf '%s\n' "$staged" | grep -E '\.md$' || true); do
+  case "$f" in AGENTS.md|CONTRIBUTING.md) continue ;; esac
+  [ -f "$f" ] || continue
+  if grep -qEi 'REQUIRED SUB-SKILL|superpowers:|^You are an? |作为一名|请你扮演|你是一个|<system-reminder>|可直接作为.{0,6}prompt|use (this|the following) as a prompt' "$f"; then
+    printf '%s reads as instructions written to a model, not documentation.\n' "$f" >&2
+    fail "keep prompts in private/; AGENTS.md is the only agent-facing file in the repo"
+  fi
+done
+
 exit 0

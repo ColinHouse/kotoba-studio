@@ -44,13 +44,13 @@ frontend/src/
   composables/ useScreenCapture · useSessionLines · useInboxLines · useSettings
   components/  common · capture · inbox · review · settings
   views/       首页·作品·采集·收件箱·复习·短测·词库·词条·设置
-docs/          产品分析、设计规格、ADR、路线图
+docs/          开发约定、ADR、路线图
 ```
 
 技术：FastAPI · SQLAlchemy 2 + Alembic · py-fsrs · fugashi/unidic · mss ·
 Apple Vision / Windows OCR / RapidOCR · Vue 3 + Vite + Tailwind 4 + PWA。
 
-核心数据模型：作品 → 会话 → 句子（截图/音频）→ 语境（某句里的某个词）→ 词条/义项 → 卡片（FSRS 状态 + 设备归属）→ 复习记录（正式 / 短测分开）。详见 [设计规格](docs/superpowers/specs/2026-09-15-kotoba-studio-design.md)。
+核心数据模型：作品 → 会话 → 句子（截图/音频）→ 语境（某句里的某个词）→ 词条/义项 → 卡片（FSRS 状态 + 设备归属）→ 复习记录（正式 / 短测分开）。模型定义见 [backend/kotoba/models/](backend/kotoba/models/)。
 
 ## 参与
 
@@ -63,8 +63,7 @@ Apple Vision / Windows OCR / RapidOCR · Vue 3 + Vite + Tailwind 4 + PWA。
 
 ## 文档
 
-- [UI 设计说明](docs/ui-design-brief.md) · [开发约定](docs/conventions.md)
-- [设计规格](docs/superpowers/specs/2026-09-15-kotoba-studio-design.md) · [M0 实施计划](docs/superpowers/plans/2026-09-15-m0-skeleton.md)
+- [开发约定](docs/conventions.md) · [AI 工具操作规则](AGENTS.md)
 - [ADR 0001 技术栈](docs/adr/0001-tech-stack.md) · [路线图](docs/roadmap.md)
 
 ## 平台说明
