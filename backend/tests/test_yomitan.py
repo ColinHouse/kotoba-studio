@@ -72,6 +72,30 @@ def test_import_reads_index_and_term_fields(client):
     assert neko["senses"][0]["gloss_en"] == ["cat", "feline"]  # structured content flattened
 
 
+def test_import_keeps_author_and_attribution(client):
+    upload(client, make_zip())
+    entry = next(
+        d for d in client.get("/api/dict/status").json()["dictionaries"] if d["title"] == "测试词典"
+    )
+    assert entry["author"] == "tester"
+    assert entry["attribution"] == "CC BY-SA"
+
+
+def test_import_without_attribution_leaves_it_empty(client):
+    upload(
+        client,
+        make_zip(
+            index={"title": "无署名", "format": 3},
+            banks=([["水", "みず", "n", "", 0, ["water"], 1, []]],),
+        ),
+    )
+    entry = next(
+        d for d in client.get("/api/dict/status").json()["dictionaries"] if d["title"] == "无署名"
+    )
+    assert entry["author"] is None
+    assert entry["attribution"] is None
+
+
 def test_import_replaces_the_same_title(client):
     upload(client, make_zip())
     upload(

@@ -94,7 +94,12 @@ def import_frequencies(db: Session, archive: zipfile.ZipFile) -> tuple[Dictionar
     db.flush()
 
     dictionary = Dictionary(
-        title=index.title, revision=index.revision, kind="yomitan", entry_count=0
+        title=index.title,
+        revision=index.revision,
+        author=index.author,
+        attribution=index.attribution,
+        kind="yomitan",
+        entry_count=0,
     )
     db.add(dictionary)
     db.flush()
