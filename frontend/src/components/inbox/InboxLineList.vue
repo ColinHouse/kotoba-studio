@@ -37,6 +37,13 @@ defineEmits<{ select: [line: Line] }>()
             {{ relTime(line.captured_at)
             }}<template v-if="line.encounter_count"> · {{ line.encounter_count }} 个词</template>
             <template v-if="line.status === 'kept'"> · 已确认</template>
+            <span
+              v-if="line.unknown_count !== null && line.unknown_count > 0"
+              class="tag tag-state ml-1.5 align-middle"
+              :class="line.unknown_count === 1 ? 'text-ink' : 'text-ink-50'"
+            >
+              {{ line.unknown_count === 1 ? 'i+1' : `${line.unknown_count} 个生词` }}
+            </span>
           </span>
         </span>
       </button>

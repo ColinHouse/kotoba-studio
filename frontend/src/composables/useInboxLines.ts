@@ -4,6 +4,7 @@ import type { Analysis, Line, Session } from '@/api/types'
 import { useAppStore } from '@/stores/app'
 
 export type LineStatus = 'inbox' | 'kept' | 'discarded'
+export type LineSort = 'recent' | 'iplus1'
 
 /** The inbox list: which session and status are shown, and what is selected. */
 export function useInboxLines() {
@@ -11,6 +12,7 @@ export function useInboxLines() {
   const sessions = ref<Session[]>([])
   const sessionId = ref<number | 'all'>('all')
   const status = ref<LineStatus>('inbox')
+  const sort = ref<LineSort>('recent')
   const lines = ref<Line[]>([])
   const selected = ref<Line | null>(null)
   const analysis = ref<Analysis | null>(null)
@@ -24,6 +26,7 @@ export function useInboxLines() {
   async function loadLines() {
     const params = new URLSearchParams({ status: status.value, limit: '200' })
     if (sessionId.value !== 'all') params.set('session_id', String(sessionId.value))
+    if (sort.value !== 'recent') params.set('sort', sort.value)
     lines.value = await api.get<Line[]>(`/api/lines?${params}`)
     if (selected.value && !lines.value.some((l) => l.id === selected.value!.id)) {
       selected.value = null
@@ -62,12 +65,13 @@ export function useInboxLines() {
     for (const line of [...lines.value]) await setStatus(line, 'discarded')
   }
 
-  watch([sessionId, status], () => loadLines().catch(app.fail))
+  watch([sessionId, status, sort], () => loadLines().catch(app.fail))
 
   return {
     sessions,
     sessionId,
     status,
+    sort,
     lines,
     selected,
     analysis,

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -11,6 +13,7 @@ from kotoba.core.errors import ApiError
 from kotoba.models import Encounter, Line
 from kotoba.schemas import LineCreate, LineCreated, LineDTO, LineUpdate
 from kotoba.services.jp.normalize import normalize_ocr, text_hash
+from kotoba.services.learning import ranking
 from kotoba.services.text import analysis
 from kotoba.services.text.ingest import create_line
 
@@ -35,20 +38,29 @@ def list_lines(
     status: str | None = None,
     limit: int = 100,
     offset: int = 0,
+    sort: Literal["recent", "iplus1"] = "recent",
     db: Session = Depends(get_db),
 ) -> list[LineDTO]:
-    stmt = (
-        select(Line).order_by(Line.captured_at.desc(), Line.id.desc()).limit(limit).offset(offset)
-    )
+    stmt = select(Line).order_by(Line.captured_at.desc(), Line.id.desc())
     if session_id is not None:
         stmt = stmt.where(Line.session_id == session_id)
     if source_id is not None:
         stmt = stmt.where(Line.source_id == source_id)
     if status is not None:
         stmt = stmt.where(Line.status == status)
-    return [
-        LineDTO.from_model(line, _encounter_count(db, line.id)) for line in db.scalars(stmt).all()
-    ]
+
+    if sort == "iplus1":
+        # Rank a recent window rather than the whole library: every uncached line
+        # costs a tokenization, and the inbox only asks for a page anyway.
+        candidates = list(db.scalars(stmt.limit(ranking.SCAN_LIMIT)).all())
+        counts = {line.id: ranking.enrich(db, line) for line in candidates}
+        db.commit()
+        candidates.sort(key=lambda line: ranking.sort_key(counts[line.id]))
+        lines = candidates[offset : offset + limit]
+    else:
+        lines = list(db.scalars(stmt.limit(limit).offset(offset)).all())
+
+    return [LineDTO.from_model(line, _encounter_count(db, line.id)) for line in lines]
 
 
 @router.post("", response_model=LineCreated)
@@ -74,6 +86,7 @@ def update_line(line_id: int, body: LineUpdate, db: Session = Depends(get_db)) -
         line.text = normalize_ocr(data.pop("text"))
         line.text_hash = text_hash(line.text)
         line.tokens_json = None
+        line.unknown_count = None
     for key, value in data.items():
         setattr(line, key, value)
     db.commit()

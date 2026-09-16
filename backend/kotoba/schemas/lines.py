@@ -45,6 +45,7 @@ class LineDTO(BaseModel):
     start_ms: int | None
     end_ms: int | None
     translation_zh: str | None
+    unknown_count: int | None
     status: str
     captured_at: datetime
     encounter_count: int = 0
@@ -67,6 +68,7 @@ class LineDTO(BaseModel):
             start_ms=line.start_ms,
             end_ms=line.end_ms,
             translation_zh=line.translation_zh,
+            unknown_count=line.unknown_count,
             status=line.status,
             captured_at=line.captured_at,
             encounter_count=encounter_count,
