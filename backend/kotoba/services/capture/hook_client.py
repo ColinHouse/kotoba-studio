@@ -22,6 +22,7 @@ from kotoba.core.errors import ApiError
 from kotoba.models import utcnow
 from kotoba.schemas import LineCreate
 from kotoba.services import settings_store
+from kotoba.services.capture.gate import gate
 from kotoba.services.text.hook import parse_hook_message
 from kotoba.services.text.ingest import create_line
 
@@ -189,19 +190,24 @@ class HookManager:
         text = message.get("text", "").strip()
         if not text:
             return
-        db = self._session_factory()
-        try:
-            session_id = message.get("session_id") or settings_store.get(db, "active_session_id")
-            create_line(
-                db,
-                LineCreate(
-                    session_id=session_id,
-                    text=text,
-                    origin="hook",
-                    speaker=message.get("speaker"),
-                ),
-            )
-        except ApiError as exc:
-            log.debug("hook text skipped: %s", exc.message)
-        finally:
-            db.close()
+        with gate.ingest() as allowed:
+            if not allowed:
+                return
+            db = self._session_factory()
+            try:
+                session_id = message.get("session_id") or settings_store.get(
+                    db, "active_session_id"
+                )
+                create_line(
+                    db,
+                    LineCreate(
+                        session_id=session_id,
+                        text=text,
+                        origin="hook",
+                        speaker=message.get("speaker"),
+                    ),
+                )
+            except ApiError as exc:
+                log.debug("hook text skipped: %s", exc.message)
+            finally:
+                db.close()
