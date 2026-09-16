@@ -3,7 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { api } from '@/api/client'
 import type { KnownStatus, Term } from '@/api/types'
-import StatusBadge from '@/components/StatusBadge.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useAppStore } from '@/stores/app'
 import { STATUS_LABEL } from '@/utils/format'
 
