@@ -1,11 +1,33 @@
 import io
+import itertools
 import json
+import threading
+import time
 import zipfile
 
 import httpx
+import pytest
 from PIL import Image
 
+from kotoba.services import backup as backup_service
+from kotoba.services.capture.clipboard import ClipboardWatcher
+from kotoba.services.capture.gate import CaptureGate, gate
 from kotoba.services.export.anki_connect import AnkiConnect
+
+
+@pytest.fixture(autouse=True)
+def _always_resume_capture():
+    yield
+    gate.resume()
+
+
+def wait_for(predicate, timeout: float = 5.0) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        time.sleep(0.01)
+    return predicate()
 
 
 def _png():
@@ -57,6 +79,93 @@ def _seed(client, data_dir):
         },
     )
     return enc
+
+
+def test_capture_gate_waits_for_the_in_flight_write_and_skips_new_ones():
+    gate = CaptureGate()
+    entered, release, finished = threading.Event(), threading.Event(), threading.Event()
+
+    def writer():
+        with gate.ingest() as allowed:
+            assert allowed
+            entered.set()
+            release.wait(2)
+        finished.set()
+
+    thread = threading.Thread(target=writer, daemon=True)
+    thread.start()
+    assert entered.wait(2)
+
+    pauser = threading.Thread(target=gate.pause, daemon=True)
+    pauser.start()
+    time.sleep(0.05)
+    assert pauser.is_alive()  # pause is waiting for the write, not killing it
+    release.set()
+    thread.join(2)
+    pauser.join(2)
+    assert finished.is_set() and not pauser.is_alive()
+
+    with gate.ingest() as allowed:
+        assert allowed is False  # a new write is skipped while paused
+    gate.resume()
+    with gate.ingest() as allowed:
+        assert allowed is True
+
+
+def test_restore_pauses_a_running_capture_source(client, data_dir, monkeypatch):
+    _seed(client, data_dir)
+    name = client.post("/api/backups").json()["name"]
+
+    counter = itertools.count(1)
+    watcher = ClipboardWatcher(
+        lambda: client.app.state.db.session(),
+        read=lambda: f"恢复期间的台词{next(counter)}",
+        interval=0.01,
+    )
+    client.app.state.clipboard_watcher = watcher
+    watcher.start()
+    assert wait_for(lambda: watcher.captured >= 1)
+
+    state = {"captured_at_pause": 0}
+    real_restore = backup_service.restore
+
+    def slow_restore(paths, backup_name):
+        # By now the endpoint has closed the gate; the watcher keeps polling in
+        # this window and none of those lines may reach the database.
+        state["captured_at_pause"] = watcher.captured
+        deadline = time.monotonic() + 1.0
+        while time.monotonic() < deadline:
+            time.sleep(0.02)
+        assert watcher.captured == state["captured_at_pause"]
+        return real_restore(paths, backup_name)
+
+    monkeypatch.setattr(backup_service, "restore", slow_restore)
+    r = client.post("/api/backups/restore", json={"name": name})
+    assert r.status_code == 200 and r.json()["snapshot"].startswith("pre-restore")
+
+    assert watcher.running is True  # it was running and it stays running
+    assert wait_for(lambda: watcher.captured > state["captured_at_pause"])
+    watcher.stop()
+
+
+def test_restore_failure_still_releases_the_capture_gate(client, data_dir):
+    _seed(client, data_dir)
+    counter = itertools.count(1)
+    watcher = ClipboardWatcher(
+        lambda: client.app.state.db.session(),
+        read=lambda: f"失败之后的台词{next(counter)}",
+        interval=0.01,
+    )
+    client.app.state.clipboard_watcher = watcher
+    watcher.start()
+    assert wait_for(lambda: watcher.captured >= 1)
+
+    r = client.post("/api/backups/restore", json={"name": "missing.zip"})
+    assert r.status_code == 404
+
+    captured_before = watcher.captured
+    assert wait_for(lambda: watcher.captured > captured_before)
+    watcher.stop()
 
 
 def test_apkg_export_contains_media_and_fields(client, data_dir):

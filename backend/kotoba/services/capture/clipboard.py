@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from kotoba.core.errors import ApiError
 from kotoba.schemas import LineCreate
 from kotoba.services import settings_store
+from kotoba.services.capture.gate import gate
 from kotoba.services.jp import kana
 from kotoba.services.jp.normalize import normalize_ocr
 from kotoba.services.text.ingest import create_line
@@ -103,24 +104,27 @@ class ClipboardWatcher:
                 self._captured += 1
 
     def _ingest(self, text: str) -> bool:
-        db: Session | None = None
-        try:
-            # Inside the try: opening the session can fail too, and an escaping
-            # exception would end the polling thread for good.
-            db = self._session_factory()
-            session_id = settings_store.get(db, "active_session_id")
-            _, duplicate = create_line(
-                db, LineCreate(session_id=session_id, text=text, origin="hook")
-            )
-            return not duplicate
-        except ApiError as exc:
-            log.debug("clipboard text skipped: %s", exc.message)
-            return False
-        except Exception:
-            # A locked database (a JMdict import holds one transaction) must cost us this
-            # line, not the watcher: an exception here would end the thread for good.
-            log.warning("clipboard line could not be stored", exc_info=True)
-            return False
-        finally:
-            if db is not None:
-                db.close()
+        with gate.ingest() as allowed:
+            if not allowed:
+                return False
+            db: Session | None = None
+            try:
+                # Inside the try: opening the session can fail too, and an escaping
+                # exception would end the polling thread for good.
+                db = self._session_factory()
+                session_id = settings_store.get(db, "active_session_id")
+                _, duplicate = create_line(
+                    db, LineCreate(session_id=session_id, text=text, origin="hook")
+                )
+                return not duplicate
+            except ApiError as exc:
+                log.debug("clipboard text skipped: %s", exc.message)
+                return False
+            except Exception:
+                # A locked database (a JMdict import holds one transaction) must cost us this
+                # line, not the watcher: an exception here would end the thread for good.
+                log.warning("clipboard line could not be stored", exc_info=True)
+                return False
+            finally:
+                if db is not None:
+                    db.close()

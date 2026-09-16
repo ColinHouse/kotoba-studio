@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from kotoba.core.db import Database, make_engine, upgrade
 from kotoba.services import backup
+from kotoba.services.capture.gate import gate
 
 router = APIRouter(prefix="/backups", tags=["backups"])
 
@@ -30,10 +31,14 @@ def create_backup(request: Request) -> dict:
 def restore_backup(body: RestoreIn, request: Request) -> dict:
     app = request.app
     paths = app.state.paths
-    app.state.db.dispose()
-    try:
-        result = backup.restore(paths, body.name)
-    finally:
-        upgrade(paths.db_path)
-        app.state.db = Database(make_engine(paths.db_path))
+    # Silence every capture source and wait for the write in flight before the
+    # file is swapped; a line arriving mid-restore would land in the database
+    # that is about to be overwritten.
+    with gate.hold():
+        app.state.db.dispose()
+        try:
+            result = backup.restore(paths, body.name)
+        finally:
+            upgrade(paths.db_path)
+            app.state.db = Database(make_engine(paths.db_path))
     return result

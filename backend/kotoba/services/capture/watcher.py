@@ -20,6 +20,7 @@ from kotoba.core.errors import ApiError
 from kotoba.schemas import LineCreate
 from kotoba.services import settings_store
 from kotoba.services.capture.framehash import StabilityTracker, dhash
+from kotoba.services.capture.gate import gate
 from kotoba.services.capture.screen import Grab, Region, grab
 from kotoba.services.jp.normalize import normalize_ocr
 from kotoba.services.ocr.base import OcrProvider
@@ -105,21 +106,24 @@ class RegionWatcher:
         text = normalize_ocr(result.text)
         if not text:
             return
-        db = self._session_factory()
-        try:
-            session_id = settings_store.get(db, "active_session_id")
-            _, duplicate = create_line(
-                db,
-                LineCreate(
-                    session_id=session_id,
-                    source_id=self.source_id,
-                    text=text,
-                    raw_text=result.text,
-                    origin="ocr",
-                    position={"region": self.region.to_dict()},
-                ),
-            )
-        finally:
-            db.close()
-        if not duplicate:
-            self._captured += 1
+        with gate.ingest() as allowed:
+            if not allowed:
+                return
+            db = self._session_factory()
+            try:
+                session_id = settings_store.get(db, "active_session_id")
+                _, duplicate = create_line(
+                    db,
+                    LineCreate(
+                        session_id=session_id,
+                        source_id=self.source_id,
+                        text=text,
+                        raw_text=result.text,
+                        origin="ocr",
+                        position={"region": self.region.to_dict()},
+                    ),
+                )
+            finally:
+                db.close()
+            if not duplicate:
+                self._captured += 1

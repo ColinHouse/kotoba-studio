@@ -5,6 +5,7 @@ import time
 from PIL import Image, ImageDraw, ImageFont
 
 from kotoba.core.errors import ApiError
+from kotoba.services.capture.gate import gate
 from kotoba.services.capture.screen import Grab, Region
 from kotoba.services.capture.watcher import RegionWatcher
 from kotoba.services.ocr.base import OcrResult
@@ -35,6 +36,10 @@ class ScriptedFrames:
         png = self._pngs[min(self.calls, len(self._pngs) - 1)]
         self.calls += 1
         return Grab(png=png, width=region.width, height=region.height, scale=1.0)
+
+    def append(self, *texts: str) -> None:
+        """Extend the script while the watcher runs: the next call takes the new frames."""
+        self._pngs.extend(frame_png(text) for text in texts)
 
 
 class AlternatingFrames:
@@ -155,6 +160,23 @@ def test_watcher_survives_ocr_failure(client):
         assert watcher.captured == 0
     finally:
         watcher.stop()
+
+
+def test_watcher_skips_ingest_while_the_gate_is_paused(client):
+    session_id = start_session(client)
+    frames = ScriptedFrames(*TWO_SCENES[:6])
+    watcher = make_watcher(client, frames, ScriptedProvider("第一句", "第二句"))
+    with gate.hold():
+        watcher.start()
+        assert wait_for(lambda: frames.calls > 6)  # the trigger frame was already seen
+        assert watcher.captured == 0
+        assert client.get("/api/lines", params={"session_id": session_id}).json() == []
+
+    frames.append(*TWO_SCENES[6:])  # a fresh scene arrives after the restore window
+    assert wait_for(lambda: watcher.captured == 1)
+    watcher.stop()
+    lines = client.get("/api/lines", params={"session_id": session_id}).json()
+    assert [line["text"] for line in lines] == ["第二句"]
 
 
 def test_watch_endpoints_are_idempotent_and_stop_cleanly(client):
