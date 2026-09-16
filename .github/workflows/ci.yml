@@ -15,10 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # backend/kotoba/data/ is bundled package data and is meant to be tracked;
+      # only the runtime directory at the repository root is forbidden.
       - name: No runtime data or build output in the repository
         run: |
           bad=$(git ls-files | grep -E \
-            '(^|/)data/|(^|/)\.venv/|(^|/)node_modules/|^frontend/(dist|dev-dist)/|\.db(-wal|-shm)?$|\.apkg$|^\.env' \
+            '^data/|(^|/)\.venv/|(^|/)node_modules/|^frontend/(dist|dev-dist)/|\.db(-wal|-shm)?$|\.apkg$|^\.env' \
             || true)
           if [ -n "$bad" ]; then
             echo "::error::these files must not be tracked:"; echo "$bad"; exit 1
