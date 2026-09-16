@@ -2,9 +2,10 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/api/client'
-import type { Kind, Session, Source } from '@/api/types'
+import type { Coverage, Kind, Session, Source } from '@/api/types'
 import { useAppStore } from '@/stores/app'
 import { useDeviceStore } from '@/stores/device'
+import { coverageInk, coveragePercent } from '@/utils/coverage'
 import { KIND_LABEL } from '@/utils/format'
 
 const app = useAppStore()
@@ -17,6 +18,27 @@ const form = ref<{ title: string; title_ja: string; kind: Kind }>({
   kind: 'game',
 })
 const busy = ref(false)
+const coverageId = ref<number | null>(null)
+const coverage = ref<Coverage | null>(null)
+const coverageBusy = ref(false)
+
+async function showCoverage(s: Source) {
+  if (coverageId.value === s.id) {
+    coverageId.value = null
+    return
+  }
+  coverageId.value = s.id
+  coverage.value = null
+  coverageBusy.value = true
+  try {
+    coverage.value = await api.get<Coverage>(`/api/sources/${s.id}/coverage`)
+  } catch (e) {
+    coverageId.value = null
+    app.fail(e)
+  } finally {
+    coverageBusy.value = false
+  }
+}
 
 async function load() {
   sources.value = await api.get<Source[]>('/api/sources')
@@ -99,30 +121,69 @@ async function remove(s: Source) {
     </form>
 
     <ul class="m-0 mt-6 flex list-none flex-col p-0">
-      <li
-        v-for="s in sources"
-        :key="s.id"
-        class="flex flex-wrap items-center justify-between gap-3 border-b border-rule py-3.5"
-      >
-        <div class="min-w-0">
-          <p class="m-0 font-head text-[19px]">
-            {{ s.title }}
-            <span v-if="s.title_ja" class="jp text-[13px] font-normal text-ink-35">{{
-              s.title_ja
-            }}</span>
-          </p>
-          <p class="num m-0 text-[11px] text-ink-35">
-            {{ KIND_LABEL[s.kind] }} · {{ s.line_count }} 句 · 已掌握 {{ s.known_term_count }} /
-            {{ s.term_count }} 词 ·
-            {{ s.region ? `对话区域 ${s.region.width}×${s.region.height}` : '未设置对话区域' }}
-          </p>
+      <li v-for="s in sources" :key="s.id" class="border-b border-rule py-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="m-0 font-head text-[19px]">
+              {{ s.title }}
+              <span v-if="s.title_ja" class="jp text-[13px] font-normal text-ink-35">{{
+                s.title_ja
+              }}</span>
+            </p>
+            <p class="num m-0 text-[11px] text-ink-35">
+              {{ KIND_LABEL[s.kind] }} · {{ s.line_count }} 句 · 已掌握 {{ s.known_term_count }} /
+              {{ s.term_count }} 词 ·
+              {{ s.region ? `对话区域 ${s.region.width}×${s.region.height}` : '未设置对话区域' }}
+            </p>
+          </div>
+          <div class="flex shrink-0 items-center gap-3">
+            <button v-if="device.kind === 'desktop'" class="btn btn-primary" @click="start(s)">
+              开始会话
+            </button>
+            <button class="btn btn-secondary" @click="showCoverage(s)">覆盖率</button>
+            <RouterLink :to="`/library?source=${s.id}`" class="btn btn-secondary">词库</RouterLink>
+            <button class="btn-quiet" @click="remove(s)">删除</button>
+          </div>
         </div>
-        <div class="flex shrink-0 items-center gap-3">
-          <button v-if="device.kind === 'desktop'" class="btn btn-primary" @click="start(s)">
-            开始会话
-          </button>
-          <RouterLink :to="`/library?source=${s.id}`" class="btn btn-secondary">词库</RouterLink>
-          <button class="btn-quiet" @click="remove(s)">删除</button>
+
+        <div v-if="coverageId === s.id" class="framed mt-3 p-4">
+          <p v-if="coverageBusy || !coverage" class="m-0 text-[13px] text-ink-50">正在统计…</p>
+          <template v-else>
+            <p class="kicker m-0">覆盖率 · 按出现次数</p>
+            <div class="mt-1.5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+              <span
+                class="font-head text-[30px] leading-none"
+                :class="coverageInk(coverage.coverage)"
+              >
+                {{ coveragePercent(coverage.coverage) }}
+              </span>
+              <span class="num text-[12px] text-ink-50">
+                {{ coverage.known_tokens }} / {{ coverage.total_tokens }} 次遇见已掌握 · 词种
+                {{ coveragePercent(coverage.distinct_coverage) }}（{{ coverage.known_terms }} /
+                {{ coverage.distinct_terms }}）
+              </span>
+            </div>
+            <div class="mt-2.5 h-[3px] w-full bg-rule">
+              <div class="h-full bg-ink" :style="{ width: coveragePercent(coverage.coverage) }" />
+            </div>
+
+            <p v-if="coverage.unknown_top.length" class="kicker mt-4 mb-1.5">最值得先学</p>
+            <div v-if="coverage.unknown_top.length" class="flex flex-wrap gap-x-4 gap-y-2">
+              <RouterLink
+                v-for="w in coverage.unknown_top"
+                :key="w.term_id"
+                :to="`/terms/${w.term_id}`"
+                class="flex items-center gap-1.5 no-underline"
+              >
+                <span class="jp text-[15px] text-ink">{{ w.headword }}</span>
+                <span class="num text-[11px] text-ink-35">×{{ w.count }}</span>
+              </RouterLink>
+            </div>
+            <p v-else class="mt-3 mb-0 text-[13px] text-ink-35">这个作品暂时没有未学的词。</p>
+            <p v-if="!coverage.has_frequency" class="mt-3 mb-0 text-[11px] text-ink-35">
+              未导入频率词典，生词按出现次数排序；导入后按常见度排序。
+            </p>
+          </template>
         </div>
       </li>
       <li v-if="!sources.length" class="py-4 text-[13px] text-ink-50">

@@ -102,6 +102,25 @@ export interface Term {
   trap: Trap | null
 }
 
+export interface CoverageWord {
+  term_id: number
+  headword: string
+  reading: string
+  rank: number | null
+  count: number
+}
+
+export interface Coverage {
+  total_tokens: number
+  distinct_terms: number
+  known_tokens: number
+  known_terms: number
+  coverage: number
+  distinct_coverage: number
+  has_frequency: boolean
+  unknown_top: CoverageWord[]
+}
+
 export interface Explanation {
   meaning_here?: string
   form?: string | null
