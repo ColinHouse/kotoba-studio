@@ -8,6 +8,7 @@ from collections.abc import Callable
 from sqlalchemy.orm import Session
 
 from kotoba.core.config import Paths
+from kotoba.services.capture.gate import gate
 from kotoba.services.dictionary.jmdict.download import download, latest_asset
 from kotoba.services.dictionary.jmdict.importer import import_json
 
@@ -35,6 +36,7 @@ class InstallJob:
     ) -> bool:
         if self._thread and self._thread.is_alive():
             return False
+        gate.begin_long_write("jmdict-install")
 
         def run() -> None:
             db = session_factory()
@@ -54,9 +56,16 @@ class InstallJob:
                 self.state, self.message = "error", str(exc)
             finally:
                 db.close()
+                gate.end_long_write("jmdict-install")
 
-        self._thread = threading.Thread(target=run, name="jmdict-install", daemon=True)
-        self._thread.start()
+        # If the thread never starts, the claim must not outlive this call: a leaked
+        # claim blocks every future restore until the application is restarted.
+        try:
+            self._thread = threading.Thread(target=run, name="jmdict-install", daemon=True)
+            self._thread.start()
+        except BaseException:
+            gate.end_long_write("jmdict-install")
+            raise
         return True
 
 
