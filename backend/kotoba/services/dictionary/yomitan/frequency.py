@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.orm import Session
 
+from kotoba.core.errors import ApiError
 from kotoba.models import Dictionary, TermFrequency
 from kotoba.services.dictionary.yomitan.archive import meta_bank_names, read_index
 
@@ -83,15 +84,20 @@ def has_any(db: Session) -> bool:
     return db.scalar(select(TermFrequency.id).limit(1)) is not None
 
 
-def import_frequencies(db: Session, archive: zipfile.ZipFile) -> tuple[Dictionary, int]:
-    """Replace any same-titled Yomitan dictionary with this frequency table."""
-    index = read_index(archive)
+def _replace_existing(db: Session, title: str) -> None:
+    """Drop any same-titled frequency table, rows first."""
     for old in db.scalars(
-        select(Dictionary).where(Dictionary.kind == "yomitan-freq", Dictionary.title == index.title)
+        select(Dictionary).where(Dictionary.kind == "yomitan-freq", Dictionary.title == title)
     ).all():
         db.execute(delete(TermFrequency).where(TermFrequency.dict_id == old.id))
         db.delete(old)
     db.flush()
+
+
+def import_frequencies(db: Session, archive: zipfile.ZipFile) -> tuple[Dictionary, int]:
+    """Replace any same-titled Yomitan dictionary with this frequency table."""
+    index = read_index(archive)
+    _replace_existing(db, index.title)
 
     dictionary = Dictionary(
         title=index.title,
@@ -106,30 +112,41 @@ def import_frequencies(db: Session, archive: zipfile.ZipFile) -> tuple[Dictionar
 
     imported = 0
     batch: list[dict] = []
-    for name in meta_bank_names(archive):
-        with archive.open(name) as fh:
-            bank = json.load(fh)
-        if not isinstance(bank, list):
-            continue
-        for raw in bank:
-            parsed = parse_entry(raw)
-            if parsed is None:
+    try:
+        for name in meta_bank_names(archive):
+            with archive.open(name) as fh:
+                bank = json.load(fh)
+            if not isinstance(bank, list):
                 continue
-            headword, reading, rank = parsed
-            batch.append(
-                {
-                    "dict_id": dictionary.id,
-                    "headword": headword,
-                    "reading": reading,
-                    "rank": rank,
-                }
-            )
-            imported += 1
-            if len(batch) >= BATCH:
-                _commit_batch(db, batch)
-                batch = []
-    if batch:
-        _commit_batch(db, batch)
+            for raw in bank:
+                parsed = parse_entry(raw)
+                if parsed is None:
+                    continue
+                headword, reading, rank = parsed
+                batch.append(
+                    {
+                        "dict_id": dictionary.id,
+                        "headword": headword,
+                        "reading": reading,
+                        "rank": rank,
+                    }
+                )
+                imported += 1
+                if len(batch) >= BATCH:
+                    _commit_batch(db, batch)
+                    batch = []
+        if batch:
+            _commit_batch(db, batch)
+    except Exception as exc:
+        # Batches commit as they go, so a bank that fails half way through leaves
+        # committed rows behind a table that still says entry_count = 0 — an "empty"
+        # frequency table whose ranks nevertheless order the library. Undo it.
+        db.rollback()
+        _replace_existing(db, index.title)
+        db.commit()
+        if isinstance(exc, ApiError):
+            raise
+        raise ApiError("bad_dictionary", f"频率表读取失败：{type(exc).__name__}") from exc
     dictionary.entry_count = imported
     db.commit()
     return dictionary, imported
