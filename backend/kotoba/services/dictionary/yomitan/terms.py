@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.orm import Session
 
+from kotoba.core.errors import ApiError
 from kotoba.models import DictEntry, DictForm, Dictionary
 from kotoba.services.dictionary.yomitan.archive import YomitanIndex, read_index, term_bank_names
 from kotoba.services.jp import kana
@@ -105,30 +106,41 @@ def import_archive(db: Session, archive: zipfile.ZipFile) -> tuple[Dictionary, i
     imported = 0
     entry_batch: list[dict] = []
     form_batch: list[dict] = []
-    for name in term_bank_names(archive):
-        with archive.open(name) as fh:
-            bank = json.load(fh)
-        if not isinstance(bank, list):
-            continue
-        for raw in bank:
-            ordinal += 1
-            split = split_entry(raw, ordinal)
-            if split is None:
+    try:
+        for name in term_bank_names(archive):
+            with archive.open(name) as fh:
+                bank = json.load(fh)
+            if not isinstance(bank, list):
                 continue
-            entry, forms = split
-            entry["id"] = next_id
-            entry["dict_id"] = dictionary.id
-            next_id += 1
-            imported += 1
-            for form in forms:
-                form["entry_id"] = entry["id"]
-            entry_batch.append(entry)
-            form_batch.extend(forms)
-            if len(entry_batch) >= BATCH:
-                _commit_batch(db, entry_batch, form_batch)
-                entry_batch, form_batch = [], []
-    if entry_batch:
-        _commit_batch(db, entry_batch, form_batch)
+            for raw in bank:
+                ordinal += 1
+                split = split_entry(raw, ordinal)
+                if split is None:
+                    continue
+                entry, forms = split
+                entry["id"] = next_id
+                entry["dict_id"] = dictionary.id
+                next_id += 1
+                imported += 1
+                for form in forms:
+                    form["entry_id"] = entry["id"]
+                entry_batch.append(entry)
+                form_batch.extend(forms)
+                if len(entry_batch) >= BATCH:
+                    _commit_batch(db, entry_batch, form_batch)
+                    entry_batch, form_batch = [], []
+        if entry_batch:
+            _commit_batch(db, entry_batch, form_batch)
+    except Exception as exc:
+        # Batches commit as they go, so a bank that fails half way through leaves
+        # committed rows behind a dictionary that still says entry_count = 0 — an
+        # "empty" dictionary whose entries nevertheless answer lookups. Undo it.
+        db.rollback()
+        _replace_existing(db, index.title)
+        db.commit()
+        if isinstance(exc, ApiError):
+            raise
+        raise ApiError("bad_dictionary", f"词典包读取失败：{type(exc).__name__}") from exc
     dictionary.entry_count = imported
     db.commit()
     return dictionary, imported

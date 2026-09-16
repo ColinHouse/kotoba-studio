@@ -35,7 +35,8 @@ def make_zip(index=INDEX, banks=(BANK,)) -> bytes:
         if index is not None:
             zf.writestr("index.json", json.dumps(index))
         for i, bank in enumerate(banks, start=1):
-            zf.writestr(f"term_bank_{i}.json", json.dumps(bank))
+            # A str bank is written verbatim, so a test can supply a truncated file.
+            zf.writestr(f"term_bank_{i}.json", bank if isinstance(bank, str) else json.dumps(bank))
     return buf.getvalue()
 
 
@@ -117,3 +118,22 @@ def test_bad_archives_are_rejected(client):
 
     r = upload(client, make_zip(index={"revision": "2026.1"}))
     assert r.status_code == 400 and r.json()["error"]["code"] == "bad_dictionary"
+
+
+def test_a_truncated_bank_leaves_no_half_imported_dictionary(client):
+    """Batches commit as they go, so a failure must undo what it already wrote."""
+    from sqlalchemy import func, select
+
+    from kotoba.models import DictEntry, Dictionary
+
+    big = [[f"語{i}", f"ご{i}", "n", "", 0, [f"gloss {i}"], i, []] for i in range(2500)]
+    response = upload(client, make_zip(banks=(big, "{truncated")))
+    assert response.status_code >= 400
+    assert response.json()["error"]["code"] == "bad_dictionary"
+
+    db = client.app.state.db.session()
+    try:
+        assert db.scalars(select(Dictionary).where(Dictionary.kind == "yomitan")).first() is None
+        assert db.scalar(select(func.count(DictEntry.id))) == 0
+    finally:
+        db.close()
