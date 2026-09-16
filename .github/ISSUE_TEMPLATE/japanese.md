@@ -1,7 +1,7 @@
 ---
 name: 日语处理错误
 about: 分词、读音、缩约还原或表达合并的结果不对
-labels: japanese
+labels: bug, japanese
 ---
 
 **原句**

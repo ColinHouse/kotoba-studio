@@ -81,6 +81,25 @@ make check
 说明你在做什么、期望什么、实际发生了什么。涉及识别问题时，附上原句文本（不用附截图，
 截图里可能有剧透）、作品名和所在平台。
 
+### 标签怎么看
+
+不用自己贴标签，维护者会补；但看懂它们能帮你挑到合适的活：
+
+- **类型**（每个 issue 恰好一个）：`bug`、`enhancement`、`documentation`、`refactor`、`test`。
+  另有领域标签 `japanese`（分词、读音、缩约、表达合并）与 `accessibility`。
+- **`agent-ready`** —— 规格完整到**可以交给自动运行的 coding agent 直接实现**：问题确凿、
+  子系统明确、范围有边界、验收标准写死、验证方式说清楚、没有悬而未决的产品决策。
+  它是**就绪状态，不是署名**——由 AI 发现或撰写的 issue 不会因此自动就绪。
+- **`needs-hardware`** —— 要真机或系统授权才能验证，**agent 不要接**，必须有人在真机上做。
+- **`good first issue`** —— 真的适合第一次来的人：影响面小、不需要跨文件协调、不需要背景知识。
+  **不等于"改动小"。**
+- **`help wanted`** —— 明确希望有外部的人来接。
+- **`no-japanese-needed`** —— 纯工程改动，不懂日语也能做。注意用户可见的文案是简体中文，
+  所以"要写界面文案"的 issue 即使不需要日语，也不是零语言门槛。
+
+带上自己的 coding agent 来的话：挑 `agent-ready` + `no-japanese-needed`，把
+[`AGENTS.md`](AGENTS.md) 交给它，规矩都在里面（开 issue 时该怎么贴标签见 §8）。
+
 ## 许可证
 
 贡献的代码按 [AGPL-3.0-or-later](LICENSE) 授权。词典数据的授权见 [NOTICE.md](NOTICE.md)。

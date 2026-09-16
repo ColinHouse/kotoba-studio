@@ -183,9 +183,12 @@ PRs — you and the human share one GitHub account, so that matches their work t
    always branch from `main`.
 2. **Never merge anything** — not your PR, not anyone's. Never approve, never enable auto-merge,
    never push to `main`. A human merges; that review is the whole point of the loop.
-3. **Only issues labelled `agent-ready`.** That label means a human decided the description is
-   complete enough to implement without asking. An issue without it is not yours to take, no
-   matter how easy it looks. Lowest open number first, so dependencies land in order.
+3. **Only issues labelled `agent-ready`.** That label means the description was judged complete
+   enough to implement without asking (§8). An issue without it is not yours to take, no matter
+   how easy it looks. Lowest open number first, so dependencies land in order.
+   **Never take an issue you labelled `agent-ready` yourself** — labelling your own find and
+   then implementing it puts no human anywhere in the loop. Someone else confirms the label
+   before it becomes queue work.
 4. **One issue, one branch, one PR.** If you discover a second problem, open an issue for it
    (that much is allowed) and leave it alone.
 5. **The issue's "Out of scope" list is binding.** It is there because the work was deliberately
@@ -210,3 +213,66 @@ PRs — you and the human share one GitHub account, so that matches their work t
 
 Stopping with "here is the branch, here is what blocks me" is a success. A green PR that quietly
 skipped half the acceptance criteria is not.
+
+## 8. Labelling an issue you open
+
+§7 tells you how to *consume* `agent-ready`. This tells you how to *apply* it — and the rest of
+the labels — when you are authorised to open an issue. Labels are the queue's index; an issue
+that is classified wrongly either gets picked up when it should not be, or never gets picked up
+at all.
+
+### One type label, always
+
+Exactly one of these, matching the change the issue asks for:
+
+| Label | For |
+| --- | --- |
+| `bug` | existing behaviour is wrong |
+| `enhancement` | a new capability, or a meaningful extension of one |
+| `documentation` | documentation only |
+| `refactor` | internal structure changes, no user-visible behaviour change intended |
+| `test` | mostly test infrastructure or coverage |
+
+They line up with the Conventional Commits type the fix will carry, so a `test(db):` commit
+belongs to a `test` issue. Add domain labels on top when they apply: `japanese` for
+tokenisation, readings, contractions and expression merging; `accessibility` for barriers
+affecting people with disabilities.
+
+### `agent-ready` is a readiness state, not a byline
+
+**An issue is not `agent-ready` because an agent wrote it.** Opus, Codex, DeepSeek or anyone
+else can file a vague issue, and a human can file a perfectly specified one. The label answers
+one question only: *can an unattended agent finish this without asking anything?*
+
+Apply it only when all of these hold:
+
+1. the problem is reproducible, or otherwise concretely established — not a suspicion;
+2. the affected subsystem is named;
+3. the scope is bounded, and what is **out** of scope is written down;
+4. acceptance criteria are explicit enough to disagree with;
+5. the required tests or verification are described;
+6. no product or architecture decision is still open.
+
+If any of those is missing, leave it off and say what is unresolved. An unlabelled issue waiting
+for a decision is useful; a mislabelled one wastes an agent's whole run and produces a PR
+someone has to read and reject.
+
+You may apply the label to an issue you open. You may not then pick that issue up yourself
+(§7.3): certifying your own find and implementing it leaves no human in the loop at any point.
+
+`needs-hardware` is the counterpart: the work cannot be verified without real hardware or an OS
+permission, so **an agent must not take it** even if the specification is complete (§6).
+
+### Labels that are promises to other people
+
+- **`good first issue`** — genuinely suitable for someone's first contribution here: small blast
+  radius, no cross-file coordination, no repository lore required. **Not a synonym for "small".**
+  A one-line fix in code that needs three other files' context is small and a bad first issue.
+  Do not put this on your own issue just because the diff will be short.
+- **`help wanted`** — the maintainer actively wants someone outside to take this.
+- **`no-japanese-needed`** — the work is pure engineering; you do not need to read Japanese to
+  do it. Note that user-facing strings are Simplified Chinese (§4), so an issue that adds UI copy
+  is not language-free even when it needs no Japanese.
+
+These three are read by people deciding whether to spend an evening here. Applying them loosely
+costs someone else's time, not yours.
