@@ -32,7 +32,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.settings = settings
         app.state.paths = resolved_paths
         app.state.db = Database(make_engine(resolved_paths.db_path))
-        # Resolve the database per poll: restore_backup() swaps app.state.db, and a
+        # Resolve the database per use: restore_backup() swaps app.state.db, and a
         # captured bound method would keep writing through the retired engine.
         app.state.clipboard_watcher = ClipboardWatcher(lambda: app.state.db.session())
         app.state.hook_manager = HookManager(lambda: app.state.db.session())
