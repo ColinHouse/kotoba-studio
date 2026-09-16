@@ -36,7 +36,6 @@ def install_jmdict(request: Request, url: str | None = None) -> dict:
 def import_yomitan(file: UploadFile = File(...), db: Session = Depends(get_db)) -> dict:
     try:
         with zipfile.ZipFile(file.file) as archive:
-            dictionary, entries = yomitan.import_archive(db, archive)
+            return yomitan.import_package(db, archive)
     except zipfile.BadZipFile as exc:
         raise ApiError("bad_dictionary", "上传的文件不是有效的 zip 词典包") from exc
-    return {"dictionary_id": dictionary.id, "title": dictionary.title, "entries": entries}
