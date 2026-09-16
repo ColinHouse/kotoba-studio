@@ -23,6 +23,7 @@ dependencies = [
   "segno>=1.6",
   "genanki>=0.13",
   "python-multipart>=0.0.20",
+  "pyperclip>=1.11.0",
 ]
 
 [project.optional-dependencies]
