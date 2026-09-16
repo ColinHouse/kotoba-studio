@@ -24,6 +24,8 @@ DEFAULTS: dict[str, Any] = {
     "capture_hotkey": "Ctrl+Shift+S",
     "capture_hotkey_enabled": False,
     "backfill_tolerance_s": 5.0,
+    "overlay_enabled": False,
+    "overlay_hotkey": "Ctrl+Shift+O",
 }
 
 

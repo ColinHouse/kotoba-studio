@@ -7,6 +7,7 @@ import ExportSection from '@/components/settings/ExportSection.vue'
 import HotkeySection from '@/components/settings/HotkeySection.vue'
 import KnownImportSection from '@/components/settings/KnownImportSection.vue'
 import OcrSection from '@/components/settings/OcrSection.vue'
+import OverlaySection from '@/components/settings/OverlaySection.vue'
 import QrConnect from '@/components/settings/QrConnect.vue'
 import ReviewSection from '@/components/settings/ReviewSection.vue'
 import SettingsSection from '@/components/settings/SettingsSection.vue'
@@ -30,6 +31,7 @@ const app = useAppStore()
     <KnownImportSection />
     <OcrSection />
     <HotkeySection />
+    <OverlaySection />
     <ExportSection />
     <BackupSection />
 

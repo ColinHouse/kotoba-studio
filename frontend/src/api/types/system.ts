@@ -22,6 +22,8 @@ export interface Settings {
   ui_language: string
   capture_hotkey: string
   capture_hotkey_enabled: boolean
+  overlay_enabled: boolean
+  overlay_hotkey: string
 }
 
 export interface ConnectInfo {

@@ -21,7 +21,7 @@ from kotoba.api.capture import (
     ws,
 )
 from kotoba.api.study import cards, encounters, kanji, quiz, reviews, terms
-from kotoba.api.system import ai, backups, devices, dictionary, export, settings
+from kotoba.api.system import ai, backups, devices, dictionary, export, overlay, settings
 
 API_MODULES = (
     meta,
@@ -47,6 +47,7 @@ API_MODULES = (
     export,
     backups,
     settings,
+    overlay,
 )
 
 

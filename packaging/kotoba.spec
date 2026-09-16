@@ -50,6 +50,7 @@ hiddenimports += [
     # (invariant 7 keeps the app bootable without the platform pieces).
     "kotoba.app",  # uvicorn.run("kotoba.app:app") imports this by name
     "unidic_lite",  # fugashi imports it from its compiled extension
+    "tkinter",  # the game overlay imports it inside the view
     "winocr",
     "mss",
     "pyperclip",
@@ -84,7 +85,6 @@ a = Analysis(  # noqa: F821 - Analysis is injected by PyInstaller
         "rapidocr",
         "onnxruntime",
         "matplotlib",
-        "tkinter",
     ],
     noarchive=False,
 )
