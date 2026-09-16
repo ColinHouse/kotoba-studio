@@ -124,3 +124,54 @@ def test_import_commits_in_batches(client, monkeypatch):
 def test_unknown_format_is_rejected(client):
     r = upload(client, b"x", "csv")
     assert r.status_code == 400 and r.json()["error"]["code"] == "bad_import"
+
+
+def test_a_different_reading_is_a_different_word(client):
+    """辛い/からい (spicy) must not mark 辛い/つらい (painful) known."""
+    from sqlalchemy import select
+
+    from kotoba.models import Term
+
+    db = client.app.state.db.session()
+    try:
+        db.add(Term(headword="辛い", reading="つらい", known_status="unknown"))
+        db.commit()
+    finally:
+        db.close()
+
+    result = upload(client, "辛い\tからい\n".encode(), fmt="list")
+    assert result.json()["created"] == 1
+
+    db = client.app.state.db.session()
+    try:
+        by_reading = {
+            t.reading: t.known_status
+            for t in db.scalars(select(Term).where(Term.headword == "辛い")).all()
+        }
+        assert by_reading == {"つらい": "unknown", "からい": "known"}
+    finally:
+        db.close()
+
+
+def test_a_reading_still_matches_a_term_whose_reading_is_unrecorded(client):
+    """The narrower match must not stop an import from updating an existing row."""
+    from sqlalchemy import select
+
+    from kotoba.models import Term
+
+    db = client.app.state.db.session()
+    try:
+        db.add(Term(headword="水", reading="", known_status="unknown"))
+        db.commit()
+    finally:
+        db.close()
+
+    result = upload(client, "水\tみず\n".encode(), fmt="list")
+    assert result.json() | {"unparsed": 0} == result.json()
+    assert result.json()["updated"] == 1 and result.json()["created"] == 0
+
+    db = client.app.state.db.session()
+    try:
+        assert len(db.scalars(select(Term).where(Term.headword == "水")).all()) == 1
+    finally:
+        db.close()
