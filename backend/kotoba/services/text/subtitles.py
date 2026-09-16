@@ -16,6 +16,14 @@ _ASS_CLOCK = re.compile(r"(?P<h>\d+):(?P<m>\d{1,2}):(?P<s>\d{1,2})[.](?P<frac>\d
 _ASS_OVERRIDE = re.compile(r"\{[^}]*\}")
 _ASS_SECTION = re.compile(r"^\[([^\]]+)\]\s*$")
 _ASS_ESCAPES = (r"\N", r"\n", r"\h")
+# An [Events] header on its own line. Searching the whole text would misread an SRT
+# whose dialogue happens to quote "[Events]" as an ASS file.
+_ASS_EVENTS_HEADER = re.compile(r"^\s*\[events\]\s*$", re.IGNORECASE | re.MULTILINE)
+# Drawing mode: \p1 and up switch the payload to vector commands, \p0 switches back.
+# The commands are coordinates, not dialogue, and must not reach the tokenizer.
+_ASS_DRAWING = re.compile(r"\{[^}]*\\p[1-9]\d*[^}]*\}.*?(?=\{[^}]*\\p0\b[^}]*\}|$)", re.DOTALL)
+# Inline markup an SRT may carry: <i>/<b>/<font ...> and ASS-style {\an8} positioning.
+_SRT_TAG = re.compile(r"</?(?:i|b|u|s|em|strong|font|ruby|rt|rp)\b[^>]*>", re.IGNORECASE)
 
 
 @dataclass(slots=True)
@@ -37,9 +45,9 @@ def parse_subtitles(content: str, fmt: str | None = None) -> list[Cue]:
 
 def _resolve_format(content: str, fmt: str | None) -> str:
     if fmt is None:
-        # The [Events] section is the one thing only ASS/SSA has, and the section
-        # header is matched case-insensitively below, so detect it the same way.
-        return "ass" if "[events]" in content.lower() else "srt"
+        # Only ASS/SSA has an [Events] section *header*; match the line, not the
+        # substring, so dialogue quoting "[Events]" does not misdetect the file.
+        return "ass" if _ASS_EVENTS_HEADER.search(content) else "srt"
     normalized = fmt.strip().lower()
     if normalized in {"srt", "ass"}:
         return normalized
@@ -58,6 +66,7 @@ def _parse_srt(content: str) -> list[Cue]:
         if start_ms is None or end_ms is None:
             continue
         text = " ".join(line.strip() for line in lines[timing + 1 :])
+        text = _ASS_OVERRIDE.sub("", _SRT_TAG.sub("", text))
         text = " ".join(text.split())
         if text:
             cues.append(Cue(start_ms, end_ms, text))
@@ -105,10 +114,11 @@ def _ass_cue(payload: str, fields: list[str]) -> Cue | None:
 
 
 def _clean_ass_text(text: str) -> str:
+    text = _ASS_DRAWING.sub("", text)
     text = _ASS_OVERRIDE.sub("", text)
     for escape in _ASS_ESCAPES:
         text = text.replace(escape, " ")
-    return text.strip()
+    return " ".join(text.split())
 
 
 def _srt_ms(value: str) -> int | None:

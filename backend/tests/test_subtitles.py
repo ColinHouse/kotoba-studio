@@ -128,3 +128,56 @@ def test_parse_subtitles_raises_when_nothing_parses():
         with pytest.raises(ApiError) as err:
             parse_subtitles(content)
         assert err.value.code == "bad_subtitle"
+
+
+def test_srt_quoting_events_is_not_mistaken_for_ass():
+    content = "1\n00:00:01,000 --> 00:00:02,000\nゲームの [Events] について\n"
+    assert parse_subtitles(content) == [Cue(1000, 2000, "ゲームの [Events] について")]
+
+
+def test_parse_srt_strips_inline_markup_but_keeps_a_bare_angle_bracket():
+    content = (
+        "1\n00:00:01,000 --> 00:00:02,000\n<i>今日は</i>\n\n"
+        "2\n00:00:03,000 --> 00:00:04,000\n{\\an8}上の字幕\n\n"
+        '3\n00:00:05,000 --> 00:00:06,000\n<font color="#fff">色</font>\n\n'
+        "4\n00:00:07,000 --> 00:00:08,000\n5 < 10 だ\n"
+    )
+    assert [c.text for c in parse_subtitles(content)] == ["今日は", "上の字幕", "色", "5 < 10 だ"]
+
+
+def test_parse_srt_drops_cues_that_are_only_markup():
+    content = (
+        "1\n00:00:01,000 --> 00:00:02,000\n<i></i>\n\n2\n00:00:03,000 --> 00:00:04,000\n本編\n"
+    )
+    assert parse_subtitles(content) == [Cue(3000, 4000, "本編")]
+
+
+def test_parse_ass_removes_drawing_mode_payloads():
+    header = (
+        "[Events]\n"
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    )
+    content = header + (
+        "Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,{\\p1}m 0 0 l 100 0 100 100{\\p0}\n"
+        "Dialogue: 0,0:00:03.00,0:00:04.00,D,,0,0,0,,{\\p1}m 0 0 l 5 5{\\p0}こんにちは\n"
+        "Dialogue: 0,0:00:05.00,0:00:06.00,D,,0,0,0,,{\\pos(320,240)}おはよう\n"
+    )
+    assert parse_subtitles(content) == [
+        Cue(3000, 4000, "こんにちは"),
+        Cue(5000, 6000, "おはよう"),
+    ]
+
+
+def test_parse_ass_drops_an_unterminated_drawing_event():
+    content = (
+        "[Events]\n"
+        "Format: Start, End, Text\n"
+        "Dialogue: 0:00:01.00,0:00:02.00,{\\p4}m 0 0 l 9 9\n"
+        "Dialogue: 0:00:03.00,0:00:04.00,本編\n"
+    )
+    assert parse_subtitles(content) == [Cue(3000, 4000, "本編")]
+
+
+def test_parse_ass_collapses_runs_of_whitespace_from_escapes():
+    content = "[Events]\nFormat: Start, End, Text\nDialogue: 0:00:01.00,0:00:02.00,あ\\N\\Nい\n"
+    assert parse_subtitles(content) == [Cue(1000, 2000, "あ い")]
