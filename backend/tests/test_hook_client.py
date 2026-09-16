@@ -156,3 +156,84 @@ def test_client_retries_and_stop_interrupts_a_long_backoff():
 
     asyncio.run(retry_scenario())
     asyncio.run(stop_scenario())
+
+
+class _ClosingSocket:
+    """Delivers `messages`, then ends the iteration — i.e. the server hung up."""
+
+    def __init__(self, messages):
+        self._messages = list(messages)
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if not self._messages:
+            raise StopAsyncIteration
+        return self._messages.pop(0)
+
+
+def flapping_connector(attempts: list[float], messages=()):
+    """A server that completes the handshake and immediately closes."""
+
+    @contextlib.asynccontextmanager
+    async def connect(url):
+        attempts.append(time.monotonic())
+        yield _ClosingSocket(messages)
+
+    return connect
+
+
+def test_a_flapping_server_still_backs_off():
+    """Accepting the handshake is not proof of a usable connection."""
+
+    async def scenario():
+        attempts: list[float] = []
+        client = HookClient(
+            "ws://127.0.0.1:1",
+            on_text=lambda raw: None,
+            connect=flapping_connector(attempts),
+            initial_backoff=0.02,
+            max_backoff=1.0,
+        )
+        client.start()
+        await asyncio.sleep(0.35)
+        await client.stop()
+        # Doubling from 20ms reaches ~0.35s in about six attempts; resetting on the
+        # handshake instead would retry every 20ms and pile up far more than that.
+        assert 2 <= len(attempts) <= 9, attempts
+        gaps = [b - a for a, b in zip(attempts, attempts[1:], strict=False)]
+        assert gaps[-1] > gaps[0] * 1.5, gaps
+
+    asyncio.run(scenario())
+
+
+def test_backoff_resets_once_a_message_arrives():
+    """A server that actually delivers text has proved itself; retry promptly."""
+
+    async def scenario():
+        attempts: list[float] = []
+        seen: list[str] = []
+        client = HookClient(
+            "ws://127.0.0.1:1",
+            on_text=seen.append,
+            connect=flapping_connector(attempts, messages=["おはよう"]),
+            initial_backoff=0.02,
+            max_backoff=1.0,
+        )
+        client.start()
+        await asyncio.sleep(0.35)
+        await client.stop()
+        assert len(seen) >= 5, seen
+        gaps = [b - a for a, b in zip(attempts, attempts[1:], strict=False)]
+        assert max(gaps) < 0.1, gaps  # never escalated
+
+    asyncio.run(scenario())
+
+
+def test_manager_serialises_reconfiguration_per_target():
+    from kotoba.services.capture.hook_client import HookManager
+
+    manager = HookManager(lambda: None)
+    assert manager._lock("textractor") is manager._lock("textractor")
+    assert manager._lock("textractor") is not manager._lock("luna")

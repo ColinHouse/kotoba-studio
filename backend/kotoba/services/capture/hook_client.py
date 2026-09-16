@@ -84,10 +84,13 @@ class HookClient:
                 async with self._connect(self.url) as ws:
                     self.connected = True
                     self.error = None
-                    backoff = self._initial_backoff
                     async for raw in ws:
                         if not isinstance(raw, str):
                             continue
+                        # Reset on a delivered message, not on the handshake: a server
+                        # that accepts and immediately closes would otherwise be retried
+                        # every 0.5s for ever instead of backing off.
+                        backoff = self._initial_backoff
                         self.last_text_at = utcnow()
                         try:
                             self._on_text(raw)
@@ -121,6 +124,15 @@ class HookManager:
     def __init__(self, session_factory: Callable[[], Session]) -> None:
         self._session_factory = session_factory
         self._clients: dict[str, HookClient] = {}
+        self._locks: dict[str, asyncio.Lock] = {}
+
+    def _lock(self, name: str) -> asyncio.Lock:
+        """One lock per target: connect and disconnect both await, and interleaving
+        them would let a resumed connect revive a client that disconnect just stopped."""
+        lock = self._locks.get(name)
+        if lock is None:
+            lock = self._locks[name] = asyncio.Lock()
+        return lock
 
     def get(self, name: str) -> HookClient | None:
         return self._clients.get(name)
@@ -129,23 +141,26 @@ class HookManager:
         url = (url or PRESETS.get(name) or "").strip()
         if not url:
             raise ApiError("unknown_hook", f"未知的 Hook 目标：{name}")
-        client = self._clients.get(name)
-        if client is not None and client.url != url:
-            await client.stop()
-            client = None
-        if client is None:
-            client = HookClient(url, self._ingest)
-            self._clients[name] = client
-        client.start()
-        return self.describe(name)
+        async with self._lock(name):
+            client = self._clients.get(name)
+            if client is not None and client.url != url:
+                await client.stop()
+                self._clients.pop(name, None)
+                client = None
+            if client is None:
+                client = HookClient(url, self._ingest)
+                self._clients[name] = client
+            client.start()
+            return self.describe(name)
 
     async def disconnect(self, name: str) -> dict:
-        client = self._clients.get(name)
-        if client is None and name not in PRESETS:
-            raise ApiError("not_found", f"未知的 Hook 目标：{name}", 404)
-        if client is not None:
-            await client.stop()
-        return self.describe(name)
+        async with self._lock(name):
+            client = self._clients.get(name)
+            if client is None and name not in PRESETS:
+                raise ApiError("not_found", f"未知的 Hook 目标：{name}", 404)
+            if client is not None:
+                await client.stop()
+            return self.describe(name)
 
     def list(self) -> list[dict]:
         names = list(dict.fromkeys([*PRESETS, *self._clients]))
