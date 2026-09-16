@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from kotoba.core.errors import ApiError
 
 _TERM_BANK = re.compile(r"^term_bank_(\d+)\.json$")
+_META_BANK = re.compile(r"^term_meta_bank_(\d+)\.json$")
 
 
 @dataclass(slots=True)
@@ -44,3 +45,9 @@ def term_bank_names(archive: zipfile.ZipFile) -> list[str]:
     """term_bank_1.json, term_bank_2.json, ... in numeric order."""
     names = [name for name in archive.namelist() if _TERM_BANK.match(name)]
     return sorted(names, key=lambda name: int(_TERM_BANK.match(name).group(1)))
+
+
+def meta_bank_names(archive: zipfile.ZipFile) -> list[str]:
+    """term_meta_bank_1.json, term_meta_bank_2.json, ... in numeric order."""
+    names = [name for name in archive.namelist() if _META_BANK.match(name)]
+    return sorted(names, key=lambda name: int(_META_BANK.match(name).group(1)))

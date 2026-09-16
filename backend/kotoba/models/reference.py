@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -61,3 +62,22 @@ class DictForm(Base):
     common: Mapped[bool] = mapped_column(Boolean, default=False)
 
     entry: Mapped[DictEntry] = relationship(back_populates="forms")
+
+
+class TermFrequency(Base):
+    """A word's rank in one frequency dictionary; `reading` NULL means any reading."""
+
+    __tablename__ = "term_frequencies"
+    __table_args__ = (
+        UniqueConstraint("dict_id", "headword", "reading", name="uq_term_frequencies"),
+        Index("ix_term_frequencies_headword", "headword"),
+        Index("ix_term_frequencies_headword_reading", "headword", "reading"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    dict_id: Mapped[int] = mapped_column(
+        ForeignKey("dictionaries.id", ondelete="CASCADE"), index=True
+    )
+    headword: Mapped[str] = mapped_column(String(200))
+    reading: Mapped[str | None] = mapped_column(String(200))
+    rank: Mapped[int] = mapped_column(Integer)
