@@ -18,6 +18,12 @@ export const router = createRouter({
     { path: '/library', name: 'library', component: () => import('@/views/LibraryView.vue') },
     { path: '/kanji', name: 'kanji', component: () => import('@/views/KanjiView.vue') },
     {
+      path: '/read/:sourceId',
+      name: 'reader',
+      component: () => import('@/views/ReaderView.vue'),
+      props: true,
+    },
+    {
       path: '/terms/:id',
       name: 'term',
       component: () => import('@/views/TermDetailView.vue'),

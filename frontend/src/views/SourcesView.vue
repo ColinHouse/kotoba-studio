@@ -159,6 +159,13 @@ async function remove(s: Source) {
             </button>
             <button class="btn btn-secondary" @click="showCoverage(s)">覆盖率</button>
             <RouterLink :to="`/library?source=${s.id}`" class="btn btn-secondary">词库</RouterLink>
+            <RouterLink
+              v-if="s.kind === 'manga' && s.line_count"
+              :to="`/read/${s.id}`"
+              class="btn btn-secondary"
+            >
+              阅读
+            </RouterLink>
             <button class="btn-quiet" @click="remove(s)">删除</button>
           </div>
         </div>
