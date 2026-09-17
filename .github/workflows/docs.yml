@@ -36,11 +36,12 @@ jobs:
         working-directory: docs
       - run: npm run build
         working-directory: docs
-      # enablement lets the first run switch Pages to the Actions source itself;
-      # without it the action 404s on a repository where Pages was never set up.
+      # Pages has to be switched to the Actions source once, by hand or by API, by
+      # someone with admin on the repository. `enablement: true` looks like it would
+      # do that and cannot: creating a Pages site needs administration:write, which
+      # is not among the scopes GITHUB_TOKEN can be granted, so it fails with
+      # "Resource not accessible by integration". A fork has to do the same once.
       - uses: actions/configure-pages@v6
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v5
         with:
           path: docs/.vitepress/dist
