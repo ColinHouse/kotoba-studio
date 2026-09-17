@@ -105,20 +105,25 @@ const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.co
 
     <template v-else-if="current">
       <div class="flex flex-1 flex-col justify-center py-5">
-        <CardFaceView :face="current" :revealed="revealed" />
+        <Transition name="fade" mode="out-in">
+          <CardFaceView :key="current.id" :face="current" :revealed="revealed" />
+        </Transition>
       </div>
 
       <div class="flex items-end gap-[18px]">
         <div class="flex-1">
-          <button
-            v-if="!revealed"
-            type="button"
-            class="flex h-[58px] w-full items-center justify-center gap-2.5 rounded-ui border border-accent font-head text-[19px] text-accent hover:bg-accent-100"
-            @click="revealed = true"
-          >
-            显示答案<span class="text-[12px] tracking-wider text-ink-50">空格</span>
-          </button>
-          <RatingBar v-else :preview="current.preview" @rate="rate" />
+          <Transition name="fade" mode="out-in">
+            <button
+              v-if="!revealed"
+              key="reveal"
+              type="button"
+              class="flex h-[58px] w-full items-center justify-center gap-2.5 rounded-ui border border-accent font-head text-[19px] text-accent hover:bg-accent-100"
+              @click="revealed = true"
+            >
+              显示答案<span class="text-[12px] tracking-wider text-ink-50">空格</span>
+            </button>
+            <RatingBar v-else key="rating" :preview="current.preview" @rate="rate" />
+          </Transition>
         </div>
         <div
           class="hidden w-[190px] shrink-0 border-l border-divider pl-4 text-[11px] leading-[1.9] text-ink-35 md:block"
@@ -133,58 +138,60 @@ const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.co
       </p>
     </template>
 
-    <div v-else class="mt-8">
-      <p class="m-0 font-head text-[25px] leading-snug">
-        {{ done ? `今天的复习完成了，共 ${done} 张。` : '这个设备上没有到期的卡片。' }}
-      </p>
-      <p class="mt-2 mb-0 text-[13px] leading-relaxed text-ink-50">
-        卡片按归属端分配：只有归属于本设备（或"任意"）的卡片会出现在这里。可在词条详情或设置中调整。
-      </p>
+    <Transition name="rise">
+      <div v-if="!loading && !current" class="mt-8">
+        <p class="m-0 font-head text-[25px] leading-snug">
+          {{ done ? `今天的复习完成了，共 ${done} 张。` : '这个设备上没有到期的卡片。' }}
+        </p>
+        <p class="mt-2 mb-0 text-[13px] leading-relaxed text-ink-50">
+          卡片按归属端分配：只有归属于本设备（或"任意"）的卡片会出现在这里。可在词条详情或设置中调整。
+        </p>
 
-      <section v-if="forecast.length" class="mt-7">
-        <p class="kicker">记忆日历 · 未来一周到期</p>
-        <div class="mt-3.5 flex h-[74px] items-end gap-2.5 border-b border-divider">
-          <div
-            v-for="(d, i) in forecast"
-            :key="d.date"
-            class="flex flex-1 flex-col items-center justify-end gap-1.5"
-          >
-            <span
-              class="num text-[11px]"
-              :class="
-                i === 0 ? 'font-semibold text-accent' : d.count ? 'text-ink-50' : 'text-ink-35'
-              "
-              >{{ d.count || '·' }}</span
-            >
+        <section v-if="forecast.length" class="mt-7">
+          <p class="kicker">记忆日历 · 未来一周到期</p>
+          <div class="mt-3.5 flex h-[74px] items-end gap-2.5 border-b border-divider">
             <div
-              class="w-full"
-              :style="{
-                height: `${d.count ? Math.max(4, Math.round((d.count / maxForecast) * 56)) : 1}px`,
-                background: d.count
-                  ? i === 0
-                    ? 'var(--accent)'
-                    : 'transparent'
-                  : 'var(--divider)',
-                border: d.count && i > 0 ? '1px solid var(--accent)' : 'none',
-              }"
-            />
+              v-for="(d, i) in forecast"
+              :key="d.date"
+              class="flex flex-1 flex-col items-center justify-end gap-1.5"
+            >
+              <span
+                class="num text-[11px]"
+                :class="
+                  i === 0 ? 'font-semibold text-accent' : d.count ? 'text-ink-50' : 'text-ink-35'
+                "
+                >{{ d.count || '·' }}</span
+              >
+              <div
+                class="w-full"
+                :style="{
+                  height: `${d.count ? Math.max(4, Math.round((d.count / maxForecast) * 56)) : 1}px`,
+                  background: d.count
+                    ? i === 0
+                      ? 'var(--accent)'
+                      : 'transparent'
+                    : 'var(--divider)',
+                  border: d.count && i > 0 ? '1px solid var(--accent)' : 'none',
+                }"
+              />
+            </div>
           </div>
-        </div>
-        <div class="mt-1.5 flex gap-2.5">
-          <span
-            v-for="(d, i) in forecast"
-            :key="d.date"
-            class="num flex-1 text-center text-[10px]"
-            :class="i === 0 ? 'font-semibold text-accent' : 'text-ink-35'"
-            >{{ Number(d.date.slice(8, 10)) }}</span
-          >
-        </div>
-      </section>
+          <div class="mt-1.5 flex gap-2.5">
+            <span
+              v-for="(d, i) in forecast"
+              :key="d.date"
+              class="num flex-1 text-center text-[10px]"
+              :class="i === 0 ? 'font-semibold text-accent' : 'text-ink-35'"
+              >{{ Number(d.date.slice(8, 10)) }}</span
+            >
+          </div>
+        </section>
 
-      <div class="mt-7 flex gap-2.5">
-        <RouterLink to="/inbox" class="btn btn-primary">去收件箱建卡</RouterLink>
-        <RouterLink to="/" class="btn btn-secondary">返回首页</RouterLink>
+        <div class="mt-7 flex gap-2.5">
+          <RouterLink to="/inbox" class="btn btn-primary">去收件箱建卡</RouterLink>
+          <RouterLink to="/" class="btn btn-secondary">返回首页</RouterLink>
+        </div>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>

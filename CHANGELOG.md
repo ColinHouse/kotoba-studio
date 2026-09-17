@@ -48,6 +48,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Classical 设计语言：纸墨金三层、墨色编码学习状态、中日双字体、明暗两套主题。
 - 学习：统计页（近 90 天每日复习量与正确率、未来 30 天到期预测、按作品建卡与掌握数、真实保留率 vs 目标保留率、连续复习天数）；纯 SQL 聚合，图表使用手画 SVG，数据不足 14 天不外推趋势线。
 - 交互与反馈：补全 `.btn`、`.seg-opt`、`.rate`、`.tok`、以及收件箱列表行的 `:active` 按下反馈与触屏优化；新增 Skeleton 骨架屏组件，在词库与短测视图中实现 200ms 延迟显示与 rise 平滑入场过渡。
+- 动效层：将动效系统完整接入其余七个核心视图（CaptureView、DashboardView、LibraryView、QuizView、ReviewView、SourcesView、TermDetailView），包括 TransitionGroup 列表增删平移动画、面板上浮与内容平滑切换。
 
 ### 已知限制
 

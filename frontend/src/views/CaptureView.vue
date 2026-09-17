@@ -373,14 +373,16 @@ const elapsed = computed(() =>
         </div>
       </div>
 
-      <EngineCompare
-        :results="compare.results.value"
-        :current="app.settings?.ocr_provider ?? 'auto'"
-        :running="compare.running.value"
-        :can-run="framed"
-        @run="runCompare"
-        @select="chooseEngine"
-      />
+      <Transition name="rise">
+        <EngineCompare
+          :results="compare.results.value"
+          :current="app.settings?.ocr_provider ?? 'auto'"
+          :running="compare.running.value"
+          :can-run="framed"
+          @run="runCompare"
+          @select="chooseEngine"
+        />
+      </Transition>
     </template>
   </div>
 </template>

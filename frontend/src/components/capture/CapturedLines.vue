@@ -19,7 +19,7 @@ const shortcut = confirmShortcut(navigator.userAgent)
       </span>
     </div>
 
-    <ul class="m-0 mt-3 flex list-none flex-col p-0">
+    <TransitionGroup tag="ul" name="list" class="relative m-0 mt-3 flex list-none flex-col p-0">
       <li
         v-for="(line, i) in lines"
         :key="line.id"
@@ -42,7 +42,7 @@ const shortcut = confirmShortcut(navigator.userAgent)
           </p>
         </div>
       </li>
-    </ul>
+    </TransitionGroup>
 
     <p v-if="!lines.length" class="m-0 text-[12px] leading-relaxed text-ink-35">
       收藏的句子会出现在这里；游戏结束后到收件箱统一整理。
