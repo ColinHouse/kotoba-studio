@@ -15,10 +15,15 @@ mkdirSync(dataDir, { recursive: true })
 
 const isWindows = process.platform === 'win32'
 const backend = join(here, '..', '..', 'backend')
+// No `detached`: Playwright kills the webServer's whole process group when the
+// run ends, which is exactly what has to die with it. Detaching put uv/python in
+// a separate group, and they kept the inherited stdout open, so Playwright's
+// teardown waited on a pipe that would never close (the job hung for 19 minutes
+// after the test itself had passed on CI).
 const child = spawn(
   'uv',
   ['run', 'python', '-m', 'kotoba', 'serve', '--data-dir', dataDir, '--port', '8731'],
-  { cwd: backend, stdio: 'inherit', detached: !isWindows },
+  { cwd: backend, stdio: 'inherit' },
 )
 
 function killTree() {
@@ -26,7 +31,7 @@ function killTree() {
     if (isWindows) {
       spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
     } else {
-      process.kill(-child.pid, 'SIGTERM')
+      child.kill()
     }
   } catch {
     /* already gone */
