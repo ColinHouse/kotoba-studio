@@ -8,7 +8,7 @@ BACKEND  := backend
 FRONTEND := frontend
 
 .PHONY: help setup hooks check check-backend check-frontend fix test test-backend \
-        test-frontend dev run build migrate clean package-windows
+        test-frontend e2e dev run build migrate clean package-windows
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -62,6 +62,11 @@ test-backend:
 
 test-frontend:
 	cd $(FRONTEND) && npm run test
+
+# Not part of `make check`: it needs a Chromium download and a real build, and
+# check stays fast. CI runs it as its own job.
+e2e: ## Smoke the main path in a real browser (Playwright + Chromium)
+	cd $(FRONTEND) && npm run e2e
 
 dev: ## Backend (8720) and Vite (5174), both with reload
 	./scripts/dev.sh

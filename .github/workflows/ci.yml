@@ -42,7 +42,7 @@ jobs:
           # `make setup` is the first thing AGENTS.md tells a contributor to run, and
           # nothing else in CI uses it. A $(shell ...) that swallows its own closing
           # paren produced a recipe that had never worked; -n catches that class.
-          for target in setup check fix test dev build run migrate clean version package-windows; do
+          for target in setup check fix test dev build run migrate clean version package-windows e2e; do
             make -n "$target" >/dev/null 2>&1 || {
               echo "::error::make $target does not expand"; make -n "$target"; exit 1; }
           done
@@ -147,3 +147,41 @@ jobs:
         run: npm run test
       - name: Build
         run: npm run build
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Backend dependencies
+        run: uv sync --project backend --extra dev
+      - name: Frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build the web app
+        working-directory: frontend
+        run: npm run build
+      - name: Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Smoke the main path
+        working-directory: frontend
+        run: npm run e2e
+      - name: Keep traces and screenshots when it fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: |
+            frontend/test-results
+            frontend/playwright-report
+          retention-days: 7
