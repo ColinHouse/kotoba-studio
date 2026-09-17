@@ -65,6 +65,14 @@ Two git hooks ship with the repository (`make setup`, or `make hooks`):
 
 Do not reach for `--no-verify`. When a hook stops you, the thing to fix is the cause.
 
+CI applies the same idea to two conventions, and both exits are labels on the pull request —
+visible and auditable, never a magic word in a commit message:
+
+- a PR that touches `LICENSE`, `NOTICE.md`, `SECURITY.md`, `docs/adr/*` or `AGENTS.md` needs a
+  human to add the `protected-docs-reviewed` label;
+- a PR whose `feat(...)`/`fix(...)` commits do not update `CHANGELOG.md` needs the
+  `no-changelog` label (pure refactors, tests and CI changes are what it is for).
+
 ## Code conventions
 
 Read [docs/conventions.md](docs/conventions.md) before writing code: how the layers are split,
