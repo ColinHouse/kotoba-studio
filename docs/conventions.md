@@ -40,6 +40,14 @@ core/      基础设施。不 import services 或 api。
 - 时间一律 UTC aware。用 `models.utcnow()`，不要用 `datetime.now()`。
 - 路径不要用 `Path(__file__).parents[n]` 这种脆弱写法，用 `core/resources.py` 里的常量——
   重构时前者会静默失效。
+- **服务不要捕获 `app.state.db.session`。** `restore_backup()` 会整个换掉 `app.state.db`，
+  被捕获的绑定方法之后会继续写已经退役的引擎。传 `lambda: app.state.db.session()`，
+  每次调用重新取（`app.py` 里所有后台服务都这么做）。
+- **分批 commit 的导入器必须能从中途失败恢复。** 词典/词频这类导入先把
+  `entry_count` 写成 0，全部成功才置数：半截数据留在库里比失败更糟，用户没有任何办法发现。
+  参考 `services/dictionary/yomitan/`。
+- 用户自带数据的格式读取放在 `services/dictionary/yomitan/`（只支持格式，不分发内容）；
+  文本编码嗅探集中在 `services/text/encoding.py`，导入路径不要各自 decode。
 
 ### 测试
 
