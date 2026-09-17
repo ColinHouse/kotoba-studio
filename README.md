@@ -80,7 +80,8 @@ The software turns a line of dialogue into a scheduled card through the followin
 - **使用责任自负。** 你需要自行确认，对你运行它的对象而言，截屏与文本读取符合其服务条款与当地法律。
 - **开源许可：** 代码采用 [`AGPL-3.0-or-later`](LICENSE)。本应用自己提供网络界面（手机通过局域网访问桌面端），
   AGPL 第 13 条正对应这种形态；理由详见 [ADR 0002](docs/adr/0002-license.md)。
-- **词典数据不属于本项目。** JMdict/EDICT、KANJIDIC2 与 Kanjium 依 CC BY-SA 4.0 授权，
+- **词典数据不属于本项目。** JMdict/EDICT、KANJIDIC2（均来自 EDRDG）与 Kanjium（Uros O.）
+  依 CC BY-SA 4.0 授权，
   再分发时**不得剥离其署名与协议**，详见下方[鸣谢](#鸣谢--acknowledgements)与 [NOTICE.md](NOTICE.md)。
 - **免责：** 本软件按「原样」提供。因使用本软件造成的任何直接或间接损失，作者不承担责任。
 
@@ -97,6 +98,17 @@ The software turns a line of dialogue into a scheduled card through the followin
   CC BY-SA 4.0; redistribution **must not strip their attribution or licence**.
 - **Disclaimer**: provided "as is". The author accepts no liability for any direct or indirect loss
   arising from its use.
+
+## 还能做什么 / What else it does
+
+- **持续伴读：** 框好对话区域后，区域监视器盯着画面自己收句，重复台词自动去重；
+  也可以主动连接 Textractor / Agent / LunaTranslator，或让它看着剪贴板（默认关闭）。
+- **多种内容源：** 字幕（.srt/.ass）、mokuro 漫画（可带整卷页图）、EPUB 轻小说都能导进来；
+  字幕配本地视频还能为每一句切出原声与中点截图，并把台词接成通勤听的凝缩音频。
+- **知道该学什么：** 读取 Yomitan 格式的词典与频率表（用户自带文件，仓库不分发），
+  按作品覆盖率预习、词库按词频排序、已会词批量导入；音高重音来自 Kanjium（Uros O.）。
+- **参数跟着你走：** FSRS 优化器用你自己的复习记录算出专属参数与最优保留率；
+  OCR 引擎对比让每台机器用它认得最准的那个引擎。
 
 ## 使用方法 / How to Use
 
