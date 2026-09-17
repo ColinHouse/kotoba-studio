@@ -21,6 +21,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The diff-based guards below compare against the base branch; a
+          # shallow clone has no merge base for that, and the comparison then
+          # silently returns nothing (which is how a guard passes while
+          # proving nothing).
+          fetch-depth: 0
       # backend/kotoba/data/ is bundled package data and is meant to be tracked;
       # only the runtime directory at the repository root is forbidden.
       - name: No runtime data or build output in the repository
@@ -100,7 +106,8 @@ jobs:
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
           git fetch --quiet origin ${{ github.base_ref }}
-          changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E \
+          files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          changed=$(printf '%s\n' "$files" | grep -E \
             '^LICENSE$|^NOTICE\.md$|^SECURITY\.md$|^docs/adr/.*\.md$|^AGENTS\.md$' || true)
           if [ -n "$changed" ]; then
             case ",$LABELS," in
