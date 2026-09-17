@@ -9,6 +9,7 @@ from pathlib import Path
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.orm import Session
 
+from kotoba.core.errors import ApiError
 from kotoba.models import DictEntry, DictForm, Dictionary
 
 BATCH = 2000
@@ -76,11 +77,7 @@ def import_json(
         data = json.load(fh)
     words = data["words"]
 
-    for old in db.scalars(select(Dictionary).where(Dictionary.kind == "jmdict")).all():
-        old_entry_ids = select(DictEntry.id).where(DictEntry.dict_id == old.id)
-        db.execute(delete(DictForm).where(DictForm.entry_id.in_(old_entry_ids)))
-        db.execute(delete(DictEntry).where(DictEntry.dict_id == old.id))
-        db.delete(old)
+    _drop_existing(db)
     db.flush()
 
     dictionary = Dictionary(
@@ -96,23 +93,49 @@ def import_json(
     entry_batch: list[dict] = []
     form_batch: list[dict] = []
     total = len(words)
-    for i, word in enumerate(words):
-        entry, forms = _entry_rows(word, next_id + i, dictionary.id)
-        entry_batch.append(entry)
-        form_batch.extend(forms)
-        if len(entry_batch) >= BATCH:
-            db.execute(insert(DictEntry), entry_batch)
-            db.execute(insert(DictForm), form_batch)
-            entry_batch, form_batch = [], []
-            if progress:
-                progress(i + 1, total)
-    if entry_batch:
-        db.execute(insert(DictEntry), entry_batch)
-        db.execute(insert(DictForm), form_batch)
+    try:
+        for i, word in enumerate(words):
+            entry, forms = _entry_rows(word, next_id + i, dictionary.id)
+            entry_batch.append(entry)
+            form_batch.extend(forms)
+            if len(entry_batch) >= BATCH:
+                _commit_batch(db, entry_batch, form_batch)
+                entry_batch, form_batch = [], []
+                if progress:
+                    progress(i + 1, total)
+        if entry_batch:
+            _commit_batch(db, entry_batch, form_batch)
+    except Exception as exc:
+        # Committing per batch means a failure leaves rows behind a dictionary that
+        # claims the full entry_count. Undo it rather than leave a half-installed
+        # JMdict that answers lookups with a third of the language.
+        db.rollback()
+        _drop_existing(db)
+        db.commit()
+        if isinstance(exc, ApiError):
+            raise
+        raise ApiError("bad_dictionary", f"词典导入失败：{type(exc).__name__}") from exc
+    dictionary.entry_count = total
     db.commit()
     if progress:
         progress(total, total)
     return total
+
+
+def _drop_existing(db: Session) -> None:
+    for old in db.scalars(select(Dictionary).where(Dictionary.kind == "jmdict")).all():
+        old_entry_ids = select(DictEntry.id).where(DictEntry.dict_id == old.id)
+        db.execute(delete(DictForm).where(DictForm.entry_id.in_(old_entry_ids)))
+        db.execute(delete(DictEntry).where(DictEntry.dict_id == old.id))
+        db.delete(old)
+
+
+def _commit_batch(db: Session, entries: list[dict], forms: list[dict]) -> None:
+    """One batch per transaction: SQLite has a single writer, and holding it for the
+    whole 218k-entry import blocks every capture for minutes."""
+    db.execute(insert(DictEntry), entries)
+    db.execute(insert(DictForm), forms)
+    db.commit()
 
 
 def status(db: Session) -> dict:

@@ -31,6 +31,13 @@ def make_engine(db_path: Path) -> Engine:
         cur.execute("PRAGMA journal_mode=WAL")
         cur.execute("PRAGMA foreign_keys=ON")
         cur.execute("PRAGMA synchronous=NORMAL")
+        # pysqlite already sets this from its own `timeout=5.0` connect default, so
+        # this line changes nothing today. It is here so the value sits beside the
+        # other pragmas instead of depending on a driver default that could move --
+        # and so the next person chasing a lock error does not have to rediscover
+        # that it was never the missing piece. Five seconds does not save you from a
+        # writer that holds the lock for minutes; keeping transactions short does.
+        cur.execute("PRAGMA busy_timeout=5000")
         cur.close()
 
     return engine
