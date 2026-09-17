@@ -38,7 +38,11 @@ const emit = defineEmits<{
         :key="row.provider"
         type="button"
         class="framed flex flex-col items-start p-3 text-left"
-        :class="row.provider === current ? 'border-accent' : 'hover:border-ink-35'"
+        :class="[
+          row.provider === current ? 'border-accent' : 'hover:border-ink-35',
+          row.error ? 'cursor-not-allowed' : '',
+        ]"
+        :disabled="!!row.error"
         @click="emit('select', row.provider)"
       >
         <span class="flex w-full items-baseline justify-between gap-2">
