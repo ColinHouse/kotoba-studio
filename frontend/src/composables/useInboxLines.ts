@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue'
 import { api } from '@/api/client'
-import type { Analysis, Line, Session } from '@/api/types'
+import type { Line, Session } from '@/api/types'
 import { useAppStore } from '@/stores/app'
 
 export type LineStatus = 'inbox' | 'kept' | 'discarded'
@@ -15,7 +15,6 @@ export function useInboxLines() {
   const sort = ref<LineSort>('recent')
   const lines = ref<Line[]>([])
   const selected = ref<Line | null>(null)
-  const analysis = ref<Analysis | null>(null)
 
   async function loadSessions(preferred?: string | null) {
     sessions.value = await api.get<Session[]>('/api/sessions?limit=30')
@@ -30,20 +29,6 @@ export function useInboxLines() {
     lines.value = await api.get<Line[]>(`/api/lines?${params}`)
     if (selected.value && !lines.value.some((l) => l.id === selected.value!.id)) {
       selected.value = null
-    }
-  }
-
-  async function analyze(line: Line) {
-    analysis.value = await api.post<Analysis>(`/api/lines/${line.id}/analyze`)
-  }
-
-  async function select(line: Line) {
-    selected.value = line
-    analysis.value = null
-    try {
-      await analyze(line)
-    } catch (e) {
-      app.fail(e)
     }
   }
 
@@ -74,11 +59,8 @@ export function useInboxLines() {
     sort,
     lines,
     selected,
-    analysis,
     loadSessions,
     loadLines,
-    analyze,
-    select,
     setStatus,
     discardRest,
   }
