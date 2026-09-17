@@ -132,7 +132,9 @@ function sentenceParts(enc: Encounter) {
       </div>
     </header>
 
-    <TrapBlock v-if="term.trap" :trap="term.trap" :framed="true" class="mt-5" />
+    <Transition name="rise">
+      <TrapBlock v-if="term.trap" :trap="term.trap" :framed="true" class="mt-5" />
+    </Transition>
 
     <section class="mt-[26px]">
       <div class="flex flex-wrap items-baseline gap-3">
@@ -143,7 +145,7 @@ function sentenceParts(enc: Encounter) {
         </span>
       </div>
 
-      <ol class="timeline m-0 mt-[18px] list-none p-0">
+      <TransitionGroup tag="ol" name="list" class="timeline relative m-0 mt-[18px] list-none p-0">
         <li v-for="(enc, i) in [...term.encounters].reverse()" :key="enc.id" class="tl-item">
           <div class="tl-date num">
             {{ dayLabel(enc.captured_at) }}<br /><span class="text-ink-35">{{
@@ -194,13 +196,13 @@ function sentenceParts(enc: Encounter) {
             </div>
           </div>
         </li>
-      </ol>
+      </TransitionGroup>
     </section>
 
     <section class="mt-[30px]">
       <p class="kicker mb-3">卡片</p>
       <table v-if="term.cards.length" class="table-plain">
-        <tbody>
+        <TransitionGroup tag="tbody" name="list" class="relative">
           <tr v-for="c in term.cards" :key="c.id">
             <td class="pl-0">{{ CARD_TYPE_LABEL[c.card_type] }}卡</td>
             <td class="num text-ink-50">
@@ -214,7 +216,6 @@ function sentenceParts(enc: Encounter) {
                   :key="o.value"
                   type="button"
                   class="seg-opt"
-                  style="padding: 4px 10px; font-size: 12px"
                   :aria-pressed="c.review_owner === o.value"
                   @click="setOwner(c, o.value)"
                 >
@@ -223,7 +224,7 @@ function sentenceParts(enc: Encounter) {
               </span>
             </td>
           </tr>
-        </tbody>
+        </TransitionGroup>
       </table>
       <p v-else class="m-0 text-[13px] text-ink-35">
         还没有卡片。在收件箱确认这个词时勾选卡片类型。

@@ -137,7 +137,7 @@ async function remove(s: Source) {
       <button class="btn btn-primary self-end" :disabled="busy">添加</button>
     </form>
 
-    <ul class="m-0 mt-6 flex list-none flex-col p-0">
+    <TransitionGroup tag="ul" name="list" class="relative m-0 mt-6 flex list-none flex-col p-0">
       <li v-for="s in sources" :key="s.id" class="border-b border-rule py-3.5">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="min-w-0">
@@ -163,65 +163,70 @@ async function remove(s: Source) {
           </div>
         </div>
 
-        <div v-if="coverageId === s.id" class="framed mt-3 p-4">
-          <p v-if="coverageBusy || !coverage" class="m-0 text-[13px] text-ink-50">正在统计…</p>
-          <template v-else>
-            <p class="kicker m-0">覆盖率 · 按出现次数</p>
-            <div class="mt-1.5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-              <span
-                class="font-head text-[30px] leading-none"
-                :class="coverageInk(coverage.coverage)"
+        <Transition name="rise">
+          <div v-if="coverageId === s.id" class="framed mt-3 p-4">
+            <p v-if="coverageBusy || !coverage" class="m-0 text-[13px] text-ink-50">正在统计…</p>
+            <template v-else>
+              <p class="kicker m-0">覆盖率 · 按出现次数</p>
+              <div class="mt-1.5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <span
+                  class="font-head text-[30px] leading-none"
+                  :class="coverageInk(coverage.coverage)"
+                >
+                  {{ coveragePercent(coverage.coverage) }}
+                </span>
+                <span class="num text-[12px] text-ink-50">
+                  {{ coverage.known_tokens }} / {{ coverage.total_tokens }} 次遇见已掌握 · 词种
+                  {{ coveragePercent(coverage.distinct_coverage) }}（{{ coverage.known_terms }} /
+                  {{ coverage.distinct_terms }}）
+                </span>
+              </div>
+              <div class="mt-2.5 h-[3px] w-full bg-rule">
+                <div class="h-full bg-ink" :style="{ width: coveragePercent(coverage.coverage) }" />
+              </div>
+
+              <p v-if="coverage.unknown_top.length" class="kicker mt-4 mb-1.5">最值得先学</p>
+              <div v-if="coverage.unknown_top.length" class="flex flex-wrap gap-x-4 gap-y-2">
+                <RouterLink
+                  v-for="w in coverage.unknown_top"
+                  :key="w.term_id"
+                  :to="`/terms/${w.term_id}`"
+                  class="flex items-center gap-1.5 no-underline"
+                >
+                  <span class="jp text-[15px] text-ink">{{ w.headword }}</span>
+                  <span class="num text-[11px] text-ink-35">×{{ w.count }}</span>
+                </RouterLink>
+              </div>
+              <p v-else class="mt-3 mb-0 text-[13px] text-ink-35">这个作品暂时没有未学的词。</p>
+
+              <div
+                v-if="coverage.unknown_top.length"
+                class="mt-4 flex flex-wrap items-center gap-3"
               >
-                {{ coveragePercent(coverage.coverage) }}
-              </span>
-              <span class="num text-[12px] text-ink-50">
-                {{ coverage.known_tokens }} / {{ coverage.total_tokens }} 次遇见已掌握 · 词种
-                {{ coveragePercent(coverage.distinct_coverage) }}（{{ coverage.known_terms }} /
-                {{ coverage.distinct_terms }}）
-              </span>
-            </div>
-            <div class="mt-2.5 h-[3px] w-full bg-rule">
-              <div class="h-full bg-ink" :style="{ width: coveragePercent(coverage.coverage) }" />
-            </div>
+                <label class="field-label m-0" :for="`prestudy-limit-${s.id}`">预习卡数量</label>
+                <input
+                  :id="`prestudy-limit-${s.id}`"
+                  v-model.number="prestudyLimit"
+                  type="number"
+                  min="1"
+                  max="500"
+                  class="input w-24"
+                />
+                <button class="btn btn-primary" :disabled="prestudyBusy" @click="runPrestudy(s)">
+                  {{ prestudyBusy ? '建卡中…' : '把这些做成预习卡' }}
+                </button>
+              </div>
 
-            <p v-if="coverage.unknown_top.length" class="kicker mt-4 mb-1.5">最值得先学</p>
-            <div v-if="coverage.unknown_top.length" class="flex flex-wrap gap-x-4 gap-y-2">
-              <RouterLink
-                v-for="w in coverage.unknown_top"
-                :key="w.term_id"
-                :to="`/terms/${w.term_id}`"
-                class="flex items-center gap-1.5 no-underline"
-              >
-                <span class="jp text-[15px] text-ink">{{ w.headword }}</span>
-                <span class="num text-[11px] text-ink-35">×{{ w.count }}</span>
-              </RouterLink>
-            </div>
-            <p v-else class="mt-3 mb-0 text-[13px] text-ink-35">这个作品暂时没有未学的词。</p>
-
-            <div v-if="coverage.unknown_top.length" class="mt-4 flex flex-wrap items-center gap-3">
-              <label class="field-label m-0" :for="`prestudy-limit-${s.id}`">预习卡数量</label>
-              <input
-                :id="`prestudy-limit-${s.id}`"
-                v-model.number="prestudyLimit"
-                type="number"
-                min="1"
-                max="500"
-                class="input w-24"
-              />
-              <button class="btn btn-primary" :disabled="prestudyBusy" @click="runPrestudy(s)">
-                {{ prestudyBusy ? '建卡中…' : '把这些做成预习卡' }}
-              </button>
-            </div>
-
-            <p v-if="!coverage.has_frequency" class="mt-3 mb-0 text-[11px] text-ink-35">
-              未导入频率词典，生词按出现次数排序；导入后按常见度排序。
-            </p>
-          </template>
-        </div>
+              <p v-if="!coverage.has_frequency" class="mt-3 mb-0 text-[11px] text-ink-35">
+                未导入频率词典，生词按出现次数排序；导入后按常见度排序。
+              </p>
+            </template>
+          </div>
+        </Transition>
       </li>
-      <li v-if="!sources.length" class="py-4 text-[13px] text-ink-50">
-        添加你正在玩的 Galgame 或在看的动画，然后开始第一次会话。
-      </li>
-    </ul>
+    </TransitionGroup>
+    <p v-if="!sources.length" class="py-4 text-[13px] text-ink-50">
+      添加你正在玩的 Galgame 或在看的动画，然后开始第一次会话。
+    </p>
   </div>
 </template>

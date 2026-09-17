@@ -99,7 +99,11 @@ async function startSession(source: Source) {
     </header>
 
     <section class="flex flex-wrap items-center gap-5 border-b border-rule py-[18px]">
-      <p class="m-0 font-head text-[21px] leading-snug md:text-[25px]">{{ headline }}</p>
+      <Transition name="fade" mode="out-in">
+        <p :key="headline" class="m-0 font-head text-[21px] leading-snug md:text-[25px]">
+          {{ headline }}
+        </p>
+      </Transition>
       <div class="flex flex-wrap gap-2.5 md:ml-auto">
         <RouterLink v-if="queueCount" to="/review" class="btn btn-primary">
           开始复习 {{ queueCount }} 张
@@ -130,7 +134,11 @@ async function startSession(source: Source) {
     <div class="mt-[30px] md:grid md:grid-cols-[1fr_1px_1fr]">
       <section class="md:pr-7">
         <p class="kicker mb-3">作品进度</p>
-        <ul class="m-0 flex list-none flex-col gap-4 p-0">
+        <TransitionGroup
+          tag="ul"
+          name="list"
+          class="relative m-0 flex list-none flex-col gap-4 p-0"
+        >
           <li v-for="s in sources" :key="s.id">
             <div class="flex items-baseline justify-between gap-3">
               <span class="font-head text-[17px] md:text-[19px]">
@@ -167,11 +175,11 @@ async function startSession(source: Source) {
               </template>
             </p>
           </li>
-          <li v-if="!sources.length" class="text-[13px] text-ink-50">
-            还没有作品。<RouterLink to="/sources" class="text-accent">添加一部</RouterLink
-            >，然后开始第一次会话。
-          </li>
-        </ul>
+        </TransitionGroup>
+        <p v-if="!sources.length" class="mt-3 text-[13px] text-ink-50">
+          还没有作品。<RouterLink to="/sources" class="text-accent">添加一部</RouterLink
+          >，然后开始第一次会话。
+        </p>
       </section>
 
       <div class="hidden bg-divider md:block" />
@@ -179,7 +187,7 @@ async function startSession(source: Source) {
       <section class="mt-7 md:mt-0 md:pl-7">
         <p class="kicker mb-3">最近会话</p>
         <table v-if="sessions.length" class="table-plain">
-          <tbody>
+          <TransitionGroup tag="tbody" name="list" class="relative">
             <tr v-for="s in sessions" :key="s.id">
               <td class="pl-0">{{ s.source_title ?? '—' }}</td>
               <td class="num text-ink-50">{{ s.line_count }} 句 · {{ relTime(s.started_at) }}</td>
@@ -189,7 +197,7 @@ async function startSession(source: Source) {
                 <RouterLink :to="`/quiz/${s.id}`" class="text-accent">短测</RouterLink>
               </td>
             </tr>
-          </tbody>
+          </TransitionGroup>
         </table>
         <p v-else class="m-0 text-[13px] text-ink-35">还没有会话。</p>
         <p class="mt-4 mb-0 text-[11px] leading-[1.7] text-ink-35">
