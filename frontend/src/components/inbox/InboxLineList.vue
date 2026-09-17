@@ -59,4 +59,8 @@ defineEmits<{ select: [line: Line] }>()
     background var(--mo-base) var(--ease-paper),
     border-color var(--mo-base) var(--ease-paper);
 }
+.line-row:active {
+  background: color-mix(in srgb, var(--surface) 80%, var(--ink) 20%);
+  transition: background var(--mo-quick) var(--ease-soft);
+}
 </style>

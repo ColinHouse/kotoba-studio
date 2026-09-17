@@ -258,12 +258,23 @@ rt {
 .btn-primary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
+.btn-primary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
 .btn-secondary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.btn-secondary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 .btn-quiet:hover:not(:disabled) {
   color: var(--ink);
   border-bottom-color: var(--ink-50);
+}
+.btn-quiet:active:not(:disabled) {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 /* ── 标签：三种，含义不重叠 ───────────────────────────────────────────── */
@@ -325,6 +336,9 @@ rt {
 }
 .seg-opt:hover:not(.is-on):not([aria-pressed='true']) {
   background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.seg-opt:active:not([disabled]) {
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
 /* ── 表单 ─────────────────────────────────────────────────────────────── */
@@ -435,6 +449,20 @@ input[type='range'] {
 }
 .tok-selected rt {
   color: var(--bg);
+}
+.tok:active:not(.tok-plain):not(.tok-selected) {
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+/* 触屏交互优化：消除移动端默认点击灰色遮罩，保证 :active 墨色压深即时生效 */
+@media (hover: none) {
+  button,
+  .btn,
+  .seg-opt,
+  .tok,
+  .line-row {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 /* ── 表格 ─────────────────────────────────────────────────────────────── */

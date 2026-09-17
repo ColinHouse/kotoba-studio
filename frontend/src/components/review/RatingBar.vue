@@ -48,6 +48,15 @@ const BUTTONS = [
   border-radius: var(--radius-ui);
   background: transparent;
   cursor: pointer;
+  transition:
+    background var(--mo-quick) var(--ease-soft),
+    filter var(--mo-quick) var(--ease-soft),
+    transform var(--mo-quick) var(--ease-soft);
+  -webkit-tap-highlight-color: transparent;
+}
+.rate:active:not(:disabled) {
+  transform: translateY(0.5px);
+  filter: brightness(0.92);
 }
 .rate:disabled {
   opacity: 0.45;
