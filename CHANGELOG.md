@@ -58,6 +58,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - 交互与反馈：补全 `.btn`、`.seg-opt`、`.rate`、`.tok`、以及收件箱列表行的 `:active` 按下反馈与触屏优化；新增 Skeleton 骨架屏组件，在词库与短测视图中实现 200ms 延迟显示与 rise 平滑入场过渡。
 - 动效层：将动效系统完整接入其余七个核心视图（CaptureView、DashboardView、LibraryView、QuizView、ReviewView、SourcesView、TermDetailView），包括 TransitionGroup 列表增删平移动画、面板上浮与内容平滑切换。
 - 复习：手机离线复习。复习记录先存本机（每条带客户端生成的稳定 id），联网后批量合并；卡片状态按时间序重放全部已调度记录得出，重复上传不会重复计算。离线时用缓存的卡片继续复习，客户端用 ts-fsrs 与后端同一套参数本地调度。
+- 桌面：`kotoba desktop` 桌面壳（需 `uv sync --extra desktop`）。服务在本进程内启动，健康检查通过后打开窗口与托盘；端口被占用时自动顺延；关窗口隐藏到托盘（采集继续跑），托盘可显示/隐藏窗口、打开数据目录、退出；退出走与 `kotoba serve` 相同的清理路径，不留子进程。未装桌面组件时 `kotoba serve` 照常工作。
 
 ### 已知限制
 
