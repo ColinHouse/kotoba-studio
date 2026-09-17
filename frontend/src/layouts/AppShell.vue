@@ -51,7 +51,7 @@ function active(to: string) {
           >言</span
         >
         <span>
-          <span class="block font-head text-[18px] leading-tight text-ink">Kotoba Studio</span>
+          <span class="block font-head text-[18px] leading-tight text-ink">ことばこ</span>
           <span class="block text-[11px] text-ink-35">会记住语境的伴读</span>
         </span>
       </RouterLink>
@@ -86,7 +86,7 @@ function active(to: string) {
 
     <div class="flex min-h-dvh flex-1 flex-col">
       <p v-if="app.offline" class="m-0 bg-accent-100 px-5 py-2 text-[12px] text-gold">
-        无法连接 Kotoba Studio 服务器。请确认桌面端正在运行，手机需与电脑在同一局域网。
+        无法连接 ことばこ 服务器。请确认桌面端正在运行，手机需与电脑在同一局域网。
       </p>
 
       <main class="flex-1">

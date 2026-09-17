@@ -9,7 +9,7 @@ week.
 
 ## What this application is
 
-Kotoba Studio runs on your own machine. There is no account, no server owned by anyone else,
+Kotobako runs on your own machine. There is no account, no server owned by anyone else,
 and your study data never leaves your computer unless you export it or enable the optional AI
 explanations. That shapes the threat model below.
 
@@ -29,7 +29,7 @@ something sensitive passes through the frame while it is running, it is now on d
 **The global shortcut installs an OS-level keyboard hook.** Turning it on asks `pynput` for a
 system-wide key hook — on macOS that needs Accessibility permission, on Windows it is a
 low-level hook. The hook receives key events from *every* window, not just this application;
-Kotoba Studio only acts on the combination you configured and does not record, store or send
+Kotobako only acts on the combination you configured and does not record, store or send
 anything else. But the hook itself is global, so if you would rather not have one running,
 leave the feature off — it is off by default.
 

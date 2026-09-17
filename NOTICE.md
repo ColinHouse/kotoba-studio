@@ -1,6 +1,6 @@
 # Third-party notices
 
-Kotoba Studio itself is licensed under the **GNU Affero General Public License v3.0 or later**
+Kotobako itself is licensed under the **GNU Affero General Public License v3.0 or later**
 (see `LICENSE`). The data and libraries it uses carry their own terms, listed here.
 
 ## Dictionary data
@@ -11,14 +11,14 @@ Kotoba Studio itself is licensed under the **GNU Affero General Public License v
 - Project page: <https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project>
 - Licence: <https://www.edrdg.org/edrdg/licence.html>
 
-Kotoba Studio downloads JMdict at runtime from
+Kotobako downloads JMdict at runtime from
 [scriptin/jmdict-simplified](https://github.com/scriptin/jmdict-simplified) (the JSON
 conversion, Apache-2.0 for the conversion code, CC BY-SA 4.0 for the data itself).
 The repository additionally ships a **derived subset** of JMdict used only as a test
 fixture, at `backend/kotoba/data/jmdict_fixture.json`; that file is a derivative work and
 is therefore also CC BY-SA 4.0.
 
-Kotoba Studio downloads KANJIDIC2 at runtime from
+Kotobako downloads KANJIDIC2 at runtime from
 <https://www.edrdg.org/pub/Nihongo/kanjidic2.xml.gz> when the user installs the kanji table;
 no KANJIDIC data is bundled with the repository.
 
@@ -38,7 +38,7 @@ next to the install control.
 - **fugashi** (MIT) — Cython wrapper around **MeCab** (BSD 3-clause).
 - **unidic-lite** (MIT packaging) bundles **UniDic**, which is distributed under a choice of
   the GPL, LGPL or BSD licence by the National Institute for Japanese Language and Linguistics.
-  Kotoba Studio uses it under the BSD option.
+  Kotobako uses it under the BSD option.
 
 ## Spaced repetition
 

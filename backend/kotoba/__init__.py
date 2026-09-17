@@ -1,8 +1,8 @@
-"""Kotoba Studio server package."""
+"""Kotobako server package."""
 
 from importlib.metadata import PackageNotFoundError, version
 
 try:
-    __version__ = version("kotoba-studio-server")
+    __version__ = version("kotobako-server")
 except PackageNotFoundError:  # running from a source tree without an install
     __version__ = "0.0.0+unknown"

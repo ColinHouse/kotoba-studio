@@ -28,8 +28,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = ROOT / "packaging" / "kotoba.spec"
-BUNDLE = ROOT / "dist" / "KotobaStudio"
-EXE = BUNDLE / "KotobaStudio.exe"
+BUNDLE = ROOT / "dist" / "Kotobako"
+EXE = BUNDLE / "Kotobako.exe"
 SMOKE_TEXT = "今日は俺が奢ってやるよ。"
 TIMESTAMP_URL = "http://timestamp.digicert.com"
 
@@ -207,7 +207,7 @@ def build_installer() -> Path:
             "Inno Setup 6 not found; install it (`winget install JRSoftware.InnoSetup`) "
             "or rerun without --installer for the portable bundle only"
         )
-    out = ROOT / "dist" / f"KotobaStudio-{version()}-setup.exe"
+    out = ROOT / "dist" / f"Kotobako-{version()}-setup.exe"
     run(
         [
             iscc,

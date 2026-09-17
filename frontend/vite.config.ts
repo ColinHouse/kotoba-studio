@@ -14,8 +14,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Kotoba Studio',
-        short_name: 'Kotoba',
+        name: 'Kotobako · ことばこ',
+        short_name: 'ことばこ',
         description: '会记住语境的日语伴读工具',
         lang: 'zh-CN',
         theme_color: '#f3f2f2',

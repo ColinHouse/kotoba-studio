@@ -9,7 +9,11 @@ import httpx
 from kotoba.core.errors import ApiError
 from kotoba.services.export.notes import BACK, CSS, FIELDS, FRONT, ExportNote
 
-DECK_NAME = "Kotoba Studio"
+DECK_NAME = "Kotobako"
+# Deliberately still the pre-rename name: this is the note type inside the
+# user's Anki collection. Renaming it would leave every note exported before
+# the rename on an orphaned type. The "-v1" suffix is the version to bump if
+# the field layout ever changes.
 MODEL_NAME = "KotobaStudio-v1"
 
 

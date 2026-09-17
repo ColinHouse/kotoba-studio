@@ -1,4 +1,4 @@
-# Kotoba Studio — one entry point for humans and agents.
+# Kotobako — one entry point for humans and agents.
 # Every target is safe to run repeatedly. `make check` is what CI runs.
 
 SHELL := /bin/bash

@@ -4,7 +4,7 @@
 
 ## 背景
 
-Kotoba Studio 需要同时具备：屏幕截取与 OCR（Windows / macOS）、日语分词与词典、FSRS 复习调度、Anki 导出、局域网内的手机 PWA，以及本地数据的备份与迁移。用户提议 Vue 3 (TS) + FastAPI + SQLite，并询问 Node.js / Ruby / Java Spring Boot 是否更合适。
+Kotobako 需要同时具备：屏幕截取与 OCR（Windows / macOS）、日语分词与词典、FSRS 复习调度、Anki 导出、局域网内的手机 PWA，以及本地数据的备份与迁移。用户提议 Vue 3 (TS) + FastAPI + SQLite，并询问 Node.js / Ruby / Java Spring Boot 是否更合适。
 
 ## 决策
 

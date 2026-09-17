@@ -2,7 +2,7 @@
 
 ## Windows
 
-到 [Releases](https://github.com/ColinHouse/kotoba-studio/releases) 下载安装包，双击安装即可，
+到 [Releases](https://github.com/ColinHouse/kotobako/releases) 下载安装包，双击安装即可，
 **不需要装 Python 或 Node**。
 
 安装包**没有签名**，Windows 会弹 SmartScreen 警告，点「更多信息 → 仍要运行」。
@@ -11,7 +11,7 @@
 ## macOS / Linux
 
 还没有安装包，只能从源码运行。macOS 的 `.app` 与签名进度见
-[#61](https://github.com/ColinHouse/kotoba-studio/issues/61)。
+[#61](https://github.com/ColinHouse/kotobako/issues/61)。
 
 ## 从源码运行
 
@@ -38,8 +38,8 @@ Unix 风格的 recipe 会失败。
 ### 跑起来
 
 ```bash
-git clone https://github.com/ColinHouse/kotoba-studio.git
-cd kotoba-studio
+git clone https://github.com/ColinHouse/kotobako.git
+cd kotobako
 make setup     # 装两端依赖并启用 git hooks
 make run       # 构建前端，在 8720 端口同时提供 API 与网页
 ```

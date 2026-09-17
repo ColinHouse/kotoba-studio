@@ -32,7 +32,7 @@
   而且类型检查已经能抓住漏字段；等接口稳定、字段变动变频繁时再换。
 - **打包与签名。** 见 M4；届时补一份 `CODE_SIGNING.md`（参考 localsend）。
 
-## M2 · 知道该学什么（进行中，[milestone 2](https://github.com/ColinHouse/kotoba-studio/milestone/2)）
+## M2 · 知道该学什么（进行中，[milestone 2](https://github.com/ColinHouse/kotobako/milestone/2)）
 
 M1 把采集做强了：一晚上能收五百句。瓶颈因此往后挪了——**这五百句里该学哪二十个词？**
 别的开源方案都停在「Anki 前端」，没人回答这个问题；jpdb 真正的护城河也不是它的 SRS，
@@ -53,39 +53,39 @@ M1 把采集做强了：一晚上能收五百句。瓶颈因此往后挪了—�
 - **i+1 例句优选**：整句只有一个生词的句子最有效。整句、分词、`known_status` 我们都有了，
   只差把它用起来。
 
-## M3 · 什么都读得进来（[milestone 3](https://github.com/ColinHouse/kotoba-studio/milestone/3)）
+## M3 · 什么都读得进来（[milestone 3](https://github.com/ColinHouse/kotobako/milestone/3)）
 
-M3 是**内容源扩展**。应用此前只吃 galgame 与带字幕动画，漫画与轻小说这两个日语学习者最大的内容类型完全没覆盖；而且字幕在 M1 里只做了文本那一半，配视频切原声的那一半（[#67](https://github.com/ColinHouse/kotoba-studio/issues/67)）在 `#7` 里被划出范围后一直没人捡回来。M3 补齐多媒介阅读与视听体验。
+M3 是**内容源扩展**。应用此前只吃 galgame 与带字幕动画，漫画与轻小说这两个日语学习者最大的内容类型完全没覆盖；而且字幕在 M1 里只做了文本那一半，配视频切原声的那一半（[#67](https://github.com/ColinHouse/kotobako/issues/67)）在 `#7` 里被划出范围后一直没人捡回来。M3 补齐多媒介阅读与视听体验。
 
-本轮架构评估结论：**不拆服务**——分层零违规、services 依赖无环、114 个文件平均 66 行、6 万词条导入 2.3 秒且内存只涨 12MB；唯一要动的是内容定位模型（[#51](https://github.com/ColinHouse/kotoba-studio/issues/51)）与离线同步模型（[#59](https://github.com/ColinHouse/kotoba-studio/issues/59)），两者都各自有 ADR。
+本轮架构评估结论：**不拆服务**——分层零违规、services 依赖无环、114 个文件平均 66 行、6 万词条导入 2.3 秒且内存只涨 12MB；唯一要动的是内容定位模型（[#51](https://github.com/ColinHouse/kotobako/issues/51)）与离线同步模型（[#59](https://github.com/ColinHouse/kotobako/issues/59)），两者都各自有 ADR。
 
-- **通用内容定位模型**（[#51](https://github.com/ColinHouse/kotoba-studio/issues/51)）：从单篇时间轴扩展到支持页、行、分卷的统一坐标模型。
-- **Mokuro 漫画 OCR 导入**（[#52](https://github.com/ColinHouse/kotoba-studio/issues/52)）与**漫画阅读视图**（[#53](https://github.com/ColinHouse/kotoba-studio/issues/53)）：画面即语境，点击框选文本查词建卡。
-- **EPUB 轻小说解析与导入**（[#54](https://github.com/ColinHouse/kotoba-studio/issues/54)）：按 spine 拆句并保留振假名入库。
-- **回溯媒体缓冲**（[#55](https://github.com/ColinHouse/kotoba-studio/issues/55)）：内存循环缓冲，事后为已过去的台词补齐截图与音频。
-- **汉字掌握度进度网格**（[#56](https://github.com/ColinHouse/kotoba-studio/issues/56)）：基于 KANJIDIC2 的常用汉字学习进度透视。
-- **学习统计页**（[#57](https://github.com/ColinHouse/kotoba-studio/issues/57)）：纯 SQL 聚合与诚实留存率轨迹。
-- **字幕配视频**（[#67](https://github.com/ColinHouse/kotoba-studio/issues/67)）：ffmpeg 切原声与截图，为台词卡片补齐视听语境。
-- **凝缩音频**（[#68](https://github.com/ColinHouse/kotoba-studio/issues/68)）：抽取纯台词音频流，通勤反复盲听。
+- **通用内容定位模型**（[#51](https://github.com/ColinHouse/kotobako/issues/51)）：从单篇时间轴扩展到支持页、行、分卷的统一坐标模型。
+- **Mokuro 漫画 OCR 导入**（[#52](https://github.com/ColinHouse/kotobako/issues/52)）与**漫画阅读视图**（[#53](https://github.com/ColinHouse/kotobako/issues/53)）：画面即语境，点击框选文本查词建卡。
+- **EPUB 轻小说解析与导入**（[#54](https://github.com/ColinHouse/kotobako/issues/54)）：按 spine 拆句并保留振假名入库。
+- **回溯媒体缓冲**（[#55](https://github.com/ColinHouse/kotobako/issues/55)）：内存循环缓冲，事后为已过去的台词补齐截图与音频。
+- **汉字掌握度进度网格**（[#56](https://github.com/ColinHouse/kotobako/issues/56)）：基于 KANJIDIC2 的常用汉字学习进度透视。
+- **学习统计页**（[#57](https://github.com/ColinHouse/kotobako/issues/57)）：纯 SQL 聚合与诚实留存率轨迹。
+- **字幕配视频**（[#67](https://github.com/ColinHouse/kotobako/issues/67)）：ffmpeg 切原声与截图，为台词卡片补齐视听语境。
+- **凝缩音频**（[#68](https://github.com/ColinHouse/kotobako/issues/68)）：抽取纯台词音频流，通勤反复盲听。
 
-## M4 · 装得上、带得走（[milestone 4](https://github.com/ColinHouse/kotoba-studio/milestone/4)）
+## M4 · 装得上、带得走（[milestone 4](https://github.com/ColinHouse/kotobako/milestone/4)）
 
 M4 是**交付**。从开发者使用的命令行启动，走向真正给终端用户开箱即用的产品形态：双击可用、手机离线复习、游戏时不用切窗口。
 
-- **手机离线复习与可合并同步**（[#59](https://github.com/ColinHouse/kotoba-studio/issues/59)）：客户端 ts-fsrs 调度与基于只追加日志的确定性重放合并。
-- **pywebview 桌面壳与托盘**（[#60](https://github.com/ColinHouse/kotoba-studio/issues/60)）：双击启动本地服务、常驻托盘菜单与优雅退出。
-- **打包与签名**（[#61](https://github.com/ColinHouse/kotoba-studio/issues/61)）：macOS .app 与 Windows 安装包自动化分发。
-- **游戏内透明覆盖层**（[#62](https://github.com/ColinHouse/kotoba-studio/issues/62)）：游戏窗口上方悬浮即时分词与一键收藏，无需频繁切屏。
+- **手机离线复习与可合并同步**（[#59](https://github.com/ColinHouse/kotobako/issues/59)）：客户端 ts-fsrs 调度与基于只追加日志的确定性重放合并。
+- **pywebview 桌面壳与托盘**（[#60](https://github.com/ColinHouse/kotobako/issues/60)）：双击启动本地服务、常驻托盘菜单与优雅退出。
+- **打包与签名**（[#61](https://github.com/ColinHouse/kotobako/issues/61)）：macOS .app 与 Windows 安装包自动化分发。
+- **游戏内透明覆盖层**（[#62](https://github.com/ColinHouse/kotobako/issues/62)）：游戏窗口上方悬浮即时分词与一键收藏，无需频繁切屏。
 
-## M5 · 测得住（[milestone 5](https://github.com/ColinHouse/kotoba-studio/milestone/5)）
+## M5 · 测得住（[milestone 5](https://github.com/ColinHouse/kotobako/milestone/5)）
 
 M5 是**质量**。工程化债项的系统性清偿：34 个前端组件目前零测试、没有 E2E、没有性能基线、CHANGELOG 缺少强制护栏。
 
-- **前端组件测试基建**（[#69](https://github.com/ColinHouse/kotoba-studio/issues/69)）：为高频交互组件补齐 vitest 测试。
-- **Playwright 主路径 E2E 冒烟测试**（[#70](https://github.com/ColinHouse/kotoba-studio/issues/70)）：走通采集、整理、复习全链路。
-- **Hypothesis 日语性质测试**（[#71](https://github.com/ColinHouse/kotoba-studio/issues/71)）：针对分词、振假名与音高算子做基于性质的随机边界轰炸。
-- **导入与查词性能基线**（[#72](https://github.com/ColinHouse/kotoba-studio/issues/72)）：建立万级词条与长文本导入的性能回归防护。
-- **文档债项补齐**（[#73](https://github.com/ColinHouse/kotoba-studio/issues/73)）与**CHANGELOG 联动强制检查**（[#77](https://github.com/ColinHouse/kotoba-studio/issues/77)）：杜绝版本更新文档脱节。
-- **协议性文档变更防护**（[#74](https://github.com/ColinHouse/kotoba-studio/issues/74)）：受保护文件必须由人工审核通过后合入。
-- **Alembic 迁移往返与数据升级测试**（[#75](https://github.com/ColinHouse/kotoba-studio/issues/75)）：保障数据库升降级安全。
-- **可访问性与对比度基线**（[#76](https://github.com/ColinHouse/kotoba-studio/issues/76)）：评估墨色编码系统的对比度与键盘可达性。
+- **前端组件测试基建**（[#69](https://github.com/ColinHouse/kotobako/issues/69)）：为高频交互组件补齐 vitest 测试。
+- **Playwright 主路径 E2E 冒烟测试**（[#70](https://github.com/ColinHouse/kotobako/issues/70)）：走通采集、整理、复习全链路。
+- **Hypothesis 日语性质测试**（[#71](https://github.com/ColinHouse/kotobako/issues/71)）：针对分词、振假名与音高算子做基于性质的随机边界轰炸。
+- **导入与查词性能基线**（[#72](https://github.com/ColinHouse/kotobako/issues/72)）：建立万级词条与长文本导入的性能回归防护。
+- **文档债项补齐**（[#73](https://github.com/ColinHouse/kotobako/issues/73)）与**CHANGELOG 联动强制检查**（[#77](https://github.com/ColinHouse/kotobako/issues/77)）：杜绝版本更新文档脱节。
+- **协议性文档变更防护**（[#74](https://github.com/ColinHouse/kotobako/issues/74)）：受保护文件必须由人工审核通过后合入。
+- **Alembic 迁移往返与数据升级测试**（[#75](https://github.com/ColinHouse/kotobako/issues/75)）：保障数据库升降级安全。
+- **可访问性与对比度基线**（[#76](https://github.com/ColinHouse/kotobako/issues/76)）：评估墨色编码系统的对比度与键盘可达性。

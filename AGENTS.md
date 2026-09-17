@@ -10,7 +10,7 @@ never weaken a check to make it pass.**
 
 ## 1. What this is
 
-Kotoba Studio is a local-first Japanese study companion for Chinese speakers. One FastAPI
+Kotobako is a local-first Japanese study companion for Chinese speakers. One FastAPI
 process owns the database, the media files and the built web app; a phone on the same network
 reaches the same data through a PWA.
 

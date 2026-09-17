@@ -82,7 +82,7 @@ def _rows(db: Session, model) -> list[dict]:
 @router.get("/json")
 def json_export(db: Session = Depends(get_db)) -> dict:
     return {
-        "app": "kotoba-studio",
+        "app": "kotobako",
         "version": __version__,
         "exported_at": datetime.now(UTC).isoformat(),
         "sources": _rows(db, Source),

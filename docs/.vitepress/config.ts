@@ -1,14 +1,14 @@
 import { defineConfig } from 'vitepress'
 
-// The site is served from https://colinhouse.github.io/kotoba-studio/, so every
+// The site is served from https://colinhouse.github.io/kotobako/, so every
 // absolute asset path carries that prefix. It lives here alone: moving to a custom
 // domain later is this one line plus a CNAME file in docs/public/.
-const BASE = '/kotoba-studio/'
+const BASE = '/kotobako/'
 
 export default defineConfig({
   base: BASE,
   lang: 'zh-CN',
-  title: 'Kotoba Studio',
+  title: 'Kotobako · ことばこ',
   description: '会记住语境的日语伴读工具',
   cleanUrls: true,
   lastUpdated: true,
@@ -32,7 +32,7 @@ export default defineConfig({
       { text: '开发', link: '/architecture' },
       {
         text: '下载',
-        link: 'https://github.com/ColinHouse/kotoba-studio/releases/latest',
+        link: 'https://github.com/ColinHouse/kotobako/releases/latest',
       },
     ],
 
@@ -74,11 +74,11 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/ColinHouse/kotoba-studio' },
+      { icon: 'github', link: 'https://github.com/ColinHouse/kotobako' },
     ],
 
     editLink: {
-      pattern: 'https://github.com/ColinHouse/kotoba-studio/edit/main/docs/:path',
+      pattern: 'https://github.com/ColinHouse/kotobako/edit/main/docs/:path',
       text: '在 GitHub 上编辑此页',
     },
 
@@ -93,7 +93,7 @@ export default defineConfig({
     footer: {
       message:
         '代码 AGPL-3.0-or-later · 词典数据 © EDRDG，CC BY-SA 4.0',
-      copyright: 'Kotoba Studio',
+      copyright: 'Kotobako',
     },
   },
 })

@@ -15,6 +15,8 @@ DECK_ID = 1726090002
 def _model() -> genanki.Model:
     return genanki.Model(
         MODEL_ID,
+        # Must stay identical to anki_connect.MODEL_NAME, and stays on the
+        # pre-rename name for the reason given there.
         "KotobaStudio-v1",
         fields=[{"name": f} for f in FIELDS],
         templates=[{"name": "Recognition", "qfmt": FRONT, "afmt": BACK}],
@@ -28,7 +30,7 @@ class _Note(genanki.Note):
         return genanki.guid_for(self.fields[FIELDS.index("KotobaId")])
 
 
-def build(notes: list[ExportNote], out_path: Path, deck_name: str = "Kotoba Studio") -> Path:
+def build(notes: list[ExportNote], out_path: Path, deck_name: str = "Kotobako") -> Path:
     model = _model()
     deck = genanki.Deck(DECK_ID, deck_name)
     media: list[str] = []

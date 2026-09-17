@@ -94,7 +94,7 @@ exe = EXE(  # noqa: F821
     pyz,
     a.scripts,
     exclude_binaries=True,
-    name="KotobaStudio",
+    name="Kotobako",
     console=True,
     disable_windowed_traceback=False,
     icon=str(ROOT / "assets" / "kotoba.ico"),
@@ -105,5 +105,5 @@ coll = COLLECT(  # noqa: F821
     a.datas,
     strip=False,
     upx=False,
-    name="KotobaStudio",
+    name="Kotobako",
 )

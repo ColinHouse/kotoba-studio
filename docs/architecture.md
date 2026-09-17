@@ -25,7 +25,7 @@ docs/          开发约定、ADR、路线图、这个文档站
 
 「语境」是这条链上最关键的一环：它把「某个词」和「你在哪句话里遇到它」绑在一起，
 所以一张卡永远知道自己是从哪来的。模型定义见
-[backend/kotoba/models/](https://github.com/ColinHouse/kotoba-studio/tree/main/backend/kotoba/models)。
+[backend/kotoba/models/](https://github.com/ColinHouse/kotobako/tree/main/backend/kotoba/models)。
 
 ## 技术栈
 
@@ -42,8 +42,8 @@ make check    # 提交前必须通过，CI 跑的就是这个
 ```
 
 代码约定见[这里](/conventions)，给 AI 工具的操作规则见
-[AGENTS.md](https://github.com/ColinHouse/kotoba-studio/blob/main/AGENTS.md)，
-人看的入口是 [CONTRIBUTING.md](https://github.com/ColinHouse/kotoba-studio/blob/main/CONTRIBUTING.md)。
+[AGENTS.md](https://github.com/ColinHouse/kotobako/blob/main/AGENTS.md)，
+人看的入口是 [CONTRIBUTING.md](https://github.com/ColinHouse/kotobako/blob/main/CONTRIBUTING.md)。
 
 ## 打包
 
@@ -53,5 +53,5 @@ make package-windows ARGS="--installer"
 
 PyInstaller onedir + Inno Setup。构建后会自动冒烟：真实跑一次内置 OCR 识别与分词，
 再检查 SPA 与健康检查。体积、耗时与签名做法见
-[packaging/README.md](https://github.com/ColinHouse/kotoba-studio/blob/main/packaging/README.md)
+[packaging/README.md](https://github.com/ColinHouse/kotobako/blob/main/packaging/README.md)
 与[代码签名](/CODE_SIGNING)。

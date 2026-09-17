@@ -7,7 +7,10 @@ import os
 from kotoba.core.config import get_settings
 from kotoba.core.errors import ApiError
 
-KEYRING_SERVICE = "kotoba-studio"
+KEYRING_SERVICE = "kotobako"
+# The service name before the rename. Read-only: a key saved under it keeps
+# working, and the next save moves it to the current name.
+LEGACY_KEYRING_SERVICE = "kotoba-studio"
 ENV_KEY = "KOTOBA_AI_KEY"
 
 
@@ -25,7 +28,9 @@ def get_api_key(provider: str) -> tuple[str | None, str]:
     try:
         import keyring
 
-        key = keyring.get_password(KEYRING_SERVICE, provider)
+        key = keyring.get_password(KEYRING_SERVICE, provider) or keyring.get_password(
+            LEGACY_KEYRING_SERVICE, provider
+        )
     except Exception:  # noqa: BLE001 - no backend, locked keychain, etc.
         key = None
     return (key, "keyring") if key else (None, "none")

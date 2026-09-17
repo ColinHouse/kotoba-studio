@@ -38,8 +38,8 @@ make package-windows ARGS="--installer --sign-pfx C:\keys\kotoba.pfx"
 ### 手动验证签名
 
 ```powershell
-signtool verify /pa /v "dist\KotobaStudio-0.1.0-setup.exe"
-Get-AuthenticodeSignature "dist\KotobaStudio\KotobaStudio.exe" | Format-List Status,SignerCertificate
+signtool verify /pa /v "dist\Kotobako-0.1.0-setup.exe"
+Get-AuthenticodeSignature "dist\Kotobako\Kotobako.exe" | Format-List Status,SignerCertificate
 ```
 
 ### CI 里怎么放证书
