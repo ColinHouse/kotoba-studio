@@ -48,13 +48,17 @@ def test_normalize_ocr_is_idempotent(text):
 
 @_SLOW
 @given(JP)
-def test_tokenize_covers_every_non_space_character(text):
-    """Highlighting uses token offsets; a dropped or invented character shifts
-    every later span. Whitespace is deliberately not tokenized, so the property
-    is over the non-space characters (frozen example below)."""
+def test_tokenize_offsets_point_at_their_surface(text):
+    """Highlighting slices the line by these offsets. Dropped or invented
+    characters, or an offset that points somewhere else, shifts every later
+    span; the surfaces themselves are the tagger's business (it drops ASCII
+    spaces and keeps U+3000 — both frozen below)."""
     normalized = normalize_ocr(text)
-    tokens = tokenize(normalized)
-    assert "".join(token.surface for token in tokens) == "".join(normalized.split())
+    cursor = 0
+    for token in tokenize(normalized):
+        assert token.start >= cursor
+        assert normalized[token.start : token.end] == token.surface
+        cursor = token.end
 
 
 @_SLOW
@@ -106,11 +110,15 @@ def test_pitch_pattern_rules():
     assert pattern("がっこう", 2) == "nakadaka"
 
 
-def test_tokenize_does_not_emit_whitespace():
-    """Found by the property test above: ': :' tokenizes to two tokens whose
-    surfaces join to '::'. The offsets still point at the right characters, but
-    the concatenation is not character-for-character the input."""
-    normalized = normalize_ocr(": :")
-    assert "".join(token.surface for token in tokenize(normalized)) == "::"
-    starts = [token.start for token in tokenize(normalized)]
-    assert starts == [0, 2]
+def test_tokenize_whitespace_is_the_taggers_business():
+    """Two counterexamples the property above found, in order: ASCII spaces are
+    dropped (': :' -> '::' with offsets 0 and 2), while the ideographic space is
+    kept inside a token (':\\u3000:' joins to the same string). The offsets stay
+    correct in both cases, which is what highlighting needs."""
+    narrow = tokenize(normalize_ocr(": :"))
+    assert "".join(token.surface for token in narrow) == "::"
+    assert [token.start for token in narrow] == [0, 2]
+
+    wide = tokenize(normalize_ocr(":\u3000:"))
+    assert "".join(token.surface for token in wide) == ":\u3000:"
+    assert wide[0].start == 0
