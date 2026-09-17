@@ -38,6 +38,18 @@ updates:
       - dependency-name: typescript
         update-types: [version-update:semver-major]
 
+  - package-ecosystem: npm
+    directory: /docs
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      docs:
+        patterns: ['*']
+        update-types: [minor, patch]
+    commit-message:
+      prefix: build
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
