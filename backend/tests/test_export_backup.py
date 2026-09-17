@@ -247,7 +247,7 @@ def test_anki_connect_unreachable():
 def test_json_export(client, data_dir):
     _seed(client, data_dir)
     body = client.get("/api/export/json").json()
-    assert body["app"] == "kotoba-studio"
+    assert body["app"] == "kotobako"
     assert len(body["terms"]) == 2 and len(body["lines"]) == 2 and len(body["cards"]) == 3
 
 

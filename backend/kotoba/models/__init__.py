@@ -1,4 +1,4 @@
-"""ORM models, grouped by domain. See docs/superpowers/specs/2026-09-15-kotoba-studio-design.md §4.
+"""ORM models, grouped by domain. See docs/architecture.md for the shape of the chain.
 
 Importing this package registers every mapper, which Alembic's autogenerate and
 SQLAlchemy's string-based relationship resolution both rely on.

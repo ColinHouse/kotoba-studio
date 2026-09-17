@@ -3,7 +3,7 @@
 把后端、前端 `dist/` 与分词词典装进一个双击可用的目录，并可选地打出 Inno Setup 安装包。
 
 ```bash
-make package-windows                    # 便携 onedir（dist/KotobaStudio）
+make package-windows                    # 便携 onedir（dist/Kotobako）
 make package-windows ARGS="--installer" # 再打 Inno Setup 安装包
 make package-windows ARGS="--no-smoke"  # 跳过构建后的冒烟测试
 ```
@@ -11,7 +11,7 @@ make package-windows ARGS="--no-smoke"  # 跳过构建后的冒烟测试
 `packaging/build.py` 依次做四件事：
 
 1. `npm run build` 构建前端（`--skip-frontend` 可跳过）。
-2. `PyInstaller kotoba.spec` 产出 `dist/KotobaStudio/KotobaStudio.exe` 与 `_internal/`。
+2. `PyInstaller kotoba.spec` 产出 `dist/Kotobako/Kotobako.exe` 与 `_internal/`。
 3. **冒烟测试**：用临时数据目录启动打包好的 exe，断言健康检查、SPA 首页、Windows OCR 可用性与
    **一次真实 OCR 往返**（`今日は俺が奢ってやるよ。` 渲染成图再识别）、分词（fugashi + unidic-lite）
    都正常；任何一项失败都会让构建失败。这是这套脚本存在的理由——PyInstaller 坏掉的通常正是这几处。

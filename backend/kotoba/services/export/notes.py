@@ -71,6 +71,8 @@ class ExportNote:
     explanation: str
     image: tuple[str, Path] | None = None
     audio: tuple[str, Path] | None = None
+    # Kept from before the rename so a saved `tag:kotoba-studio` search in the
+    # user's Anki keeps matching newly exported notes.
     tags: list[str] = field(default_factory=lambda: ["kotoba-studio"])
 
     def fields(self) -> dict[str, str]:
@@ -149,7 +151,7 @@ def notes_for_cards(db: Session, paths: Paths, card_ids: list[int] | None) -> li
                 meaning="<br>".join(glosses),
                 sentence=sentence,
                 translation=(line.translation_zh or "") if line else "",
-                source=source.title if source else "Kotoba Studio",
+                source=source.title if source else "Kotobako",
                 explanation=_explanation_html(enc.ai_explanation_json) if enc else "",
                 image=image,
                 audio=audio,

@@ -5,7 +5,7 @@ import { api } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 
 const app = useAppStore()
-const deck = ref('Kotoba Studio')
+const deck = ref('Kotobako')
 const busy = ref('')
 
 async function downloadApkg() {

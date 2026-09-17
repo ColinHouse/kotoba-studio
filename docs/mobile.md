@@ -11,7 +11,7 @@ cd backend && uv run python -m kotoba serve --host 0.0.0.0
 ::: danger 这个端口没有任何认证
 同一网络里的任何人都能读写你的学习数据、并触发截屏。
 只在你信得过的网络上开，用完就关。详见
-[SECURITY.md](https://github.com/ColinHouse/kotoba-studio/blob/main/SECURITY.md)。
+[SECURITY.md](https://github.com/ColinHouse/kotobako/blob/main/SECURITY.md)。
 :::
 
 - 两台设备要在**同一个局域网**里。很多路由器的访客网络开了 AP 隔离，那样扫码能打开、接口连不上。

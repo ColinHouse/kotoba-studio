@@ -1,6 +1,6 @@
 # 开发约定 · Conventions
 
-给人和给 AI 工具看的同一份约定。硬性的提交约束在 [`AGENTS.md`](https://github.com/ColinHouse/kotoba-studio/blob/main/AGENTS.md)，这里是写代码时的
+给人和给 AI 工具看的同一份约定。硬性的提交约束在 [`AGENTS.md`](https://github.com/ColinHouse/kotobako/blob/main/AGENTS.md)，这里是写代码时的
 具体做法。
 
 ## 通用

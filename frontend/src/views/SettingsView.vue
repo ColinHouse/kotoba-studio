@@ -36,7 +36,7 @@ const app = useAppStore()
     <BackupSection />
 
     <p class="text-center text-xs text-ink-3">
-      Kotoba Studio v{{ app.health?.version }} · 服务器平台 {{ app.serverPlatform }}
+      ことばこ v{{ app.health?.version }} · 服务器平台 {{ app.serverPlatform }}
     </p>
   </div>
 </template>

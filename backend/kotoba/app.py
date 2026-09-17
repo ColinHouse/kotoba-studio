@@ -79,7 +79,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             app.state.clipboard_watcher.stop()
             app.state.db.dispose()
 
-    app = FastAPI(title="Kotoba Studio", version=__version__, lifespan=lifespan)
+    app = FastAPI(title="Kotobako", version=__version__, lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

@@ -1,22 +1,22 @@
 ---
 layout: home
 hero:
-  name: Kotoba Studio
-  text: 会记住语境的日语伴读工具
-  tagline: 玩 Galgame、看动画、读漫画和轻小说时，用很低的打断成本收藏台词——原句、截图、原声一起存下来，自动整理成词卡，用 FSRS 复习。数据在你自己的机器上。
+  name: Kotobako
+  text: 好き、以外の言葉で。
+  tagline: 会记住语境的日语伴读工具。玩 Galgame、看动画、读漫画和轻小说时，用很低的打断成本收藏台词——原句、截图、原声一起存下来，自动整理成词卡，用 FSRS 复习。数据在你自己的机器上。
   image:
     src: /mascot.png
-    alt: Kotoba Studio
+    alt: Kotobako
   actions:
     - theme: brand
       text: 下载 Windows 安装包
-      link: https://github.com/ColinHouse/kotoba-studio/releases/latest
+      link: https://github.com/ColinHouse/kotobako/releases/latest
     - theme: alt
       text: 头三件事
       link: /guide
     - theme: alt
       text: GitHub
-      link: https://github.com/ColinHouse/kotoba-studio
+      link: https://github.com/ColinHouse/kotobako
 
 features:
   - title: 看得懂汉字却读不出
@@ -37,5 +37,5 @@ features:
 核心流程可以每天用，但**只有 Windows 安装包**，也只有作者一个人完整走过一遍。
 macOS 与 Linux 目前只能[从源码运行](/install#从源码运行)。
 请先用设置页的备份功能导出一份，再开始积累学习数据。
-完整的[已知限制](https://github.com/ColinHouse/kotoba-studio/blob/main/CHANGELOG.md)写在 CHANGELOG 里。
+完整的[已知限制](https://github.com/ColinHouse/kotobako/blob/main/CHANGELOG.md)写在 CHANGELOG 里。
 :::

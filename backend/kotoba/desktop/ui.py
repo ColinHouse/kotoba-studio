@@ -15,7 +15,7 @@ import threading
 from collections.abc import Callable
 from typing import Any, Protocol
 
-WINDOW_TITLE = "Kotoba Studio"
+WINDOW_TITLE = "Kotobako · ことばこ"
 INSTALL_HINT = (
     "未安装桌面组件：在 backend 目录运行 `uv sync --extra desktop`（安装 pywebview 与 pystray），"
     "或继续用 `kotoba serve` 在浏览器里使用。"
@@ -98,9 +98,7 @@ class PyWebviewUI:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("退出", quit_app),
         )
-        return _Tray(
-            pystray.Icon("kotoba-studio", _icon_image(), WINDOW_TITLE, menu), self._tray_ready
-        )
+        return _Tray(pystray.Icon("kotobako", _icon_image(), WINDOW_TITLE, menu), self._tray_ready)
 
     def run(self, window: Any) -> None:
         import webview

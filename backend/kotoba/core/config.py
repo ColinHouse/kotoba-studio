@@ -12,7 +12,20 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def default_data_dir() -> Path:
-    return Path(platformdirs.user_data_dir("KotobaStudio", appauthor=False))
+    """Where study data lives.
+
+    The directory is named after the product, and the product was called
+    "Kotoba Studio" before it was ことばこ. An install that already has the old
+    directory keeps using it: renaming an application must not make someone's
+    cards look deleted, and silently moving their files is worse than a
+    directory whose name is out of date.
+    """
+    new = Path(platformdirs.user_data_dir("Kotobako", appauthor=False))
+    if not new.exists():
+        legacy = Path(platformdirs.user_data_dir("KotobaStudio", appauthor=False))
+        if legacy.exists():
+            return legacy
+    return new
 
 
 def _env_files() -> tuple[Path, ...]:

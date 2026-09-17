@@ -1,6 +1,6 @@
-# kotoba-studio-server
+# kotobako-server
 
-FastAPI backend for Kotoba Studio. See the repository root README for the project overview.
+FastAPI backend for Kotobako. See the repository root README for the project overview.
 
 ```bash
 uv sync --extra macos --extra dev   # on macOS; use --extra windows on Windows

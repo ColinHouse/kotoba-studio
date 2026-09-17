@@ -107,7 +107,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### 提 bug 最有帮助的方式
 
 带上：操作系统与版本、设置页底部的版本号、用的哪个 OCR 引擎、作品名与原句文本
-（**不要附截图**，里面可能有剧透）。走 [issue 模板](https://github.com/ColinHouse/kotoba-studio/issues/new/choose)。
+（**不要附截图**，里面可能有剧透）。走 [issue 模板](https://github.com/ColinHouse/kotobako/issues/new/choose)。
 
-[Unreleased]: https://github.com/ColinHouse/kotoba-studio/compare/v0.1.0-beta.1...HEAD
-[0.1.0-beta.1]: https://github.com/ColinHouse/kotoba-studio/releases/tag/v0.1.0-beta.1
+[Unreleased]: https://github.com/ColinHouse/kotobako/compare/v0.1.0-beta.1...HEAD
+[0.1.0-beta.1]: https://github.com/ColinHouse/kotobako/releases/tag/v0.1.0-beta.1

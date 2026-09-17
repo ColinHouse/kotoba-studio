@@ -214,7 +214,7 @@ const elapsed = computed(() =>
     </header>
 
     <p v-if="device.kind !== 'desktop'" class="framed mt-5 p-4 text-[13px]">
-      采集需要在运行 Kotoba Studio 的电脑上进行；手机端请使用收件箱与复习。
+      采集需要在运行 ことばこ 的电脑上进行；手机端请使用收件箱与复习。
     </p>
 
     <section v-if="!session" class="framed mt-5 flex flex-wrap items-center gap-3 p-4">

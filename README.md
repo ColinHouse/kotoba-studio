@@ -1,5 +1,6 @@
-<h1 align="center">Kotoba Studio</h1>
+<h1 align="center">Kotobako · ことばこ</h1>
 <p align="center">
+  <b>好き、以外の言葉で。</b><br>
   会记住语境的日语伴读工具 · A context-keeping Japanese reading companion<br><br>
   <img alt="软件图标" src="assets/mascot.png" width="220">
 </p>
@@ -7,14 +8,14 @@
 ---
 
 <p align="center">
-  <a href="https://github.com/ColinHouse/kotoba-studio/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/ColinHouse/kotoba-studio?style=flat-square"></a>
-  <a href="https://github.com/ColinHouse/kotoba-studio/network"><img alt="GitHub Forks" src="https://img.shields.io/github/forks/ColinHouse/kotoba-studio?style=flat-square"></a>
-  <a href="https://github.com/ColinHouse/kotoba-studio/releases/latest"><img alt="GitHub Downloads" src="https://img.shields.io/github/downloads/ColinHouse/kotoba-studio/total?style=flat-square"></a>
-  <a href="https://github.com/ColinHouse/kotoba-studio/issues"><img alt="GitHub Issues" src="https://img.shields.io/github/issues/ColinHouse/kotoba-studio?style=flat-square"></a>
-  <a href="https://github.com/ColinHouse/kotoba-studio/graphs/contributors"><img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/ColinHouse/kotoba-studio?style=flat-square"></a>
-  <a href="https://github.com/ColinHouse/kotoba-studio/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/ColinHouse/kotoba-studio/ci.yml?branch=main&style=flat-square&label=CI"></a>
-  <a href="LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/ColinHouse/kotoba-studio?style=flat-square"></a>
-  <a href="https://deepwiki.com/ColinHouse/kotoba-studio"><img alt="DeepWiki" src="https://deepwiki.com/badge.svg"></a>
+  <a href="https://github.com/ColinHouse/kotobako/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/ColinHouse/kotobako?style=flat-square"></a>
+  <a href="https://github.com/ColinHouse/kotobako/network"><img alt="GitHub Forks" src="https://img.shields.io/github/forks/ColinHouse/kotobako?style=flat-square"></a>
+  <a href="https://github.com/ColinHouse/kotobako/releases/latest"><img alt="GitHub Downloads" src="https://img.shields.io/github/downloads/ColinHouse/kotobako/total?style=flat-square"></a>
+  <a href="https://github.com/ColinHouse/kotobako/issues"><img alt="GitHub Issues" src="https://img.shields.io/github/issues/ColinHouse/kotobako?style=flat-square"></a>
+  <a href="https://github.com/ColinHouse/kotobako/graphs/contributors"><img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/ColinHouse/kotobako?style=flat-square"></a>
+  <a href="https://github.com/ColinHouse/kotobako/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/ColinHouse/kotobako/ci.yml?branch=main&style=flat-square&label=CI"></a>
+  <a href="LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/ColinHouse/kotobako?style=flat-square"></a>
+  <a href="https://deepwiki.com/ColinHouse/kotobako"><img alt="DeepWiki" src="https://deepwiki.com/badge.svg"></a>
 </p>
 
 > [!IMPORTANT]
@@ -99,12 +100,12 @@ The software turns a line of dialogue into a scheduled card through the followin
 
 ## 使用方法 / How to Use
 
-**Windows**：到 [Releases](https://github.com/ColinHouse/kotoba-studio/releases) 下载安装包，
+**Windows**：到 [Releases](https://github.com/ColinHouse/kotobako/releases) 下载安装包，
 双击即可，不需要装 Python 或 Node。**macOS / Linux**：暂无安装包，[从源码运行](docs/install.md#从源码运行)。
 
 访问文档站获取完整使用指南：
 
-- [Kotoba Studio 文档站](https://colinhouse.github.io/kotoba-studio/)
+- [Kotobako 文档站](https://colinhouse.github.io/kotobako/)
 
 | | |
 | --- | --- |
@@ -115,12 +116,12 @@ The software turns a line of dialogue into a scheduled card through the followin
 | [Hook 与导入导出](docs/integrations.md) | 对外契约：Hook 协议、字幕/EPUB/mokuro 导入、Anki 导出 |
 | [架构](docs/architecture.md) | 目录结构、数据模型、怎么改代码、怎么打包 |
 
-**Windows**: download the installer from [Releases](https://github.com/ColinHouse/kotoba-studio/releases) —
+**Windows**: download the installer from [Releases](https://github.com/ColinHouse/kotobako/releases) —
 no Python or Node required. **macOS / Linux**: no installer yet, [run from source](docs/install.md#从源码运行).
 
 Visit the documentation site for the full guide:
 
-- [Kotoba Studio Documentation](https://colinhouse.github.io/kotoba-studio/)
+- [Kotobako Documentation](https://colinhouse.github.io/kotobako/)
 
 ## 参与贡献 / Contributing
 
@@ -138,9 +139,9 @@ Visit the documentation site for the full guide:
 in English throughout. **The interface itself is Simplified Chinese**; an English UI is not
 scheduled, and if that changes it will appear in the issue tracker first.
 
-- [`good first issue`](https://github.com/ColinHouse/kotoba-studio/labels/good%20first%20issue) — small blast radius, no repository lore required
-- [`help wanted`](https://github.com/ColinHouse/kotoba-studio/labels/help%20wanted) — the maintainer actively wants outside help here
-- [`no-japanese-needed`](https://github.com/ColinHouse/kotoba-studio/labels/no-japanese-needed) — pure engineering; tests, CI and migrations touch no user-visible strings at all
+- [`good first issue`](https://github.com/ColinHouse/kotobako/labels/good%20first%20issue) — small blast radius, no repository lore required
+- [`help wanted`](https://github.com/ColinHouse/kotobako/labels/help%20wanted) — the maintainer actively wants outside help here
+- [`no-japanese-needed`](https://github.com/ColinHouse/kotobako/labels/no-japanese-needed) — pure engineering; tests, CI and migrations touch no user-visible strings at all
 
 **AI-assisted patches are explicitly welcome**, with two conditions: you ran it yourself, and the
 commit says which tool helped. Point your agent at `AGENTS.md` and it has everything.
@@ -219,17 +220,17 @@ The licences of all other third-party components are listed in [NOTICE.md](NOTIC
 感谢以下贡献者对本项目做出的贡献。<br>
 We thank the following contributors for their work on this project.
 
-<a href="https://github.com/ColinHouse/kotoba-studio/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ColinHouse/kotoba-studio" />
+<a href="https://github.com/ColinHouse/kotobako/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ColinHouse/kotobako" />
 </a>
 
 ## Star History
 
-<a href="https://www.star-history.com/#ColinHouse/kotoba-studio&Date">
+<a href="https://www.star-history.com/#ColinHouse/kotobako&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ColinHouse/kotoba-studio&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ColinHouse/kotoba-studio&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ColinHouse/kotoba-studio&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ColinHouse/kotobako&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ColinHouse/kotobako&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ColinHouse/kotobako&type=Date" />
   </picture>
 </a>
 
@@ -237,10 +238,10 @@ We thank the following contributors for their work on this project.
 
 目前没有 QQ 群或 Discord。提问、报 bug、提想法都走 GitHub：
 
-- [Discussions](https://github.com/ColinHouse/kotoba-studio/discussions)　提问与想法
-- [Issues](https://github.com/ColinHouse/kotoba-studio/issues)　bug 与功能请求
+- [Discussions](https://github.com/ColinHouse/kotobako/discussions)　提问与想法
+- [Issues](https://github.com/ColinHouse/kotobako/issues)　bug 与功能请求
 
 There is no QQ group or Discord yet. Questions, bug reports and ideas all go through GitHub:
 
-- [Discussions](https://github.com/ColinHouse/kotoba-studio/discussions) for questions and ideas
-- [Issues](https://github.com/ColinHouse/kotoba-studio/issues) for bugs and feature requests
+- [Discussions](https://github.com/ColinHouse/kotobako/discussions) for questions and ideas
+- [Issues](https://github.com/ColinHouse/kotobako/issues) for bugs and feature requests

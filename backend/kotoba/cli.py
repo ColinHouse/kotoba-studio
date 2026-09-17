@@ -13,7 +13,7 @@ from kotoba.core.config import get_settings
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="kotoba", description="Kotoba Studio server")
+    parser = argparse.ArgumentParser(prog="kotoba", description="Kotobako server")
     sub = parser.add_subparsers(dest="command")
     serve = sub.add_parser("serve", help="run the API and web server")
     serve.add_argument(

@@ -17,21 +17,21 @@
 
 [Setup]
 AppId={{8054E44B-DDA8-49DD-B4C0-6CCEC3ACBD55}
-AppName=Kotoba Studio
+AppName=Kotobako
 AppVersion={#AppVersion}
-AppPublisher=Kotoba Studio
-DefaultDirName={localappdata}\Programs\Kotoba Studio
-DefaultGroupName=Kotoba Studio
+AppPublisher=Kotobako
+DefaultDirName={localappdata}\Programs\Kotobako
+DefaultGroupName=Kotobako
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\dist
-OutputBaseFilename=KotobaStudio-{#AppVersion}-setup
+OutputBaseFilename=Kotobako-{#AppVersion}-setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-UninstallDisplayIcon={app}\KotobaStudio.exe
+UninstallDisplayIcon={app}\Kotobako.exe
 SetupLogging=yes
 
 [Languages]
@@ -44,11 +44,11 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: "附加任务："; Flags: unchecked
 
 [Files]
-Source: "..\dist\KotobaStudio\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "..\dist\Kotobako\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]
-Name: "{autoprograms}\Kotoba Studio"; Filename: "{app}\KotobaStudio.exe"; Parameters: "--open"; Comment: "日语学习伴侣"
-Name: "{autodesktop}\Kotoba Studio"; Filename: "{app}\KotobaStudio.exe"; Parameters: "--open"; Comment: "日语学习伴侣"; Tasks: desktopicon
+Name: "{autoprograms}\Kotobako"; Filename: "{app}\Kotobako.exe"; Parameters: "--open"; Comment: "日语学习伴侣"
+Name: "{autodesktop}\Kotobako"; Filename: "{app}\Kotobako.exe"; Parameters: "--open"; Comment: "日语学习伴侣"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\KotobaStudio.exe"; Parameters: "--open"; Description: "启动 Kotoba Studio"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Kotobako.exe"; Parameters: "--open"; Description: "启动 ことばこ"; Flags: nowait postinstall skipifsilent
