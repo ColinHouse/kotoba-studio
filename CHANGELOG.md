@@ -60,6 +60,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - 复习：手机离线复习。复习记录先存本机（每条带客户端生成的稳定 id），联网后批量合并；卡片状态按时间序重放全部已调度记录得出，重复上传不会重复计算。离线时用缓存的卡片继续复习，客户端用 ts-fsrs 与后端同一套参数本地调度。
 - 桌面：`kotoba desktop` 桌面壳（需 `uv sync --extra desktop`）。服务在本进程内启动，健康检查通过后打开窗口与托盘；端口被占用时自动顺延；关窗口隐藏到托盘（采集继续跑），托盘可显示/隐藏窗口、打开数据目录、退出；退出走与 `kotoba serve` 相同的清理路径，不留子进程。未装桌面组件时 `kotoba serve` 照常工作。
 - 采集：导入字幕时可附带本地视频路径，为每一句切出原声（opus，默认两端各留 250ms / 500ms 余量）与**中点**截图（jpg），路径写进 `Line.audio_path / screenshot_path`；ffmpeg 是外部可选依赖，没有它照常只导文本并在响应里说明；单句失败只计入 `media_failed` 不中断整批；视频路径必须位于设置 `video_dirs` 允许的目录内（避免任意文件读取）。
+- 采集：凝缩音频。`POST /api/sources/{id}/condensed` 把一部作品里带时间轴的台词按 `ord` 顺序接成一条音频：间隔小于 500ms 的 cue 合并成段再切，段与段之间补 200ms 静音；生成走后台任务并暴露进度，产物在 `media/condensed/{source_id}.opus`，可经媒体路由下载，重复生成覆盖旧的；没有时间轴的行被跳过，结果里给出实际用了多少行。
 
 ### 已知限制
 
