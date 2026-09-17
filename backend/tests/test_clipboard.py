@@ -51,11 +51,11 @@ def test_watch_captures_new_lines_and_filters_the_rest(client):
     watcher = ClipboardWatcher(
         client.app.state.db.session,
         read=FakeClipboard(
-            "hello world",  # no kana or kanji
-            "今日はいい天気だね",  # captured
-            "今日はいい天気だね",  # same as the previous read
-            "あ" * (MAX_CLIPBOARD_CHARS + 1),  # too long
-            "ありがとう",  # captured
+            "hello world",
+            "今日はいい天気だね",
+            "今日はいい天気だね",
+            "あ" * (MAX_CLIPBOARD_CHARS + 1),
+            "ありがとう",
         ),
         interval=0.01,
     )
@@ -105,7 +105,7 @@ def test_stop_interrupts_the_poll_and_joins_the_thread(client):
         "running": False,
         "captured": 0,
     }
-    assert time.monotonic() - began < 1.0  # did not wait out the 30 s interval
+    assert time.monotonic() - began < 1.0
 
     assert not any(t.name == "clipboard-watcher" for t in threading.enumerate())
 
@@ -121,8 +121,8 @@ def test_ingest_survives_an_unexpected_database_error(client):
         return client.app.state.db.session()
 
     watcher = ClipboardWatcher(failing_factory, read=lambda: "", interval=0.01)
-    assert watcher._ingest("最初の台詞") is False  # swallowed, not raised
-    assert watcher._ingest("次の台詞") is True  # the next poll still works
+    assert watcher._ingest("最初の台詞") is False
+    assert watcher._ingest("次の台詞") is True
 
 
 def test_watcher_follows_the_database_across_a_restore(client):
@@ -151,3 +151,23 @@ def test_stop_keeps_a_watcher_that_a_concurrent_start_installed():
     watcher.stop(timeout=0.01)
     assert watcher._thread is live, "stop() dropped the handle of a different thread"
     live.join()
+
+
+def test_lifespan_constructs_clipboard_watcher_once(data_dir, monkeypatch):
+    """A duplicate assignment would leak a watcher thread if start() is later wired in."""
+    from fastapi.testclient import TestClient
+
+    from kotoba.app import create_app
+    from kotoba.services.capture.clipboard import ClipboardWatcher
+
+    calls = {"n": 0}
+    original = ClipboardWatcher
+
+    def counting(*args, **kwargs):
+        calls["n"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr("kotoba.app.ClipboardWatcher", counting)
+    with TestClient(create_app()) as client:
+        assert calls["n"] == 1
+        assert isinstance(client.app.state.clipboard_watcher, original)
