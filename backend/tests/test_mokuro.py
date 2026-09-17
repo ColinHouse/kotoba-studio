@@ -1,4 +1,6 @@
+import io
 import json
+import zipfile
 
 from kotoba.services.text import mokuro
 
@@ -174,3 +176,147 @@ def test_import_unknown_source(client):
     r = upload(client, 999, mokuro_json([page([block(["x"], [quad(0)])])]))
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "not_found"
+
+
+def volume_zip(files: dict[str, bytes]) -> bytes:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as archive:
+        for name, data in files.items():
+            archive.writestr(name, data)
+    return buf.getvalue()
+
+
+def upload_zip(client, source_id: int, data: bytes):
+    return client.post(
+        f"/api/sources/{source_id}/mokuro",
+        files={"file": ("vol1.zip", data, "application/zip")},
+    )
+
+
+def two_page_mokuro() -> bytes:
+    return mokuro_json(
+        [
+            page([block(["いち"], [quad(0)]), block(["に"], [quad(0)])]),
+            page([block(["さん"], [quad(0)])]),
+        ]
+    )
+
+
+def stored(client, line) -> bytes:
+    return (client.app.state.paths.media_dir / line["screenshot_path"]).read_bytes()
+
+
+def test_import_zip_stores_page_images(client):
+    source_id = make_source(client)
+    data = volume_zip(
+        {
+            "vol1/vol1.mokuro": two_page_mokuro(),
+            "vol1/0001.jpg": b"page-one",
+            "vol1/0002.png": b"page-two",
+        }
+    )
+    r = upload_zip(client, source_id, data)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["images"] == 2 and body["pages"] == 2 and body["created"] == 3
+
+    lines = client.get("/api/lines", params={"session_id": body["session_id"]}).json()
+    assert lines[0]["screenshot_path"] == lines[1]["screenshot_path"]
+    assert lines[0]["screenshot_path"].startswith("manga/")
+    assert lines[0]["screenshot_path"].endswith("0001.jpg")
+    assert lines[2]["screenshot_path"].endswith("0002.png")
+    assert stored(client, lines[0]) == b"page-one"
+    assert stored(client, lines[2]) == b"page-two"
+
+    media = client.get(f"/media/{lines[0]['screenshot_path']}")
+    assert media.status_code == 200 and media.content == b"page-one"
+
+
+def test_import_zip_orders_pages_naturally(client):
+    # Lexicographic order would put 10.jpg before 2.jpg and misalign every page.
+    source_id = make_source(client)
+    data = volume_zip(
+        {
+            "vol1.mokuro": mokuro_json(
+                [
+                    page([block(["いち"], [quad(0)])]),
+                    page([block(["に"], [quad(0)])]),
+                    page([block(["さん"], [quad(0)])]),
+                ]
+            ),
+            "1.jpg": b"one",
+            "2.jpg": b"two",
+            "10.jpg": b"ten",
+        }
+    )
+    body = upload_zip(client, source_id, data).json()
+    lines = client.get("/api/lines", params={"session_id": body["session_id"]}).json()
+    assert [stored(client, line) for line in lines] == [b"one", b"two", b"ten"]
+
+
+def test_import_zip_rejects_a_page_count_mismatch(client):
+    source_id = make_source(client)
+    r = upload_zip(client, source_id, volume_zip({"vol1.mokuro": two_page_mokuro(), "1.jpg": b"x"}))
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "bad_mokuro"
+
+
+def test_import_zip_requires_a_mokuro_file(client):
+    source_id = make_source(client)
+    r = upload_zip(client, source_id, volume_zip({"1.jpg": b"x"}))
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "bad_mokuro"
+
+
+def test_import_zip_rejects_two_mokuro_files(client):
+    source_id = make_source(client)
+    data = volume_zip({"a.mokuro": two_page_mokuro(), "b.mokuro": two_page_mokuro()})
+    r = upload_zip(client, source_id, data)
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "bad_mokuro"
+
+
+def test_import_rejects_a_broken_zip(client):
+    source_id = make_source(client)
+    r = upload_zip(client, source_id, b"PK\x03\x04 broken")
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "bad_mokuro"
+
+
+def test_import_zip_without_images_is_text_only(client):
+    source_id = make_source(client)
+    body = upload_zip(client, source_id, volume_zip({"vol1.mokuro": two_page_mokuro()})).json()
+    assert body["images"] == 0
+    lines = client.get("/api/lines", params={"session_id": body["session_id"]}).json()
+    assert all(line["screenshot_path"] is None for line in lines)
+
+
+def test_import_zip_ignores_macos_resource_forks(client):
+    # A Finder-made zip stores every image twice; counting the ._ copies would
+    # fail the page-count check and make the volume unimportable.
+    source_id = make_source(client)
+    data = volume_zip(
+        {
+            "vol1.mokuro": two_page_mokuro(),
+            "0001.jpg": b"one",
+            "0002.jpg": b"two",
+            "__MACOSX/._0001.jpg": b"junk",
+            "__MACOSX/._0002.jpg": b"junk",
+        }
+    )
+    body = upload_zip(client, source_id, data).json()
+    assert body["images"] == 2
+
+
+def test_import_zip_never_writes_by_member_name(client):
+    source_id = make_source(client)
+    data = volume_zip(
+        {
+            "vol1.mokuro": mokuro_json([page([block(["いち"], [quad(0)])])]),
+            "../../evil.jpg": b"x",
+        }
+    )
+    body = upload_zip(client, source_id, data).json()
+    lines = client.get("/api/lines", params={"session_id": body["session_id"]}).json()
+    assert lines[0]["screenshot_path"].startswith("manga/")
+    assert not (client.app.state.paths.data_dir / "evil.jpg").exists()

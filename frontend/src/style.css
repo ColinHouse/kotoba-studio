@@ -465,6 +465,53 @@ input[type='range'] {
   }
 }
 
+/* ── 漫画阅读：文字框用墨色浓淡编码，颜色只留给"当前" ─────────────────── */
+.reader-box {
+  position: absolute;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  border-radius: var(--radius-chip);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--mo-quick) var(--ease-soft),
+    border-color var(--mo-quick) var(--ease-soft);
+}
+.reader-box:hover {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.reader-box-carded {
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+.reader-box-active,
+.reader-line-active {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.reader-line {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 20px;
+  line-height: 1.9;
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-ui);
+  cursor: pointer;
+  transition: background var(--mo-quick) var(--ease-soft);
+}
+.reader-line:hover {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.reader-line-carded {
+  color: var(--ink-70);
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+
 /* ── 表格 ─────────────────────────────────────────────────────────────── */
 @utility table-plain {
   width: 100%;

@@ -2,5 +2,6 @@
 
 export type * from './capture'
 export type * from './kanji'
+export type * from './reader'
 export type * from './study'
 export type * from './system'
