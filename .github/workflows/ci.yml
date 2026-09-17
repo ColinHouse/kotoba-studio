@@ -21,6 +21,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The diff-based guards below compare against the base branch; a
+          # shallow clone has no merge base for that, and the comparison then
+          # silently returns nothing (which is how a guard passes while
+          # proving nothing).
+          fetch-depth: 0
       # backend/kotoba/data/ is bundled package data and is meant to be tracked;
       # only the runtime directory at the repository root is forbidden.
       - name: No runtime data or build output in the repository
@@ -90,6 +96,30 @@ jobs:
               || { echo "::error::bad subject: $subject"; bad=1; }
           done < <(git rev-list origin/${{ github.base_ref }}..HEAD)
           exit $bad
+
+      # The pre-commit hook guards each human's commit; this guards the merge.
+      # Bypass is a label a human applies, not a magic word in a commit message:
+      # labels are visible on the PR and auditable after the fact.
+      - name: Protocol documents need a human
+        if: github.event_name == 'pull_request'
+        env:
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          git fetch --quiet origin ${{ github.base_ref }}
+          files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          changed=$(printf '%s\n' "$files" | grep -E \
+            '^LICENSE$|^NOTICE\.md$|^SECURITY\.md$|^docs/adr/.*\.md$|^AGENTS\.md$' || true)
+          if [ -n "$changed" ]; then
+            case ",$LABELS," in
+              *,protected-docs-reviewed,*)
+                echo "Protocol documents changed and a human added protected-docs-reviewed:"
+                echo "$changed" ;;
+              *)
+                echo "::error::these protocol documents changed:"; echo "$changed"
+                echo "A human must add the protected-docs-reviewed label, or revert them."
+                exit 1 ;;
+            esac
+          fi
 
   backend:
     name: backend (${{ matrix.os }})

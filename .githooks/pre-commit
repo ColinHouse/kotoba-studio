@@ -85,4 +85,16 @@ for f in $(printf '%s\n' "$staged" | grep -E '\.md$' || true); do
   fi
 done
 
+# 7. Protocol documents: the licence, the attribution, the security policy, the
+#    ADRs and AGENTS.md itself. Changing these has legal or contractual weight,
+#    not just code weight, so a human has to say yes out loud:
+#    KOTOBA_ALLOW_PROTECTED_DOCS=1 git commit ...
+#    Never reach for --no-verify instead: that disables every guard here.
+protected=$(printf '%s\n' "$staged" | grep -E \
+  '^LICENSE$|^NOTICE\.md$|^SECURITY\.md$|^docs/adr/.*\.md$|^AGENTS\.md$' || true)
+if [ -n "$protected" ] && [ "${KOTOBA_ALLOW_PROTECTED_DOCS:-}" != "1" ]; then
+  printf 'These protocol documents only change when a human confirms it:\n%s\n' "$protected" >&2
+  fail "set KOTOBA_ALLOW_PROTECTED_DOCS=1 for this commit if that human is you"
+fi
+
 exit 0
