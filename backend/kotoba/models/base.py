@@ -21,14 +21,14 @@ class UTCDateTime(TypeDecorator):
     impl = DateTime
     cache_ok = True
 
-    def process_bind_param(self, value, dialect):  # noqa: ANN001
+    def process_bind_param(self, value, dialect):
         if value is None:
             return None
         if value.tzinfo is not None:
             value = value.astimezone(UTC).replace(tzinfo=None)
         return value
 
-    def process_result_value(self, value, dialect):  # noqa: ANN001
+    def process_result_value(self, value, dialect):
         if value is None:
             return None
         return value.replace(tzinfo=UTC)

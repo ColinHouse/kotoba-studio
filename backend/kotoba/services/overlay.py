@@ -429,7 +429,7 @@ class OverlayController:
             return False, "覆盖层目前只支持 Windows"
         try:
             import tkinter  # noqa: F401
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - a missing or broken tkinter means no overlay, not a crash
             return False, f"缺少 tkinter：{exc}"
         return True, None
 

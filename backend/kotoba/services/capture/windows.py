@@ -392,7 +392,7 @@ def _ensure_dpi_aware() -> None:
     except Exception:  # noqa: BLE001 - already set, or Windows 8.1 shcore missing
         try:
             ctypes.windll.user32.SetProcessDPIAware()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001 - the 8.1 fallback too; neither API may exist
             log.debug("could not set DPI awareness", exc_info=True)
 
 

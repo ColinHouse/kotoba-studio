@@ -40,7 +40,7 @@ class RapidOcrProvider:
             import numpy as np
 
             output = self._get_engine()(np.asarray(image))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - onnxruntime and model loading fail in many ways
             raise ApiError("ocr_failed", f"RapidOCR 失败: {exc}") from exc
         blocks: list[OcrBlock] = []
         boxes = getattr(output, "boxes", None)

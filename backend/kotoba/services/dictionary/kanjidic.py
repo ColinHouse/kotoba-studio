@@ -146,7 +146,7 @@ class InstallJob:
                 self.state, self.message = "importing", "正在导入汉字表…"
                 count = import_bytes(db, raw, progress=prog)
                 self.state, self.message = "done", f"已导入 {count} 个汉字"
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001 - report through state; the thread must reach its finally
                 db.rollback()
                 self.state, self.message = "error", str(exc)
             finally:

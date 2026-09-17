@@ -36,7 +36,7 @@ def set_api_key(provider: str, key: str) -> None:
         import keyring
 
         keyring.set_password(KEYRING_SERVICE, provider, key)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001 - no backend, locked keychain, DBus refused…
         raise ApiError(
             "keyring_unavailable",
             f"无法写入系统凭据存储（{exc}）。可改为设置环境变量 {ENV_KEY}。",
@@ -49,5 +49,5 @@ def delete_api_key(provider: str) -> None:
         import keyring
 
         keyring.delete_password(KEYRING_SERVICE, provider)
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 - deleting a key that is not there is still success
         pass

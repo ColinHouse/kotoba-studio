@@ -75,7 +75,7 @@ def compare(png: bytes) -> list[dict]:
             if not provider.available():
                 continue
             text, error = provider.recognize(png).text, None
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - one engine failing must not hide the others
             text = ""
             error = exc.message if isinstance(exc, ApiError) else str(exc)
         rows.append(

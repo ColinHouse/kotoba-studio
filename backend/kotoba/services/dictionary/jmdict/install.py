@@ -51,7 +51,7 @@ class InstallJob:
                 self.state, self.message = "importing", "正在导入词典…"
                 import_json(db, json_path, progress=prog)
                 self.state, self.message = "done", "词典已安装"
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001 - report through state; a dead thread would say 'importing' for ever
                 db.rollback()
                 self.state, self.message = "error", str(exc)
             finally:

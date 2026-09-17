@@ -113,7 +113,7 @@ class RegionWatcher:
             except ApiError as exc:
                 self.last_error = exc.message
                 log.debug("region watcher skipped a frame: %s", exc.message)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001 - a failed frame must not end the watcher thread
                 self.last_error = str(exc)
                 log.debug("region watcher failed a frame", exc_info=True)
 
