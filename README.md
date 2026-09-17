@@ -4,6 +4,41 @@
 
 > A local-first companion for learning Japanese from visual novels and anime: capture a line with its screenshot, confirm the words you met, and review them with FSRS on desktop or phone. Chinese-first UI; Anki export optional.
 
+<details>
+<summary><b>In English</b> — what this is, and how to contribute</summary>
+
+Kotoba Studio watches a game or video window, reads the dialogue with OCR or a text hooker,
+and turns the words you did not know into FSRS-scheduled cards — with the screenshot and the
+original line attached, so the word keeps the context you met it in. It owns its own database:
+Anki export exists, but nothing depends on it.
+
+**The interface is Simplified Chinese.** The first release targets Chinese speakers learning
+Japanese, where the same characters mean different things (`手紙` is a letter, not toilet paper)
+and that confusion is worth building for. An English interface is not scheduled — if that
+changes it will appear in the issue tracker first.
+
+**Contributing does not require Chinese or Japanese.** Issue titles are English, and
+[`AGENTS.md`](AGENTS.md) — the file that tells a coding agent how this repository works — is
+written in English throughout. Issues labelled
+[`no-japanese-needed`](https://github.com/ColinHouse/kotoba-studio/labels/no-japanese-needed)
+are pure engineering; among those, tests, CI and migrations touch no user-visible strings at
+all, so they need neither language.
+
+- [`good first issue`](https://github.com/ColinHouse/kotoba-studio/labels/good%20first%20issue)
+  — small blast radius, no repository lore required
+- [`help wanted`](https://github.com/ColinHouse/kotoba-studio/labels/help%20wanted)
+  — the maintainer actively wants outside help here
+- [CONTRIBUTING.md](CONTRIBUTING.md) — setup, the one command that must pass, and how to claim
+  an issue so nobody races you for it
+
+**AI-assisted patches are explicitly welcome**, with two conditions: you ran it yourself, and
+the commit says which tool helped. Point your agent at `AGENTS.md` and it has everything.
+
+Windows users can install from [Releases](https://github.com/ColinHouse/kotoba-studio/releases).
+macOS and Linux run from source — see 快速开始 below, which is mostly commands.
+
+</details>
+
 > [!IMPORTANT]
 > **当前版本 `v0.1.0-beta.1`。** 核心流程可以每天用，但只在 Windows 11 上打过包，
 > 也只有作者一个人完整走过一遍。**请先用设置页的备份功能导出一份，再开始积累学习数据。**
