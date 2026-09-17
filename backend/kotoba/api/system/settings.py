@@ -64,6 +64,11 @@ def put_settings(body: dict[str, Any], db: Session = Depends(get_db)) -> dict[st
         if not 0 <= value <= 120:
             raise ApiError("invalid_value", "backfill_tolerance_s must be between 0 and 120")
         body["backfill_tolerance_s"] = value
+    if "video_dirs" in body:
+        dirs = body["video_dirs"]
+        if not isinstance(dirs, list) or not all(isinstance(entry, str) for entry in dirs):
+            raise ApiError("invalid_value", "video_dirs must be a list of directory paths")
+        body["video_dirs"] = [entry.strip() for entry in dirs if entry.strip()]
     for key, value in body.items():
         settings_store.set_value(db, key, value)
     db.commit()
