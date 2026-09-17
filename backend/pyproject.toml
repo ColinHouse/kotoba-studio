@@ -34,7 +34,7 @@ windows = ["winocr; sys_platform == 'win32'"]
 ocr-onnx = ["rapidocr>=3"]
 optimizer = ["fsrs[optimizer]>=6.3"]
 desktop = ["pywebview>=5.1", "pystray>=0.19"]
-dev = ["pytest>=8", "ruff>=0.12", "pytest-freezer>=0.4"]
+dev = ["pytest>=8", "ruff>=0.12", "pytest-freezer>=0.4", "hypothesis>=6.112"]
 packaging = ["pyinstaller>=6.10"]
 
 [project.scripts]

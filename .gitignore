@@ -54,6 +54,8 @@ Thumbs.db
 test-results/
 playwright-report/
 
+# Hypothesis keeps its example database next to the tests; it is a cache, not code.
+.hypothesis/
 # VitePress
 docs/.vitepress/dist/
 docs/.vitepress/cache/
