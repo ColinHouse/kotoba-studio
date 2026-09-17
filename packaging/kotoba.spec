@@ -30,7 +30,7 @@ datas += [(str(FRONTEND_DIST), "frontend/dist")]
 datas += collect_data_files(
     "kotoba",
     include_py_files=True,
-    includes=["data/*.json", "migrations/**/*"],
+    includes=["data/*.json", "data/*.png", "migrations/**/*"],
 )
 
 # unidic-lite is the tokenizer dictionary (~250 MB) and fugashi looks it up as a
@@ -97,6 +97,7 @@ exe = EXE(  # noqa: F821
     name="KotobaStudio",
     console=True,
     disable_windowed_traceback=False,
+    icon=str(ROOT / "assets" / "kotoba.ico"),
 )
 coll = COLLECT(  # noqa: F821
     exe,
