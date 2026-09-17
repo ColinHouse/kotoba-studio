@@ -40,7 +40,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # Resolve the database per use: restore_backup() swaps app.state.db, and a
         # captured bound method would keep writing through the retired engine.
         app.state.clipboard_watcher = ClipboardWatcher(lambda: app.state.db.session())
-        app.state.clipboard_watcher = ClipboardWatcher(lambda: app.state.db.session())
         app.state.hook_manager = HookManager(lambda: app.state.db.session())
         app.state.region_watcher = None
         app.state.media_buffer = MediaBuffer()
