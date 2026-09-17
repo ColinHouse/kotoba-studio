@@ -4,6 +4,12 @@
 
 > A local-first companion for learning Japanese from visual novels and anime: capture a line with its screenshot, confirm the words you met, and review them with FSRS on desktop or phone. Chinese-first UI; Anki export optional.
 
+> [!IMPORTANT]
+> **当前版本 `v0.1.0-beta.1`。** 核心流程可以每天用，但只在 Windows 11 上打过包，
+> 也只有作者一个人完整走过一遍。**请先用设置页的备份功能导出一份，再开始积累学习数据。**
+> 一份写得比较细的[已知限制](CHANGELOG.md#已知限制)在 CHANGELOG 里——
+> 里面写了哪些东西还没有（听力、macOS 安装包、离线复习），以及哪些只在特定环境下验证过。
+
 ## 它解决什么
 
 - **看得懂汉字却读不出**：含汉字的词默认生成"看汉字写读音"卡。
@@ -14,8 +20,12 @@
 
 ## 快速开始
 
-> **现在还没有安装包，只能从源码运行。** 打包与签名（签名的 macOS `.app`、Windows 安装包）
-> 排在 M4，见 [#61](https://github.com/ColinHouse/kotoba-studio/issues/61)。
+**Windows**：到 [Releases](https://github.com/ColinHouse/kotoba-studio/releases) 下载安装包，
+双击安装即可，不需要装 Python 或 Node。安装包**没有签名**，Windows 会弹 SmartScreen 警告，
+点「更多信息 → 仍要运行」。
+
+**macOS / Linux**：还没有安装包，只能从源码运行，按下面的步骤来。macOS 的 `.app` 与签名
+见 [#61](https://github.com/ColinHouse/kotoba-studio/issues/61)。
 
 ### 一次性准备
 

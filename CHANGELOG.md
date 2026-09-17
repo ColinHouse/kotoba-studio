@@ -6,6 +6,12 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.1.0-beta.1] - 2026-09-17
+
+第一个公开版本。核心流程已经成型、可以每天用；但只在 Windows 11 上打过包，
+也只有作者一个人完整走过一遍，所以是 beta——**请按"可能会咬人"来对待你的学习数据，
+重要数据先用设置页的备份功能导出一份。**
+
 ### Added
 
 - 采集：框选屏幕区域，OCR 识别台词，连同截图收进收件箱；支持 Apple Vision、Windows OCR、
@@ -41,10 +47,49 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Classical 设计语言：纸墨金三层、墨色编码学习状态、中日双字体、明暗两套主题。
 - 学习：统计页（近 90 天每日复习量与正确率、未来 30 天到期预测、按作品建卡与掌握数、真实保留率 vs 目标保留率、连续复习天数）；纯 SQL 聚合，图表使用手画 SVG，数据不足 14 天不外推趋势线。
 
-### Notes
+### 已知限制
 
-- Windows 11 实机已验证：内置 OCR（需日语语言包）、屏幕抓取与剪贴板读取；
-  完整采集流程与 Windows 安装步骤尚未逐一走查。
-- 手机端复习需要桌面端在线（同一局域网）；离线复习计划在 M3。
+这一节写得比一般的 release notes 长，因为 beta 的价值在于你**事先知道**哪里还不行。
 
-[Unreleased]: https://github.com/ColinHouse/kotoba-studio/commits/main
+**安装与平台**
+
+- **只有 Windows 安装包。** macOS 与 Linux 目前只能从源码运行（见 README 的快速开始）。
+- **安装包未签名。** Windows 会弹 SmartScreen 警告，要点「更多信息 → 仍要运行」。
+  证书与签名脚本见 `docs/CODE_SIGNING.md`，但仓库里没有证书，这条路**没有实测过**。
+- **Windows 内置 OCR 需要日语语言包**（`Add-WindowsCapability -Online -Name Language.OCR~~~ja-JP~0.0.1.0`）。
+  没装会自动回退 RapidOCR（需 `--extra ocr-onnx`）。
+- **界面只有简体中文。** 没有英文或日文界面。
+
+**功能上还缺的**
+
+- **没有听力／音频。** 系统音频回环与 VAD 切句还没做，所以没有听音卡。
+- **覆盖层只在 Windows，且独占全屏下显示不出来**；窗口化与无边框窗口可用。
+- **手机端必须桌面端在线**（同一局域网），不能离线复习。
+- **词典要自己装。** JMdict、KANJIDIC2、音高数据都是运行时下载；Yomitan 词典与频率表
+  需要你自己提供文件——本项目只支持格式，不分发任何第三方词典。
+  不装 JMdict 的话，收件箱里点词查不到释义。
+- **漫画导入只收文字**，卡片暂时没有漫画页截图。
+- 挖词这条路**还不能纯键盘走完**（复习页可以：空格 + 1–4）。
+
+**安全**
+
+- **手机访问那个端口没有任何认证。** 用 `--host 0.0.0.0` 时，同一网络里的任何人都能读写
+  你的学习数据并触发截屏。只在信得过的网络上开，用完就关。详见 [SECURITY.md](SECURITY.md)。
+- 全局快捷键会装一个**系统级键盘钩子**，剪贴板监听会**每秒读三次剪贴板**。两者都默认关闭，
+  打开前请读 SECURITY.md 里的说明。
+
+**验证到什么程度**
+
+- Windows 11 实机验证过：内置 OCR、屏幕抓取、窗口绑定与 `PrintWindow`、剪贴板读取、
+  全局快捷键（真按键盘，不是注入）、安装包安装与首次启动。
+- **没有验证过**：多显示器、跨 DPI 缩放、独占全屏、各种游戏引擎的窗口行为、
+  macOS 的完整采集流程、Linux。
+- 自动化测试 260+ 项，后端覆盖率约 88%；但**前端组件没有测试**，端到端冒烟也还没有。
+
+### 提 bug 最有帮助的方式
+
+带上：操作系统与版本、设置页底部的版本号、用的哪个 OCR 引擎、作品名与原句文本
+（**不要附截图**，里面可能有剧透）。走 [issue 模板](https://github.com/ColinHouse/kotoba-studio/issues/new/choose)。
+
+[Unreleased]: https://github.com/ColinHouse/kotoba-studio/compare/v0.1.0-beta.1...HEAD
+[0.1.0-beta.1]: https://github.com/ColinHouse/kotoba-studio/releases/tag/v0.1.0-beta.1
