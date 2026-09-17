@@ -1,0 +1,66 @@
+/* The site's ground is taken from the icon: #fcf1eb is the pale pink inside the
+   mark's frame, #cca398 the frame itself. Accent stays the application's gold
+   (--accent in frontend/src/style.css) — the app is 纸、墨、金线 and the site
+   documents the app; only the paper changes tone to match the icon.
+
+   brand-1 paints body links, so it uses --gold-deep: #b68235 on this ground is
+   3.2:1, under the 4.5:1 that running text needs. */
+:root {
+  --vp-c-brand-1: #7d5411;
+  --vp-c-brand-2: #b68235;
+  --vp-c-brand-3: #b68235;
+  --vp-c-brand-soft: rgba(182, 130, 53, 0.16);
+
+  --vp-c-bg: #fcf1eb;
+  --vp-c-bg-alt: #f7e4db;
+  --vp-c-bg-soft: #fdf7f4;
+  --vp-c-bg-elv: #fdf7f4;
+
+  --vp-c-text-1: #201f1d;
+  --vp-c-text-2: #60544f;
+  --vp-c-text-3: #8a7a74;
+
+  --vp-c-divider: rgba(122, 78, 63, 0.18);
+  --vp-c-border: rgba(122, 78, 63, 0.24);
+  --vp-c-gutter: rgba(122, 78, 63, 0.14);
+
+  --vp-button-brand-bg: #b68235;
+  --vp-button-brand-hover-bg: #7d5411;
+  --vp-button-brand-active-bg: #5a3b0a;
+  --vp-button-brand-text: #fdf7f4;
+
+  --vp-home-hero-name-color: #7d5411;
+  --vp-custom-block-tip-bg: rgba(182, 130, 53, 0.1);
+}
+
+/* Dark mode keeps the application's ink palette: a dark pink page reads as a
+   tint bug, not a theme. */
+.dark {
+  --vp-c-brand-1: #e1ad66;
+  --vp-c-brand-2: #e1ad66;
+  --vp-c-brand-3: #b68235;
+  --vp-c-brand-soft: rgba(225, 173, 102, 0.16);
+
+  --vp-c-bg: #191817;
+  --vp-c-bg-alt: #221f1e;
+  --vp-c-bg-soft: #262422;
+  --vp-c-bg-elv: #262422;
+
+  --vp-c-text-1: #eae7e7;
+  --vp-c-text-2: #b3aca9;
+  --vp-c-text-3: #857d7a;
+
+  --vp-c-divider: rgba(234, 231, 231, 0.14);
+  --vp-c-border: rgba(234, 231, 231, 0.2);
+
+  --vp-button-brand-bg: #b68235;
+  --vp-button-brand-hover-bg: #e1ad66;
+  --vp-button-brand-text: #191817;
+
+  --vp-home-hero-name-color: #e1ad66;
+}
+
+.VPHero .VPImage {
+  width: min(260px, 62vw);
+  height: auto;
+}
