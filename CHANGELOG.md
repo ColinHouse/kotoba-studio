@@ -57,6 +57,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - 学习：统计页（近 90 天每日复习量与正确率、未来 30 天到期预测、按作品建卡与掌握数、真实保留率 vs 目标保留率、连续复习天数）；纯 SQL 聚合，图表使用手画 SVG，数据不足 14 天不外推趋势线。
 - 交互与反馈：补全 `.btn`、`.seg-opt`、`.rate`、`.tok`、以及收件箱列表行的 `:active` 按下反馈与触屏优化；新增 Skeleton 骨架屏组件，在词库与短测视图中实现 200ms 延迟显示与 rise 平滑入场过渡。
 - 动效层：将动效系统完整接入其余七个核心视图（CaptureView、DashboardView、LibraryView、QuizView、ReviewView、SourcesView、TermDetailView），包括 TransitionGroup 列表增删平移动画、面板上浮与内容平滑切换。
+- 复习：手机离线复习。复习记录先存本机（每条带客户端生成的稳定 id），联网后批量合并；卡片状态按时间序重放全部已调度记录得出，重复上传不会重复计算。离线时用缓存的卡片继续复习，客户端用 ts-fsrs 与后端同一套参数本地调度。
 
 ### 已知限制
 
