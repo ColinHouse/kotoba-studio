@@ -158,8 +158,9 @@ git switch main && git pull --ff-only
 # Is a queue PR still open? If this prints anything, stop — see below.
 gh pr list --state open --json headRefName --jq '.[].headRefName | select(startswith("agent/"))'
 
-# Otherwise take the lowest-numbered ready issue.
-gh issue list --state open --label agent-ready --json number,title --jq 'sort_by(.number)[0]'
+# Otherwise take the lowest-numbered ready issue that nobody has claimed.
+gh issue list --state open --label agent-ready --json number,title,assignees \
+  --jq '[.[] | select(.assignees | length == 0)] | sort_by(.number)[0]'
 
 git switch -c agent/<type>-<slug>   # agent/feat-subtitle-parser, agent/fix-dedup-growth
 #   ... implement only what the issue's acceptance criteria ask for ...
@@ -183,17 +184,22 @@ PRs — you and the human share one GitHub account, so that matches their work t
    always branch from `main`.
 2. **Never merge anything** — not your PR, not anyone's. Never approve, never enable auto-merge,
    never push to `main`. A human merges; that review is the whole point of the loop.
-3. **Only issues labelled `agent-ready`.** That label means the description was judged complete
+3. **Never take an issue that has an assignee.** A person put their hand up and was
+   given it. You are faster than they are and that is exactly why this rule exists: an
+   unattended run that finishes someone's first contribution before they do costs the
+   project a contributor and gains it a patch it could have had anyway. Labels do not
+   override this — an assigned issue is off the queue no matter what else is on it.
+4. **Only issues labelled `agent-ready`.** That label means the description was judged complete
    enough to implement without asking (§8). An issue without it is not yours to take, no matter
    how easy it looks. Lowest open number first, so dependencies land in order.
    **Never take an issue you labelled `agent-ready` yourself** — labelling your own find and
    then implementing it puts no human anywhere in the loop. Someone else confirms the label
    before it becomes queue work.
-4. **One issue, one branch, one PR.** If you discover a second problem, open an issue for it
+5. **One issue, one branch, one PR.** If you discover a second problem, open an issue for it
    (that much is allowed) and leave it alone.
-5. **The issue's "Out of scope" list is binding.** It is there because the work was deliberately
+6. **The issue's "Out of scope" list is binding.** It is there because the work was deliberately
    split to keep each PR reviewable.
-6. **Never edit or close an issue you did not finish**, and never remove a label a human set.
+7. **Never edit or close an issue you did not finish**, and never remove a label a human set.
    `Closes #<n>` in the PR body is how an issue gets closed — by the merge, not by you.
 
 ### The pull request body must say
