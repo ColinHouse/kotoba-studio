@@ -20,6 +20,7 @@ const NAV: NavItem[] = [
   { to: '/capture', label: '采集', mobile: false, desktopOnly: true },
   { to: '/inbox', label: '收件箱', mobile: true },
   { to: '/review', label: '复习', mobile: true },
+  { to: '/stats', label: '统计', mobile: true },
   { to: '/library', label: '词库', mobile: true },
   { to: '/kanji', label: '汉字', mobile: false },
   { to: '/sources', label: '作品', mobile: false },
