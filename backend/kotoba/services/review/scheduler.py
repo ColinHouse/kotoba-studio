@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import uuid4
 
 from fsrs import Card as FsrsCard
 from fsrs import Rating, Scheduler, State
@@ -54,8 +55,14 @@ def review(
     now: datetime | None = None,
     duration_ms: int | None = None,
     session_id: int | None = None,
+    client_id: str | None = None,
 ) -> Card:
-    """Record a review. Only mode == "scheduled" changes the FSRS state."""
+    """Record a review. Only mode == "scheduled" changes the FSRS state.
+
+    ``client_id`` is the id an offline client generated for this review; when the
+    response is lost and the client retries through /api/reviews/sync, that id
+    makes the retry idempotent (ADR 0004).
+    """
     if mode not in MODES:
         raise ApiError("invalid_mode", f"mode must be one of {MODES}")
     if rating not in (1, 2, 3, 4):
@@ -71,6 +78,7 @@ def review(
     db.add(
         ReviewLog(
             card_id=card.id,
+            client_id=client_id or str(uuid4()),
             rating=rating,
             mode=mode,
             reviewed_at=now,

@@ -16,7 +16,7 @@ from kotoba.core.errors import ApiError
 from kotoba.models import Card, Device, utcnow
 from kotoba.services import learning
 from kotoba.services.dictionary import pitch
-from kotoba.services.review import optimize, scheduler
+from kotoba.services.review import optimize, scheduler, sync
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -28,6 +28,23 @@ class ReviewIn(BaseModel):
     device_id: str | None = None
     duration_ms: int | None = None
     session_id: int | None = None
+    client_id: str | None = Field(default=None, min_length=8, max_length=64)
+
+
+class OfflineReviewIn(BaseModel):
+    """One review recorded on a device while it had no connection (ADR 0004)."""
+
+    client_id: str = Field(min_length=8, max_length=64)
+    card_id: int
+    rating: int = Field(ge=1, le=4)
+    reviewed_at: datetime
+    device_id: str | None = None
+    duration_ms: int | None = None
+    session_id: int | None = None
+
+
+class OfflineSyncIn(BaseModel):
+    reviews: list[OfflineReviewIn] = Field(max_length=500)
 
 
 def _device_kind(db: Session, device_id: str | None, device_kind: str | None) -> str:
@@ -97,12 +114,21 @@ def submit_review(body: ReviewIn, db: Session = Depends(get_db)) -> dict:
         device_id=body.device_id,
         duration_ms=body.duration_ms,
         session_id=body.session_id,
+        client_id=body.client_id,
     )
     db.commit()
     return {
         "card": learning.card_to_dict(card),
         "next_due": card.due.isoformat() if card.due else None,
     }
+
+
+@router.post("/sync")
+def sync_offline_reviews(body: OfflineSyncIn, db: Session = Depends(get_db)) -> dict:
+    """Merge reviews recorded while offline: append the facts, replay the cards."""
+    result = sync.apply_offline_reviews(db, [r.model_dump() for r in body.reviews])
+    db.commit()
+    return result
 
 
 @router.post("/optimize")

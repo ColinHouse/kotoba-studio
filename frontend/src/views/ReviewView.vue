@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { api } from '@/api/client'
+import { ApiError, api } from '@/api/client'
 import type { CardFace as CardFaceT } from '@/api/types'
 import CardFaceView from '@/components/review/CardFace.vue'
 import RatingBar from '@/components/review/RatingBar.vue'
+import {
+  cacheQueue,
+  loadCachedQueue,
+  newReviewId,
+  usePendingReviews,
+  type PendingReview,
+} from '@/composables/usePendingReviews'
 import { useAppStore } from '@/stores/app'
 import { useDeviceStore } from '@/stores/device'
 
@@ -17,6 +24,8 @@ const done = ref(0)
 const loading = ref(true)
 const shownAt = ref(Date.now())
 const forecast = ref<{ date: string; count: number }[]>([])
+const offline = ref(false)
+const { pending, enqueue, flush } = usePendingReviews()
 
 const current = computed(() => queue.value[index.value] ?? null)
 const remaining = computed(() => Math.max(queue.value.length - index.value, 0))
@@ -33,6 +42,8 @@ async function load() {
     const params = device.device ? `device_id=${device.device.id}` : `device_kind=${device.kind}`
     const r = await api.get<{ cards: CardFaceT[] }>(`/api/reviews/queue?${params}&limit=50`)
     queue.value = r.cards
+    cacheQueue(r.cards)
+    offline.value = false
     index.value = 0
     revealed.value = false
     shownAt.value = Date.now()
@@ -42,7 +53,17 @@ async function load() {
       ).days
     }
   } catch (e) {
-    app.fail(e)
+    // No server: fall back to the last queue we saw, so the phone can keep reviewing.
+    const cached = loadCachedQueue()
+    if (e instanceof ApiError && e.status === 0 && cached.length) {
+      offline.value = true
+      queue.value = cached
+      index.value = 0
+      revealed.value = false
+      shownAt.value = Date.now()
+    } else {
+      app.fail(e)
+    }
   } finally {
     loading.value = false
   }
@@ -51,23 +72,41 @@ async function load() {
 async function rate(rating: 1 | 2 | 3 | 4) {
   const card = current.value
   if (!card) return
-  try {
-    await api.post('/api/reviews', {
-      card_id: card.id,
-      rating,
-      mode: 'scheduled',
-      device_id: device.device?.id ?? null,
-      duration_ms: Date.now() - shownAt.value,
-    })
-    done.value += 1
-    if (rating === 1) queue.value.push({ ...card })
-    index.value += 1
-    revealed.value = false
-    shownAt.value = Date.now()
-    if (!current.value) await load()
-  } catch (e) {
-    app.fail(e)
+  const entry: PendingReview = {
+    client_id: newReviewId(),
+    card_id: card.id,
+    rating,
+    reviewed_at: new Date().toISOString(),
+    device_id: device.device?.id ?? null,
+    duration_ms: Date.now() - shownAt.value,
   }
+  if (!navigator.onLine) {
+    enqueue(entry)
+    app.toast('离线记录已保存，联网后自动同步')
+  } else {
+    try {
+      await api.post('/api/reviews', { ...entry, mode: 'scheduled' })
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 0) {
+        enqueue(entry) // keep it: the same client_id makes the retry idempotent
+        app.toast('离线记录已保存，联网后自动同步')
+      } else {
+        app.fail(e)
+        return
+      }
+    }
+  }
+  done.value += 1
+  if (rating === 1) queue.value.push({ ...card })
+  index.value += 1
+  revealed.value = false
+  shownAt.value = Date.now()
+  if (!current.value && !offline.value) await load()
+}
+
+function onOnline() {
+  void flush().catch(() => {})
+  if (offline.value) load()
 }
 
 function onKey(e: KeyboardEvent) {
@@ -82,9 +121,14 @@ function onKey(e: KeyboardEvent) {
 
 onMounted(() => {
   load()
+  void flush().catch(() => {})
   window.addEventListener('keydown', onKey)
+  window.addEventListener('online', onOnline)
 })
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey)
+  window.removeEventListener('online', onOnline)
+})
 
 const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.count)))
 </script>
@@ -94,12 +138,17 @@ const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.co
     <header class="flex items-baseline justify-between gap-3">
       <h1 class="page-title text-[27px] md:text-[32px]">复习</h1>
       <span class="num text-[12px] text-ink-50 md:text-[13px]">
-        本设备（{{ deviceLabel }}）· 剩余 {{ remaining }} · 已复习 {{ done }}
+        本设备（{{ deviceLabel }}）· 剩余 {{ remaining }} · 已复习 {{ done
+        }}<template v-if="pending.length"> · {{ pending.length }} 条待同步</template>
       </span>
     </header>
     <div class="mt-2.5 h-0.5 bg-rule">
       <div class="h-0.5 bg-accent transition-[width]" :style="{ width: `${progress}%` }" />
     </div>
+
+    <p v-if="offline" class="mt-3 mb-0 text-[11px] text-ink-50">
+      当前无法连接服务器，正在用上次取到的卡片复习；记录会保存在本机，联网后自动同步。
+    </p>
 
     <p v-if="loading" class="mt-10 text-center text-[13px] text-ink-35">加载中…</p>
 

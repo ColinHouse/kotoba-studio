@@ -50,6 +50,7 @@ class ReviewLog(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     card_id: Mapped[int] = mapped_column(ForeignKey("cards.id", ondelete="CASCADE"), index=True)
+    client_id: Mapped[str | None] = mapped_column(String(36), unique=True, index=True)
     rating: Mapped[int] = mapped_column(Integer)
     mode: Mapped[str] = mapped_column(String(16), default="scheduled", index=True)
     reviewed_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
