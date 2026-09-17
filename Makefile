@@ -84,6 +84,12 @@ migrate: ## Create a migration from model changes (edit the result before commit
 package-windows: ## Build the Windows bundle (ARGS="--installer" adds the setup exe)
 	cd $(BACKEND) && uv run --extra packaging python ../packaging/build.py $(ARGS)
 
+docs: ## Serve the documentation site locally (http://localhost:5173)
+	cd docs && npm install --silent && npm run dev
+
+docs-build: ## Build the documentation site into docs/.vitepress/dist
+	cd docs && npm install --silent && npm run build
+
 clean: ## Remove build output and caches (never touches your data directory)
 	rm -rf $(FRONTEND)/dist $(FRONTEND)/dev-dist $(FRONTEND)/node_modules/.tmp
 	find $(BACKEND) -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null || true

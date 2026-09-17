@@ -13,6 +13,7 @@ DATA_DIR = PACKAGE_DIR / "data"
 CONTRACTIONS_FILE = DATA_DIR / "jp_contractions.json"
 HOMOGRAPH_TRAPS_FILE = DATA_DIR / "homograph_traps_zh.json"
 JMDICT_FIXTURE_FILE = DATA_DIR / "jmdict_fixture.json"
+TRAY_ICON_FILE = DATA_DIR / "tray.png"
 
 
 @lru_cache(maxsize=8)

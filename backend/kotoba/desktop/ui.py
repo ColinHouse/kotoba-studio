@@ -150,13 +150,19 @@ def _open_data_dir(*_args: Any) -> None:
 
 
 def _icon_image() -> Any:
-    """A paper card with an ink stroke: legible at 16px, no font dependency."""
+    """The tray icon: the same mascot the installer, favicon and README use.
+
+    It ships as package data (``kotoba/data/tray.png``) rather than being drawn
+    here, so there is exactly one icon to change. The fallback only fires if a
+    build dropped that file — a plain square beats a tray that will not start.
+    """
     from PIL import Image, ImageDraw
 
-    image = Image.new("RGBA", (64, 64), (243, 242, 242, 255))
-    draw = ImageDraw.Draw(image)
-    draw.rectangle((6, 6, 57, 57), outline=(32, 31, 29, 255), width=3)
-    draw.line((18, 22, 46, 22), fill=(32, 31, 29, 255), width=4)
-    draw.line((18, 32, 46, 32), fill=(32, 31, 29, 255), width=4)
-    draw.line((32, 22, 32, 46), fill=(182, 130, 53, 255), width=4)
+    from kotoba.core.resources import TRAY_ICON_FILE
+
+    if TRAY_ICON_FILE.exists():
+        return Image.open(TRAY_ICON_FILE).convert("RGBA")
+
+    image = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    ImageDraw.Draw(image).rounded_rectangle((4, 4, 59, 59), radius=12, fill=(182, 130, 53, 255))
     return image
