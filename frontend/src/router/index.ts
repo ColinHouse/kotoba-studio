@@ -8,6 +8,7 @@ export const router = createRouter({
     { path: '/capture', name: 'capture', component: () => import('@/views/CaptureView.vue') },
     { path: '/inbox', name: 'inbox', component: () => import('@/views/InboxView.vue') },
     { path: '/review', name: 'review', component: () => import('@/views/ReviewView.vue') },
+    { path: '/stats', name: 'stats', component: () => import('@/views/StatsView.vue') },
     {
       path: '/quiz/:sessionId',
       name: 'quiz',

@@ -39,6 +39,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - 学习：汉字进度网格。导入 KANJIDIC2（EDRDG，CC BY-SA 4.0，运行时从 EDRDG 下载、不随仓库分发）
   后，常用汉字按掌握度用墨色深浅排布，点字列出含它的词；作品页可看超出常用汉字表的字及出现次数。
 - Classical 设计语言：纸墨金三层、墨色编码学习状态、中日双字体、明暗两套主题。
+- 学习：统计页（近 90 天每日复习量与正确率、未来 30 天到期预测、按作品建卡与掌握数、真实保留率 vs 目标保留率、连续复习天数）；纯 SQL 聚合，图表使用手画 SVG，数据不足 14 天不外推趋势线。
 
 ### Notes
 

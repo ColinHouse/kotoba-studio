@@ -228,3 +228,40 @@ export interface SessionSummary {
   cards_created: number
   quiz: { answered: number; correct: number }
 }
+
+export interface DailyReviewStat {
+  date: string
+  count: number
+  correct: number
+  accuracy: number | null
+}
+
+export interface ForecastStat {
+  date: string
+  count: number
+}
+
+export interface SourceStat {
+  source_id: number
+  title: string
+  cards_count: number
+  mastered_count: number
+}
+
+export interface StudyStatsSummary {
+  total_cards: number
+  mastered_cards: number
+  total_reviews: number
+  real_retention: number | null
+  target_retention: number
+  streak_days: number
+  days_active: number
+  has_enough_history: boolean
+}
+
+export interface StudyStats {
+  summary: StudyStatsSummary
+  daily_reviews_90d: DailyReviewStat[]
+  forecast_30d: ForecastStat[]
+  sources: SourceStat[]
+}
