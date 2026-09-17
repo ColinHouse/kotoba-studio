@@ -80,6 +80,10 @@ class Paths:
         return self.media_dir / "audio"
 
     @property
+    def manga_dir(self) -> Path:
+        return self.media_dir / "manga"
+
+    @property
     def dicts_dir(self) -> Path:
         return self.data_dir / "dicts"
 
@@ -97,6 +101,7 @@ class Paths:
             self.media_dir,
             self.screens_dir,
             self.audio_dir,
+            self.manga_dir,
             self.dicts_dir,
             self.backups_dir,
             self.exports_dir,

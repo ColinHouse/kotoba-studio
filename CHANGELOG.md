@@ -6,6 +6,11 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Added
+
+- 采集：mokuro 导入也接受整卷 zip（含页图），页图按自然文件名顺序存进媒体目录并挂到每一行上；
+  只有 `.mokuro` 时仍按纯文本导入。
+
 ## [0.1.0-beta.1] - 2026-09-17
 
 第一个公开版本。核心流程已经成型、可以每天用；但只在 Windows 11 上打过包，
