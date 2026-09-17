@@ -104,7 +104,7 @@ class OptimizeJob:
                 self.state, self.message = "done", "优化完成"
             except ApiError as exc:
                 self.state, self.message = "error", exc.message
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001 - the optimizer pulls torch; it can fail in ways we cannot enumerate
                 self.state, self.message = "error", str(exc)
             finally:
                 db.close()

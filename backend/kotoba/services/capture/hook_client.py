@@ -95,11 +95,11 @@ class HookClient:
                         self.last_text_at = utcnow()
                         try:
                             self._on_text(raw)
-                        except Exception:  # noqa: BLE001
+                        except Exception:  # noqa: BLE001 - one bad line must not end the reconnect loop
                             log.debug("hook message dropped", exc_info=True)
             except asyncio.CancelledError:
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001 - any socket or protocol error just means reconnect
                 self.error = f"{type(exc).__name__}: {exc}"
                 log.debug("hook client %s failed: %s", self.url, exc)
             finally:

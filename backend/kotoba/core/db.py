@@ -26,7 +26,7 @@ def make_engine(db_path: Path) -> Engine:
     )
 
     @event.listens_for(engine, "connect")
-    def _set_pragmas(dbapi_conn, _record):  # noqa: ANN001
+    def _set_pragmas(dbapi_conn, _record):
         cur = dbapi_conn.cursor()
         cur.execute("PRAGMA journal_mode=WAL")
         cur.execute("PRAGMA foreign_keys=ON")

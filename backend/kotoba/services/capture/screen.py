@@ -39,7 +39,7 @@ def _mss():
         raise ApiError("capture_unavailable", "mss 未安装", 503) from exc
     try:
         return mss.MSS()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001 - mss raises X11/Wayland/no-display errors of every shape
         raise ApiError("capture_failed", f"无法访问屏幕: {exc}", 503) from exc
 
 
@@ -83,7 +83,7 @@ def grab(region: Region) -> Grab:
         }
         try:
             shot = sct.grab(box)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - a stale region or a display that changed under us
             raise ApiError(
                 "capture_failed",
                 f"截屏失败: {exc}（macOS 请在 系统设置 → 隐私与安全性 → 屏幕录制 中授权）",

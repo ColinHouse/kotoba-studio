@@ -75,7 +75,7 @@ class WindowsOcrProvider:
         try:
             image = _fit_within(image, _max_image_dimension())
             result = winocr.recognize_pil_sync(image, OCR_LANG)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - a broken WinRT projection is 'unavailable'
             raise ApiError("ocr_failed", f"Windows OCR 失败: {exc}. {INSTALL_HINT}") from exc
         width, height = image.size
         blocks: list[OcrBlock] = []

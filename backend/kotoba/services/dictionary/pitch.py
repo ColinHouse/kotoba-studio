@@ -210,7 +210,7 @@ class PitchInstallJob:
                 self.state, self.message = "importing", "正在导入音高数据…"
                 self.done = self.total = import_kanjium(db, path.read_text(encoding="utf-8"))
                 self.state, self.message = "done", "音高数据已安装"
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001 - report through state; the thread must reach its finally
                 db.rollback()
                 self.state, self.message = "error", str(exc)
             finally:

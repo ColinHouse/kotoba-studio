@@ -64,7 +64,7 @@ def test_enrichment_is_cached_until_the_line_changes(client, db, monkeypatch):
     calls: list[int] = []
     real = analysis_service.analyze_line
 
-    def counting(db_session, line, force=False):  # noqa: ANN001
+    def counting(db_session, line, force=False):
         calls.append(line.id)
         return real(db_session, line, force=force)
 
