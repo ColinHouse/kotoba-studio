@@ -6,13 +6,25 @@ import pluginVue from 'eslint-plugin-vue'
 import { globalIgnores } from 'eslint/config'
 
 export default defineConfigWithVueTs(
-  globalIgnores(['dist/**', 'dev-dist/**', 'node_modules/**', 'coverage/**']),
+  globalIgnores([
+    'dist/**',
+    'dev-dist/**',
+    'node_modules/**',
+    'coverage/**',
+    'test-results/**',
+    'playwright-report/**',
+  ]),
   js.configs.recommended,
   pluginVue.configs['flat/recommended'],
   vueTsConfigs.recommended,
   {
     files: ['src/**/*.test.ts'],
     ...pluginVitest.configs.recommended,
+  },
+  {
+    name: 'kotoba/node-scripts',
+    files: ['e2e/**/*.mjs'],
+    languageOptions: { globals: { process: 'readonly' } },
   },
   {
     name: 'kotoba/rules',

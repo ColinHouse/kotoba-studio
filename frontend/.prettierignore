@@ -1,5 +1,8 @@
-dist
-dev-dist
-node_modules
-coverage
+# A .prettierignore switches Prettier off .gitignore, so the build output and
+# the lock file that used to be skipped through it have to be named here.
+dist/
+dev-dist/
+node_modules/
+test-results/
+playwright-report/
 package-lock.json
