@@ -91,6 +91,29 @@ jobs:
           done < <(git rev-list origin/${{ github.base_ref }}..HEAD)
           exit $bad
 
+      # The pre-commit hook guards each human's commit; this guards the merge.
+      # Bypass is a label a human applies, not a magic word in a commit message:
+      # labels are visible on the PR and auditable after the fact.
+      - name: Protocol documents need a human
+        if: github.event_name == 'pull_request'
+        env:
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          git fetch --quiet origin ${{ github.base_ref }}
+          changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E \
+            '^LICENSE$|^NOTICE\.md$|^SECURITY\.md$|^docs/adr/.*\.md$|^AGENTS\.md$' || true)
+          if [ -n "$changed" ]; then
+            case ",$LABELS," in
+              *,protected-docs-reviewed,*)
+                echo "Protocol documents changed and a human added protected-docs-reviewed:"
+                echo "$changed" ;;
+              *)
+                echo "::error::these protocol documents changed:"; echo "$changed"
+                echo "A human must add the protected-docs-reviewed label, or revert them."
+                exit 1 ;;
+            esac
+          fi
+
   backend:
     name: backend (${{ matrix.os }})
     runs-on: ${{ matrix.os }}

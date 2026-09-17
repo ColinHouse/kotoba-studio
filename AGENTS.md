@@ -79,7 +79,11 @@ Committing without being asked each time is fine. Doing the following is not.
   a contributor using a different tool is held to exactly the same rules.
 - **Never touch the user's data directory.** No deleting, migrating or "cleaning" anything under
   `KOTOBA_DATA_DIR`. Tests use a temporary directory; use it.
-- **Never change the licence, `NOTICE.md`, or the invariants in §5.**
+- **Never change the licence, `NOTICE.md`, or the invariants in §5.** This is enforced, not
+  remembered: the pre-commit hook blocks `LICENSE`, `NOTICE.md`, `SECURITY.md`, `docs/adr/*.md`
+  and `AGENTS.md` unless that commit sets `KOTOBA_ALLOW_PROTECTED_DOCS=1` (never `--no-verify`,
+  which drops every guard), and CI fails a pull request touching them until a human applies the
+  `protected-docs-reviewed` label. The label is the record; there is no commit-message keyword.
 - **Never upgrade or add dependencies as a side effect** of an unrelated change. A dependency
   change is its own commit with its own reason.
 - **Never reformat files you did not otherwise need to change.** A formatting-only commit is
