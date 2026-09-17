@@ -70,6 +70,3 @@ class InstallJob:
 
 
 install_job = InstallJob()
-
-
-install_job = InstallJob()
