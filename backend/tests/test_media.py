@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 import pytest
 
+from kotoba.api.capture import condensed
 from kotoba.core.errors import ApiError
-from kotoba.models import Source
+from kotoba.models import CaptureSession, Line, Source
 from kotoba.services.capture import media
 from kotoba.services.text.subtitles import Cue
 
@@ -180,3 +182,133 @@ def test_import_rejects_a_video_outside_the_allowed_dirs(client, db, tmp_path, m
     )
     assert res.status_code == 400
     assert res.json()["error"]["code"] == "video_not_allowed"
+
+
+def _timed_source(db, spans: list[tuple[int, int]]) -> Source:
+    source = Source(title="episode", kind="anime")
+    db.add(source)
+    db.commit()
+    session = CaptureSession(source_id=source.id, mode="import")
+    db.add(session)
+    db.commit()
+    for position, (start, end) in enumerate(spans, start=1):
+        db.add(
+            Line(
+                source_id=source.id,
+                session_id=session.id,
+                text=f"line {position}",
+                text_hash=f"hash-{position}",
+                origin="subtitle",
+                start_ms=start,
+                end_ms=end,
+                ord=position,
+            )
+        )
+    # one line without a timeline: it must be skipped, not spoil the build
+    db.add(
+        Line(
+            source_id=source.id,
+            session_id=session.id,
+            text="no timeline",
+            text_hash="hash-none",
+            origin="manual",
+        )
+    )
+    db.commit()
+    return source
+
+
+def _wait_done(client, source_id: int, timeout: float = 10.0) -> dict:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        snapshot = client.get(f"/api/sources/{source_id}/condensed").json()
+        if snapshot["state"] in ("done", "error"):
+            return snapshot
+        time.sleep(0.05)
+    raise AssertionError("condensed job did not finish")
+
+
+def test_merge_spans_joins_cues_closer_than_the_threshold():
+    assert media.merge_spans([]) == []
+    # 400ms apart: one segment, no click in the middle
+    assert media.merge_spans([media.Span(0, 1000), media.Span(1400, 2000)]) == [media.Span(0, 2000)]
+    # exactly at the threshold stays two segments (the gap means something)
+    exact = [media.Span(0, 1000), media.Span(1500, 2000)]
+    assert media.merge_spans(exact) == exact
+    assert len(media.merge_spans([media.Span(0, 1000), media.Span(1600, 2000)])) == 2
+    # overlaps merge and extend
+    assert media.merge_spans([media.Span(0, 2000), media.Span(1500, 3000)]) == [media.Span(0, 3000)]
+    # an episode of fragments becomes one segment
+    fragments = [media.Span(i * 300, i * 300 + 250) for i in range(300)]
+    assert len(media.merge_spans(fragments)) == 1
+
+
+def test_condense_puts_silence_between_segments(tmp_path, monkeypatch):
+    monkeypatch.setattr(media, "ffmpeg_path", lambda: "ffmpeg")
+    lists: list[str] = []
+
+    def runner(args) -> None:
+        if "concat" in args:
+            lists.append(Path(args[args.index("-i") + 1]).read_text(encoding="utf-8"))
+        Path(args[-1]).write_bytes(b"x")
+
+    spans = [media.Span(0, 3000), media.Span(4000, 6000)]  # gap 1000 > 500
+    report = media.condense(Path("in.mp4"), spans, tmp_path, "condensed/1.opus", runner=runner)
+
+    assert (report.segments, report.lines_used) == (2, 2)
+    assert (tmp_path / "condensed/1.opus").exists()
+    entries = lists[0].strip().splitlines()
+    assert len(entries) == 3
+    assert entries[0].endswith("part-00001.opus'")
+    assert entries[1].endswith("silence.opus'")
+    assert entries[2].endswith("part-00002.opus'")
+
+
+def test_condense_without_ffmpeg_says_so(tmp_path, monkeypatch):
+    monkeypatch.setattr(media, "ffmpeg_path", lambda: None)
+    with pytest.raises(ApiError) as exc:
+        media.condense(Path("in.mp4"), [media.Span(0, 1000)], tmp_path, "condensed/1.opus")
+    assert exc.value.code == "ffmpeg_unavailable"
+
+
+def test_condensed_job_builds_and_serves_the_track(client, db, tmp_path, monkeypatch):
+    video = _video_in(tmp_path)
+    client.put("/api/settings", json={"video_dirs": [str(video.parent)]})
+    monkeypatch.setattr(media, "ffmpeg_path", lambda: "ffmpeg")
+    monkeypatch.setattr(media, "run_ffmpeg", lambda args: Path(args[-1]).write_bytes(b"x"))
+    monkeypatch.setattr(condensed, "condense_job", condensed.CondenseJob())
+    source = _timed_source(db, [(0, 3000), (3400, 6000)])
+
+    res = client.post(
+        f"/api/sources/{source.id}/condensed",
+        json={"video_path": str(video), "gap_ms": 500, "silence_ms": 200},
+    )
+    assert res.status_code == 202
+    snapshot = _wait_done(client, source.id)
+    assert snapshot["state"] == "done", snapshot
+    assert snapshot["lines_used"] == 2  # the untimed line was skipped
+    assert snapshot["segments"] == 1  # 400ms gap merged
+    assert snapshot["output"] == f"condensed/{source.id}.opus"
+    assert client.get(f"/media/{snapshot['output']}").status_code == 200
+
+
+def test_condensed_job_reports_a_source_without_a_timeline(client, db, tmp_path, monkeypatch):
+    video = _video_in(tmp_path)
+    client.put("/api/settings", json={"video_dirs": [str(video.parent)]})
+    monkeypatch.setattr(media, "ffmpeg_path", lambda: "ffmpeg")
+    monkeypatch.setattr(condensed, "condense_job", condensed.CondenseJob())
+    source = _source(db)
+
+    res = client.post(f"/api/sources/{source.id}/condensed", json={"video_path": str(video)})
+    assert res.status_code == 202
+    snapshot = _wait_done(client, source.id)
+    assert snapshot["state"] == "error"
+    assert "时间轴" in snapshot["message"]
+
+
+def test_condensed_needs_ffmpeg(client, db, monkeypatch):
+    source = _source(db)
+    monkeypatch.setattr(media, "ffmpeg_available", lambda: False)
+    res = client.post(f"/api/sources/{source.id}/condensed", json={"video_path": "D:/a.mp4"})
+    assert res.status_code == 503
+    assert res.json()["error"]["code"] == "ffmpeg_unavailable"
