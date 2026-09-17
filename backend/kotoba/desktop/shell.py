@@ -8,6 +8,7 @@ There is no child process to orphan.
 
 from __future__ import annotations
 
+import os
 import socket
 import sys
 import threading
@@ -32,6 +33,13 @@ def find_port(preferred: int, host: str = DEFAULT_HOST, attempts: int = PORT_ATT
     """First bindable port at or after `preferred`, so a second launch still works."""
     for port in range(preferred, min(preferred + attempts, LAST_PORT + 1)):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            if os.name != "nt":
+                # On POSIX a port whose last connection is in TIME_WAIT refuses a
+                # plain bind; uvicorn's own listener sets SO_REUSEADDR, so the probe
+                # must too or it reports ports the server could actually use as busy.
+                # Windows is the opposite: SO_REUSEADDR there lets a probe bind over
+                # a live listener, so it is deliberately left off.
+                probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 probe.bind((host, port))
             except OSError:
