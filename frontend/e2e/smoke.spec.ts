@@ -48,9 +48,12 @@ test('capture to review moves the card due date', async ({ page, request }) => {
     })
     .toBe(2)
 
-  // Review on this device: reveal, rate "记得" with the keyboard.
+  // Review on this device, keyboard only — no click anywhere. The wait is for
+  // the card to render; Space reveals, 3 rates; focus visibility comes from the
+  // global :focus-visible rule.
   await page.goto('/review')
-  await page.getByRole('button', { name: /显示答案/ }).click()
+  await expect(page.getByRole('button', { name: /显示答案/ })).toBeVisible()
+  await page.keyboard.press('Space')
   await page.keyboard.press('3')
 
   // The answer went through FSRS: exactly the rated new card now has a due date.
