@@ -417,7 +417,7 @@ input[type='range'] {
 
 /* ── 分词词块：墨色浓淡 + 线型，不用颜色分类 ─────────────────────────── */
 @utility tok {
-  font-weight: 300;
+  font-weight: 400;
   color: var(--ink-35);
   padding: 1px 2px;
   border-radius: var(--radius-chip);
@@ -444,7 +444,7 @@ input[type='range'] {
 }
 .tok-known {
   color: var(--ink-50);
-  font-weight: 300;
+  font-weight: 400;
   cursor: pointer;
 }
 .tok-ignored {
