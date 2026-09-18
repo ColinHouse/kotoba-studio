@@ -102,22 +102,97 @@ def test_find_window_matches_process_case_insensitively_and_prefers_title():
 
 def test_relative_and_absolute_regions_round_trip():
     window = window_info()
-    relative = windows.default_relative_region(*window.client[2:])
-    assert relative["height"] > 0 and relative["top"] > 0
+    absolute = Region(
+        left=window.client[0] + 120,
+        top=window.client[1] + 80,
+        width=400,
+        height=160,
+        display=window.display,
+    )
 
-    absolute = windows.region_for(window, relative)
-    assert absolute.left == window.client[0] + relative["left"]
-    assert absolute.top == window.client[1] + relative["top"]
-    assert absolute.display == window.display
-    assert windows.relative_from_region(absolute, window) == relative
+    relative = windows.relative_from_region(absolute, window)
+    assert relative is not None
+    assert relative["unit"] == "ratio"
+    assert relative["left"] == round(120 / window.client[2], 4)
+
+    back = windows.region_for(window, relative)
+    assert back is not None
+    assert (back.left, back.top, back.width, back.height) == (
+        absolute.left,
+        absolute.top,
+        absolute.width,
+        absolute.height,
+    )
+    assert back.display == window.display
+
+
+def test_default_region_is_a_fraction_of_the_client_area():
+    window = window_info()
+    default = windows.default_relative_region()
+    region = windows.region_for(window, default)
+    assert region is not None
+    assert region.left == window.client[0] + round(default["left"] * window.client[2])
+    assert region.width == round(default["width"] * window.client[2])
+
+
+def test_resizing_the_window_keeps_the_same_relative_picture():
+    """#124: a bound region is a fraction of the client area, so scaling the
+    window scales the region instead of leaving it at the old pixels."""
+    before = window_info()
+    after = window_info(
+        left=100,
+        top=50,
+        width=2560,
+        height=1440,
+        client_width=2528,
+        client_height=1360,
+    )
+    absolute = Region(
+        left=before.client[0] + 158,
+        top=before.client[1] + 136,
+        width=632,
+        height=340,
+        display=before.display,
+    )
+    relative = windows.relative_from_region(absolute, before)
+    assert relative is not None
+
+    resized = windows.region_for(after, relative)
+    assert resized is not None
+    assert resized.left - after.client[0] == round(relative["left"] * after.client[2])
+    assert resized.top - after.client[1] == round(relative["top"] * after.client[3])
+    assert resized.width == round(relative["width"] * after.client[2])
+    assert resized.height == round(relative["height"] * after.client[3])
+    assert (resized.width, resized.height) != (absolute.width, absolute.height)
+
+
+def test_legacy_pixel_bindings_still_read_as_pixels():
+    """Bindings stored before #124 carry no unit and must keep working."""
+    window = window_info()
+    region = windows.region_for(window, {"left": 10, "top": 20, "width": 300, "height": 100})
+    assert region is not None
+    assert (region.left, region.top, region.width, region.height) == (
+        window.client[0] + 10,
+        window.client[1] + 20,
+        300,
+        100,
+    )
 
 
 def test_region_for_clamps_to_the_client_area():
     window = window_info()
-    region = windows.region_for(window, {"left": 1200, "top": 600, "width": 400, "height": 400})
-    assert region.width == window.client[2] - 1200
-    assert region.height == window.client[3] - 600
-    assert windows.region_for(window, {"left": 5000, "top": 0, "width": 10, "height": 10}) is None
+    region = windows.region_for(
+        window, {"unit": "ratio", "left": 0.9, "top": 0.9, "width": 0.4, "height": 0.4}
+    )
+    assert region is not None
+    assert region.width == window.client[2] - round(0.9 * window.client[2])
+    assert region.height == window.client[3] - round(0.9 * window.client[3])
+    assert (
+        windows.region_for(
+            window, {"unit": "ratio", "left": 1.2, "top": 0.2, "width": 0.1, "height": 0.1}
+        )
+        is None
+    )
 
 
 def test_resolve_region_prefers_the_live_window(db, client):
@@ -237,7 +312,14 @@ def test_source_window_binding_round_trip(capture_client, monkeypatch):
     region = {"left": 300, "top": 400, "width": 500, "height": 120}
     saved = capture_client.patch(f"/api/sources/{src['id']}", json={"region": region}).json()
     assert saved["region"] == region
-    assert saved["window"]["region"] == {"left": 192, "top": 322, "width": 500, "height": 120}
+    client = window.client
+    assert saved["window"]["region"] == {
+        "unit": "ratio",
+        "left": round((300 - client[0]) / client[2], 4),
+        "top": round((400 - client[1]) / client[3], 4),
+        "width": round(500 / client[2], 4),
+        "height": round(120 / client[3], 4),
+    }
 
     cleared = capture_client.patch(f"/api/sources/{src['id']}", json={"window": None}).json()
     assert cleared["window"] is None and cleared["region"] == region
@@ -268,9 +350,13 @@ def test_watch_start_resolves_the_bound_window_each_cycle(capture_client, monkey
         resolved = watcher._region_provider()
         stored = capture_client.get(f"/api/sources/{src['id']}").json()
         relative = stored["window"]["region"]
-        assert resolved.left == window.client[0] + relative["left"]
-        assert resolved.top == window.client[1] + relative["top"]
-        assert (resolved.width, resolved.height) == (relative["width"], relative["height"])
+        assert relative["unit"] == "ratio"
+        assert resolved.left == window.client[0] + round(relative["left"] * window.client[2])
+        assert resolved.top == window.client[1] + round(relative["top"] * window.client[3])
+        assert (resolved.width, resolved.height) == (
+            round(relative["width"] * window.client[2]),
+            round(relative["height"] * window.client[3]),
+        )
 
         # The watcher must read the game's own pixels, not whatever covers it.
         window_png = io.BytesIO()

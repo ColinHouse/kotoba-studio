@@ -63,11 +63,22 @@ async function loadWindows() {
 
 /** The absolute region the backend will use for this window binding. */
 function windowRegion(win: GameWindow, relative: NonNullable<WindowBinding['region']>): Region {
+  const [clientLeft, clientTop, clientWidth, clientHeight] = win.client
+  if (relative.unit !== 'ratio') {
+    // #124 之前存的绑定是像素偏移：照旧读，别把老用户的区域弄乱。
+    return {
+      left: clientLeft + relative.left,
+      top: clientTop + relative.top,
+      width: relative.width,
+      height: relative.height,
+      display: win.display,
+    }
+  }
   return {
-    left: win.client[0] + relative.left,
-    top: win.client[1] + relative.top,
-    width: relative.width,
-    height: relative.height,
+    left: clientLeft + Math.round(relative.left * clientWidth),
+    top: clientTop + Math.round(relative.top * clientHeight),
+    width: Math.max(1, Math.round(relative.width * clientWidth)),
+    height: Math.max(1, Math.round(relative.height * clientHeight)),
     display: win.display,
   }
 }

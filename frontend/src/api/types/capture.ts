@@ -14,7 +14,14 @@ export interface Region {
 export interface WindowBinding {
   process: string
   title: string | null
-  region: { left: number; top: number; width: number; height: number } | null
+  /** 客户区比例（0–1）；`unit` 缺失表示 #124 之前存的像素偏移，读取端两者都认。 */
+  region: {
+    unit?: 'ratio'
+    left: number
+    top: number
+    width: number
+    height: number
+  } | null
 }
 
 /** One visible top-level window, as `GET /api/capture/windows` reports it. */
