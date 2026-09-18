@@ -54,7 +54,7 @@ onMounted(async () => {
       ),
       api.get<{ cards: unknown[] }>(`/api/reviews/queue?device_kind=${device.kind}&limit=200`),
       api.get<DictStatus>('/api/dict/status'),
-      api.get<{ connected: boolean }[]>('/api/hooks'),
+      api.get<{ connected: boolean }[]>('/api/capture/hooks'),
     ])
     stats.value = s
     inbox.value = i
