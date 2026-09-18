@@ -20,6 +20,7 @@ from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.services import settings_store
 from kotoba.services.capture import media
+from kotoba.services.capture.gate import gate
 
 router = APIRouter(prefix="/sources", tags=["capture"])
 
@@ -70,6 +71,9 @@ class CondenseJob:
     ) -> bool:
         if self._thread and self._thread.is_alive():
             return False
+        # Claimed here, on the request thread, so the caller gets a real error rather
+        # than a job that quietly races a restore for the media directory.
+        gate.begin_long_write("condensed-audio")
         self.state, self.message = "running", "正在收集台词…"
         self.done = self.total = 0
         self.source_id, self.output = source_id, None
@@ -104,11 +108,15 @@ class CondenseJob:
                 self.state, self.message = "error", str(exc)
             finally:
                 db.close()
+                gate.end_long_write("condensed-audio")
 
+        # If the thread never starts, the claim must not outlive this call: a leaked
+        # claim blocks every future restore until the application is restarted.
         try:
             self._thread = threading.Thread(target=run, name="condensed-audio", daemon=True)
             self._thread.start()
         except BaseException:
+            gate.end_long_write("condensed-audio")
             self.state, self.message = "error", "无法启动后台任务"
             raise
         return True
