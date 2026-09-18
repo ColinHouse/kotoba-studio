@@ -20,10 +20,12 @@ from kotoba.core.db import get_db
 from kotoba.core.errors import ApiError
 from kotoba.services import settings_store
 from kotoba.services.capture import media
+from kotoba.services.capture.gate import gate
 
 router = APIRouter(prefix="/sources", tags=["capture"])
 
 CONDENSED_SUBDIR = "condensed"
+LONG_WRITE = "condensed-audio"
 
 
 class CondensedIn(BaseModel):
@@ -70,6 +72,9 @@ class CondenseJob:
     ) -> bool:
         if self._thread and self._thread.is_alive():
             return False
+        # 和另外四个长作业一样在**请求线程**登记闸门：恢复备份期间直接拿到
+        # restoring，而不是留一个跑到一半、正在写 media_dir 的线程。
+        gate.begin_long_write(LONG_WRITE)
         self.state, self.message = "running", "正在收集台词…"
         self.done = self.total = 0
         self.source_id, self.output = source_id, None
@@ -104,11 +109,14 @@ class CondenseJob:
                 self.state, self.message = "error", str(exc)
             finally:
                 db.close()
+                gate.end_long_write(LONG_WRITE)
 
         try:
             self._thread = threading.Thread(target=run, name="condensed-audio", daemon=True)
             self._thread.start()
         except BaseException:
+            # 线程起不来时闸门必须放开，否则之后每一次恢复备份都会被拒。
+            gate.end_long_write(LONG_WRITE)
             self.state, self.message = "error", "无法启动后台任务"
             raise
         return True
