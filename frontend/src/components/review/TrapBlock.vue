@@ -13,17 +13,17 @@ defineProps<{ trap: Trap; framed?: boolean }>()
       :reading="trap.reading"
       class="block text-[24px] leading-[1.4] text-accent-800 md:text-[26px]"
     />
-    <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-1 text-[14px] leading-relaxed">
-      <dt class="pt-1 text-[11px] tracking-[0.1em] text-gold">中文</dt>
+    <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-1 type-body leading-relaxed">
+      <dt class="pt-1 type-micro tracking-[0.1em] text-gold">中文</dt>
       <dd class="m-0 border-b border-gold/25 pb-[5px] text-accent-800">
         「{{ trap.headword }}」＝ {{ trap.zh_reading_meaning }}
       </dd>
-      <dt class="pt-1 text-[11px] tracking-[0.1em] text-gold">日语</dt>
+      <dt class="pt-1 type-micro tracking-[0.1em] text-gold">日语</dt>
       <dd class="m-0 text-accent-800">
         「{{ trap.headword }}」＝ <b class="font-bold">{{ trap.ja_meaning }}</b>
       </dd>
     </dl>
-    <p v-if="trap.note" class="mt-2 mb-0 text-[12px] text-gold">{{ trap.note }}</p>
+    <p v-if="trap.note" class="mt-2 mb-0 type-meta text-gold">{{ trap.note }}</p>
   </div>
 </template>
 

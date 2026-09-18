@@ -132,7 +132,7 @@ const box = computed(() => {
         style="background: color-mix(in srgb, var(--paper) 90%, transparent)"
       >
         <p class="m-0 font-head text-[26px] text-gold">拖出对话框区域</p>
-        <p class="mt-1 mb-0 text-[12px] text-gold">每部作品只做一次，之后自动复用</p>
+        <p class="mt-1 mb-0 type-meta text-gold">每部作品只做一次，之后自动复用</p>
       </div>
     </div>
   </div>

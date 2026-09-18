@@ -27,13 +27,11 @@ const confidence = computed(() =>
   <div :class="bare ? '' : 'border-t border-rule bg-surface px-6 pt-4 pb-[18px]'">
     <div class="mb-2.5 flex items-baseline justify-between">
       <span class="kicker text-ink-50">AI 语境解释</span>
-      <span v-if="confidence" class="num text-[11px] text-ink-35">{{ confidence }}</span>
+      <span v-if="confidence" class="num type-micro text-ink-35">{{ confidence }}</span>
     </div>
-    <dl
-      class="m-0 grid grid-cols-[62px_1fr] gap-x-3 gap-y-2 text-[13px] leading-[1.65] text-ink-70"
-    >
+    <dl class="m-0 grid grid-cols-[62px_1fr] gap-x-3 gap-y-2 type-note leading-[1.65] text-ink-70">
       <template v-for="row in rows" :key="row.key">
-        <dt class="text-right text-[11px] text-ink-35">{{ row.label }}</dt>
+        <dt class="text-right type-micro text-ink-35">{{ row.label }}</dt>
         <dd class="m-0">{{ explanation[row.key] }}</dd>
       </template>
     </dl>

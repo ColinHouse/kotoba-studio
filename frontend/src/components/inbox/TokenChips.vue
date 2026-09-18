@@ -143,7 +143,7 @@ function pick(c: Chip) {
 
     <div
       v-if="legend"
-      class="mt-4 flex flex-wrap items-center gap-x-[18px] gap-y-1.5 text-[11px] text-ink-50"
+      class="mt-4 flex flex-wrap items-center gap-x-[18px] gap-y-1.5 type-micro text-ink-50"
     >
       <span class="kicker">读法</span>
       <span

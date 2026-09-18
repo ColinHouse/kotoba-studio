@@ -103,7 +103,7 @@ const emptyHint = computed(() =>
     <header class="flex flex-wrap items-end justify-between gap-4 border-b border-divider pb-3.5">
       <div>
         <h1 class="page-title text-[27px] md:text-[32px]">收件箱</h1>
-        <p class="mt-0.5 mb-0 text-[13px] text-ink-50">
+        <p class="mt-0.5 mb-0 type-note text-ink-50">
           点句子 → 点不认识的词 → 选释义 → 确认建卡。整理放在会后，不打断剧情。 键盘：<kbd
             class="key"
             >j</kbd
@@ -115,7 +115,7 @@ const emptyHint = computed(() =>
           <span class="kicker">会话</span>
           <select
             v-model="inbox.sessionId.value"
-            class="num border-0 border-b border-divider bg-transparent pb-[3px] text-[13px] text-ink"
+            class="num border-0 border-b border-divider bg-transparent pb-[3px] type-note text-ink"
           >
             <option value="all">全部会话</option>
             <option v-for="s in inbox.sessions.value" :key="s.id" :value="s.id">
@@ -154,7 +154,7 @@ const emptyHint = computed(() =>
       </div>
     </header>
 
-    <div v-if="showHelp" class="framed mt-4 p-4 text-[13px] leading-[2.1]">
+    <div v-if="showHelp" class="framed mt-4 p-4 type-note leading-[2.1]">
       <div class="flex items-baseline justify-between gap-3">
         <p class="kicker m-0">键盘</p>
         <button class="btn-quiet" @click="showHelp = false">关闭</button>
@@ -184,7 +184,7 @@ const emptyHint = computed(() =>
           :empty-hint="emptyHint"
           @select="selectLine"
         />
-        <div class="mt-4 flex items-baseline justify-between gap-3 text-[12px]">
+        <div class="mt-4 flex items-baseline justify-between gap-3 type-meta">
           <span class="text-ink-35">只有"抬起"的那一条是当前句子</span>
           <button
             v-if="inbox.status.value === 'inbox' && inbox.lines.value.length"
@@ -207,7 +207,7 @@ const emptyHint = computed(() =>
           ← 回到列表
         </button>
 
-        <p v-if="!inbox.selected.value" class="m-0 py-6 text-[13px] text-ink-35">
+        <p v-if="!inbox.selected.value" class="m-0 py-6 type-note text-ink-35">
           选择一句台词开始整理。
         </p>
 
@@ -271,7 +271,7 @@ const emptyHint = computed(() =>
           />
 
           <div v-if="lastResult" class="framed mt-[22px] px-5 py-4">
-            <p class="m-0 text-[13px]">
+            <p class="m-0 type-note">
               已记录
               <RouterLink
                 :to="`/terms/${lastResult.term.id}`"

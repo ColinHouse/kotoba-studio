@@ -54,11 +54,11 @@ watch(
         />
         <span class="min-w-0 flex-1">
           <span
-            class="jp block text-[15px] leading-[1.85] md:text-[16px]"
+            class="jp block type-body leading-[1.85] md:type-body"
             :class="selectedId === line.id ? 'text-ink' : 'text-ink-70'"
             >{{ line.text }}</span
           >
-          <span class="num mt-0.5 block text-[11px] text-ink-35">
+          <span class="num mt-0.5 block type-micro text-ink-35">
             {{ relTime(line.captured_at)
             }}<template v-if="line.encounter_count"> · {{ line.encounter_count }} 个词</template>
             <template v-if="line.status === 'kept'"> · 已确认</template>
@@ -74,7 +74,7 @@ watch(
       </button>
     </li>
   </TransitionGroup>
-  <p v-if="!lines.length" class="m-0 py-4 text-[13px] text-ink-35">{{ emptyHint }}</p>
+  <p v-if="!lines.length" class="m-0 py-4 type-note text-ink-35">{{ emptyHint }}</p>
 </template>
 
 <style scoped>

@@ -134,9 +134,38 @@ body {
 body {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.75;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── 字号档位 ──────────────────────────────────────────────────────────
+   组件引用档位，不再写死像素。中日文在小字号下笔画会糊（英文 11px 能读，
+   「議」不能），所以最小档从 12px 起步；手机比桌面大一档——离得更近，
+   看的也常是最小的那些字。 */
+.type-body {
+  font-size: 16px;
+  line-height: 1.75;
+}
+.type-note {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.type-meta {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.type-micro {
+  font-size: 12px;
+  line-height: 1.55;
+}
+@media (min-width: 768px) {
+  .type-note {
+    font-size: 13px;
+  }
+  .type-meta {
+    font-size: 12px;
+  }
 }
 
 /* 日语用明朝体：日文汉字字形与中文不同，这不是细节。 */
@@ -195,7 +224,7 @@ rt {
 
 /* ── 分区小标 ─────────────────────────────────────────────────────────── */
 @utility kicker {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-35);
@@ -217,7 +246,7 @@ rt {
   justify-content: center;
   gap: 6px;
   font-family: var(--font-head);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.2;
   padding: 8px 17px;
   border: 1px solid transparent;
@@ -240,7 +269,7 @@ rt {
 }
 @utility btn-quiet {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-50);
   border: 0;
   border-bottom: 1px solid var(--divider);
@@ -281,7 +310,7 @@ rt {
 @utility tag {
   display: inline-flex;
   align-items: center;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.02em;
   padding: 3px 10px;
   border-radius: 3px;
@@ -317,7 +346,7 @@ rt {
 }
 @utility seg-opt {
   padding: 7px 14px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-50);
   cursor: pointer;
   background: none;
@@ -344,7 +373,7 @@ rt {
 /* ── 表单 ─────────────────────────────────────────────────────────────── */
 @utility field-label {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 5px;
   color: var(--ink-70);
 }
@@ -353,7 +382,7 @@ rt {
   min-height: 36px;
   padding: 6px 10px;
   font: inherit;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink);
   caret-color: var(--accent);
   background: transparent;
@@ -516,11 +545,11 @@ input[type='range'] {
 @utility table-plain {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 15px;
 }
 .table-plain th {
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-50);

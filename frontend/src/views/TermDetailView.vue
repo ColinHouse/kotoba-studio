@@ -87,7 +87,7 @@ function sentenceParts(enc: Encounter) {
 
 <template>
   <div v-if="term">
-    <RouterLink to="/library" class="text-[12px] text-accent no-underline">← 词库</RouterLink>
+    <RouterLink to="/library" class="type-meta text-accent no-underline">← 词库</RouterLink>
 
     <header
       class="mt-4 flex flex-wrap items-start justify-between gap-6 border-b border-divider pb-5"
@@ -103,12 +103,12 @@ function sentenceParts(enc: Encounter) {
               .filter(Boolean)
               .join('；') || '还没有中文释义'
           }}</span>
-          <span v-if="term.pos" class="text-[12px] text-ink-35">{{ term.pos }}</span>
+          <span v-if="term.pos" class="type-meta text-ink-35">{{ term.pos }}</span>
         </div>
-        <p v-if="term.senses.some((s) => s.gloss_en)" class="mt-1.5 mb-0 text-[13px] text-ink-50">
+        <p v-if="term.senses.some((s) => s.gloss_en)" class="mt-1.5 mb-0 type-note text-ink-50">
           <template v-for="(s, i) in term.senses.filter((x) => x.gloss_en)" :key="s.id">
             <span v-if="i" class="text-ink-35">; </span>{{ s.gloss_en }}
-            <span class="text-[11px] text-ink-35">{{ originLabel(s.origin) }}</span>
+            <span class="type-micro text-ink-35">{{ originLabel(s.origin) }}</span>
           </template>
         </p>
       </div>
@@ -125,7 +125,7 @@ function sentenceParts(enc: Encounter) {
             {{ STATUS_LABEL[s] }}
           </button>
         </div>
-        <p class="num mt-2.5 mb-0 text-[11px] text-ink-35">
+        <p class="num mt-2.5 mb-0 type-micro text-ink-35">
           遇见 {{ term.encounter_count }} 次 · {{ term.source_count }} 部作品 ·
           {{ term.card_count }} 张卡
         </p>
@@ -139,7 +139,7 @@ function sentenceParts(enc: Encounter) {
     <section class="mt-[26px]">
       <div class="flex flex-wrap items-baseline gap-3">
         <h2 class="m-0 font-head text-[22px] font-normal">相遇史</h2>
-        <span v-if="term.encounters.length" class="text-[12px] text-ink-50">
+        <span v-if="term.encounters.length" class="type-meta text-ink-50">
           最早在 {{ dayLabel(term.encounters[0]!.captured_at) }}，最近是
           {{ dayLabel(term.encounters[term.encounters.length - 1]!.captured_at) }}
         </span>
@@ -171,7 +171,7 @@ function sentenceParts(enc: Encounter) {
                 }}</b
                 >{{ sentenceParts(enc).after }}
               </p>
-              <p v-if="enc.contraction_of" class="m-0 text-[12px] text-ink-35">
+              <p v-if="enc.contraction_of" class="m-0 type-meta text-ink-35">
                 缩约形「{{ enc.surface }}」← {{ enc.contraction_of }}
               </p>
               <ExplanationBlock
@@ -226,9 +226,7 @@ function sentenceParts(enc: Encounter) {
           </tr>
         </TransitionGroup>
       </table>
-      <p v-else class="m-0 text-[13px] text-ink-35">
-        还没有卡片。在收件箱确认这个词时勾选卡片类型。
-      </p>
+      <p v-else class="m-0 type-note text-ink-35">还没有卡片。在收件箱确认这个词时勾选卡片类型。</p>
     </section>
   </div>
 </template>
@@ -256,7 +254,7 @@ function sentenceParts(enc: Encounter) {
   padding-bottom: 26px;
 }
 .tl-date {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   color: var(--ink-50);
   margin-bottom: 6px;
