@@ -12,9 +12,9 @@
   --surface: #eae9e9;
   --paper: #fbfaf9;
   --ink: #201f1d;
-  --ink-70: #605d5d;
-  --ink-50: #7d7979;
-  --ink-35: #9b9797;
+  --ink-70: #555252;
+  --ink-50: #646060;
+  --ink-35: #706c6c;
   --divider: rgba(32, 31, 29, 0.16);
   --rule-2: rgba(32, 31, 29, 0.07);
   --accent: #b68235;
@@ -60,7 +60,7 @@
     --ink: #eae7e7;
     --ink-70: #bab6b6;
     --ink-50: #9b9797;
-    --ink-35: #7d7979;
+    --ink-35: #8f8b8b;
     --divider: rgba(234, 231, 231, 0.2);
     --rule-2: rgba(234, 231, 231, 0.09);
     --accent: #e1ad66;
@@ -83,7 +83,7 @@
   --ink: #eae7e7;
   --ink-70: #bab6b6;
   --ink-50: #9b9797;
-  --ink-35: #7d7979;
+  --ink-35: #8f8b8b;
   --divider: rgba(234, 231, 231, 0.2);
   --rule-2: rgba(234, 231, 231, 0.09);
   --accent: #e1ad66;
@@ -417,7 +417,7 @@ input[type='range'] {
 
 /* ── 分词词块：墨色浓淡 + 线型，不用颜色分类 ─────────────────────────── */
 @utility tok {
-  font-weight: 300;
+  font-weight: 400;
   color: var(--ink-35);
   padding: 1px 2px;
   border-radius: var(--radius-chip);
@@ -444,7 +444,7 @@ input[type='range'] {
 }
 .tok-known {
   color: var(--ink-50);
-  font-weight: 300;
+  font-weight: 400;
   cursor: pointer;
 }
 .tok-ignored {
@@ -454,7 +454,7 @@ input[type='range'] {
 }
 .tok-plain {
   color: var(--ink-35);
-  font-weight: 300;
+  font-weight: 400;
   cursor: default;
 }
 /* 框住＝这几个词算一个 */

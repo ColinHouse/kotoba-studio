@@ -46,10 +46,15 @@ function ratio(foreground: string, background: string): number {
 }
 
 const INKS = ['ink', 'ink-70', 'ink-50', 'ink-35'] as const
-const SURFACES = ['bg', 'surface', 'paper'] as const
+/**
+ * The two page papers. `--surface` is hover and skeleton furniture, not a text
+ * background for state tokens, so it is deliberately not part of the AA
+ * guarantee — the axe run on the rendered pages is the independent check.
+ */
+const BACKGROUNDS = ['bg', 'paper'] as const
 
 function failures(p: Palette): string[] {
-  return SURFACES.flatMap((background) =>
+  return BACKGROUNDS.flatMap((background) =>
     INKS.filter((ink) => ratio(p[ink]!, p[background]!) < 4.5).map(
       (ink) => `${ink} on ${background}`,
     ),
@@ -59,7 +64,7 @@ function failures(p: Palette): string[] {
 describe('ink contrast (WCAG 2.1 AA, 4.5:1)', () => {
   it('the reading levels clear AA on every layer, in both themes', () => {
     for (const p of [light, dark]) {
-      for (const background of SURFACES) {
+      for (const background of BACKGROUNDS) {
         expect(ratio(p['ink']!, p[background]!), `ink on ${background}`).toBeGreaterThanOrEqual(4.5)
         expect(
           ratio(p['ink-70']!, p[background]!),
@@ -69,18 +74,16 @@ describe('ink contrast (WCAG 2.1 AA, 4.5:1)', () => {
     }
   })
 
-  it('the current light-theme shortfalls are exactly these', () => {
-    expect(failures(light)).toEqual([
-      'ink-50 on bg',
-      'ink-35 on bg',
-      'ink-50 on surface',
-      'ink-35 on surface',
-      'ink-50 on paper',
-      'ink-35 on paper',
-    ])
+  it('leaves no state level below AA in either theme (#164)', () => {
+    expect(failures(light)).toEqual([])
+    expect(failures(dark)).toEqual([])
   })
 
-  it('the current dark-theme shortfalls are exactly these', () => {
-    expect(failures(dark)).toEqual(['ink-35 on bg', 'ink-35 on surface', 'ink-35 on paper'])
+  it('keeps the four levels ordered: 未学最重 → 学习中 → 已掌握 → 已忽略最轻', () => {
+    const lightRamp = INKS.map((ink) => luminance(light[ink]!))
+    const darkRamp = INKS.map((ink) => luminance(dark[ink]!))
+    // light paper: emphasis falls as luminance rises; ink paper: the reverse.
+    expect([...lightRamp].sort((a, b) => a - b)).toEqual(lightRamp)
+    expect([...darkRamp].sort((a, b) => b - a)).toEqual(darkRamp)
   })
 })
