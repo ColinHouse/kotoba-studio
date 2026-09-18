@@ -2,11 +2,15 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { api } from '@/api/client'
-import type { CardStats, Line, Session, Source } from '@/api/types'
+import type { CardStats, DictStatus, Line, Session, Source } from '@/api/types'
 import MemoryCalendar from '@/components/common/MemoryCalendar.vue'
+import SetupChecklist from '@/components/common/SetupChecklist.vue'
 import { useAppStore } from '@/stores/app'
 import { useDeviceStore } from '@/stores/device'
 import { relTime } from '@/utils/format'
+import { checklistVisible, setupProgress } from '@/utils/setup'
+
+const DISMISSED_KEY = 'kotoba.setup_dismissed'
 
 const app = useAppStore()
 const device = useDeviceStore()
@@ -18,13 +22,29 @@ const sources = ref<Source[]>([])
 const sessions = ref<Session[]>([])
 const forecast = ref<{ date: string; count: number }[]>([])
 const queueCount = ref<number | null>(null)
+const dictInstalled = ref(false)
+const hookConnected = ref(false)
+const setupDismissed = ref(readDismissed())
+
+function readDismissed(): boolean {
+  try {
+    return localStorage.getItem(DISMISSED_KEY) === '1'
+  } catch {
+    return false // private mode: show it; the button will just not persist
+  }
+}
 
 const days = computed(() => (device.kind === 'mobile' ? 7 : 14))
+
+const progress = computed(() =>
+  setupProgress(dictInstalled.value, sources.value, stats.value?.total ?? 0, hookConnected.value),
+)
+const showChecklist = computed(() => checklistVisible(progress.value, setupDismissed.value))
 
 onMounted(async () => {
   try {
     await device.ensureRegistered()
-    const [s, i, src, ses, fc, q] = await Promise.all([
+    const [s, i, src, ses, fc, q, dict, hooks] = await Promise.all([
       api.get<CardStats>('/api/cards/stats'),
       api.get<Line[]>('/api/lines?status=inbox&limit=200'),
       api.get<Source[]>('/api/sources'),
@@ -33,6 +53,8 @@ onMounted(async () => {
         `/api/reviews/forecast?days=${days.value}`,
       ),
       api.get<{ cards: unknown[] }>(`/api/reviews/queue?device_kind=${device.kind}&limit=200`),
+      api.get<DictStatus>('/api/dict/status'),
+      api.get<{ connected: boolean }[]>('/api/capture/hooks'),
     ])
     stats.value = s
     inbox.value = i
@@ -40,10 +62,21 @@ onMounted(async () => {
     sessions.value = ses
     forecast.value = fc.days
     queueCount.value = q.cards.length
+    dictInstalled.value = dict.installed
+    hookConnected.value = hooks.some((hook) => hook.connected)
   } catch (e) {
     app.fail(e)
   }
 })
+
+function dismissChecklist() {
+  setupDismissed.value = true
+  try {
+    localStorage.setItem(DISMISSED_KEY, '1')
+  } catch {
+    /* the in-memory flag already hid it for this visit */
+  }
+}
 
 const today = computed(() => {
   const d = new Date()
@@ -97,6 +130,13 @@ async function startSession(source: Source) {
         </p>
       </div>
     </header>
+
+    <SetupChecklist
+      v-if="showChecklist"
+      :progress="progress"
+      class="mt-5"
+      @dismiss="dismissChecklist"
+    />
 
     <section class="flex flex-wrap items-center gap-5 border-b border-rule py-[18px]">
       <Transition name="fade" mode="out-in">
