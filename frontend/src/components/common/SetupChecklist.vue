@@ -42,7 +42,7 @@ const STEPS = [
       >
         <span
           class="font-head type-body"
-          :class="progress[step.key] ? 'text-ink-35' : 'text-ink'"
+          :class="progress[step.key] ? 'text-ink-70' : 'text-ink'"
           >{{ step.label }}</span
         >
         <span class="tag tag-state" :class="progress[step.key] ? 'text-ink-35' : 'text-ink'">
@@ -54,7 +54,7 @@ const STEPS = [
           class="type-meta text-accent no-underline"
           >去处理 →</RouterLink
         >
-        <span class="w-full type-micro leading-[1.7] text-ink-35">{{ step.hint }}</span>
+        <span class="w-full type-micro leading-[1.7] text-ink-70">{{ step.hint }}</span>
       </li>
     </ul>
   </section>

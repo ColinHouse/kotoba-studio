@@ -108,7 +108,7 @@ async function remove(s: Source) {
   <div>
     <header class="border-b border-divider pb-3.5">
       <h1 class="page-title text-[27px] md:text-[32px]">作品</h1>
-      <p class="mt-0.5 mb-0 type-note text-ink-50">
+      <p class="mt-0.5 mb-0 type-note text-ink-70">
         词卡按作品归档，并记录同一个词在不同作品里的出现。
       </p>
     </header>
@@ -143,11 +143,11 @@ async function remove(s: Source) {
           <div class="min-w-0">
             <p class="m-0 font-head text-[19px]">
               {{ s.title }}
-              <span v-if="s.title_ja" class="jp type-note font-normal text-ink-35">{{
+              <span v-if="s.title_ja" class="jp type-note font-normal text-ink-70">{{
                 s.title_ja
               }}</span>
             </p>
-            <p class="num m-0 type-micro text-ink-35">
+            <p class="num m-0 type-micro text-ink-70">
               {{ KIND_LABEL[s.kind] }} · {{ s.line_count }} 句 · 已掌握 {{ s.known_term_count }} /
               {{ s.term_count }} 词 ·
               {{ s.region ? `对话区域 ${s.region.width}×${s.region.height}` : '未设置对话区域' }}
@@ -172,7 +172,7 @@ async function remove(s: Source) {
 
         <Transition name="rise">
           <div v-if="coverageId === s.id" class="framed mt-3 p-4">
-            <p v-if="coverageBusy || !coverage" class="m-0 type-note text-ink-50">正在统计…</p>
+            <p v-if="coverageBusy || !coverage" class="m-0 type-note text-ink-70">正在统计…</p>
             <template v-else>
               <p class="kicker m-0">覆盖率 · 按出现次数</p>
               <div class="mt-1.5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
@@ -182,7 +182,7 @@ async function remove(s: Source) {
                 >
                   {{ coveragePercent(coverage.coverage) }}
                 </span>
-                <span class="num type-meta text-ink-50">
+                <span class="num type-meta text-ink-70">
                   {{ coverage.known_tokens }} / {{ coverage.total_tokens }} 次遇见已掌握 · 词种
                   {{ coveragePercent(coverage.distinct_coverage) }}（{{ coverage.known_terms }} /
                   {{ coverage.distinct_terms }}）
@@ -201,10 +201,10 @@ async function remove(s: Source) {
                   class="flex items-center gap-1.5 no-underline"
                 >
                   <span class="jp type-body text-ink">{{ w.headword }}</span>
-                  <span class="num type-micro text-ink-35">×{{ w.count }}</span>
+                  <span class="num type-micro text-ink-70">×{{ w.count }}</span>
                 </RouterLink>
               </div>
-              <p v-else class="mt-3 mb-0 type-note text-ink-35">这个作品暂时没有未学的词。</p>
+              <p v-else class="mt-3 mb-0 type-note text-ink-70">这个作品暂时没有未学的词。</p>
 
               <div
                 v-if="coverage.unknown_top.length"
@@ -224,7 +224,7 @@ async function remove(s: Source) {
                 </button>
               </div>
 
-              <p v-if="!coverage.has_frequency" class="mt-3 mb-0 type-micro text-ink-35">
+              <p v-if="!coverage.has_frequency" class="mt-3 mb-0 type-micro text-ink-70">
                 未导入频率词典，生词按出现次数排序；导入后按常见度排序。
               </p>
             </template>
@@ -232,7 +232,7 @@ async function remove(s: Source) {
         </Transition>
       </li>
     </TransitionGroup>
-    <p v-if="!sources.length" class="py-4 type-note text-ink-50">
+    <p v-if="!sources.length" class="py-4 type-note text-ink-70">
       添加你正在玩的 Galgame 或在看的动画，然后开始第一次会话。
     </p>
   </div>

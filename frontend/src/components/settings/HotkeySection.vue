@@ -67,7 +67,7 @@ onMounted(async () => {
 
 <template>
   <SettingsSection v-if="settings" title="全局快捷键">
-    <p class="m-0 text-xs text-ink-50">
+    <p class="m-0 text-xs text-ink-70">
       在游戏里按一次就收藏当前句，不用切回窗口。先要有一个对话区域：在采集页框选一次，
       快捷键只认随作品保存的区域。
     </p>
@@ -102,13 +102,13 @@ onMounted(async () => {
         <span class="text-accent">{{ status.note }}</span>
       </template>
       <template v-else-if="status.running">
-        <span class="text-ink-50"
+        <span class="text-ink-70"
           >正在监听 <span class="num">{{ status.hotkey }}</span> · 已收藏
           <span class="num">{{ status.captured }}</span> 句</span
         >
       </template>
       <template v-else>
-        <span class="text-ink-35">未启用</span>
+        <span class="text-ink-70">未启用</span>
       </template>
       <span v-if="status.available && status.last_error" class="text-accent">
         · {{ status.last_error }}

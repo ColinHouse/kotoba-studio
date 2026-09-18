@@ -32,7 +32,7 @@ watch(
   <section class="flex min-w-0 flex-col">
     <div class="flex items-baseline justify-between">
       <h2 class="m-0 font-head text-[18px] font-normal">本次收藏</h2>
-      <span class="num type-micro text-ink-35">
+      <span class="num type-micro text-ink-70">
         {{ lines.length }} 句<template v-if="elapsed"> · {{ elapsed }}</template>
       </span>
     </div>
@@ -59,20 +59,20 @@ watch(
               ><span :key="line.text">{{ line.text }}</span></Transition
             >
           </p>
-          <p class="m-0 mt-px type-micro text-ink-35">
+          <p class="m-0 mt-px type-micro text-ink-70">
             {{ line.origin }} · {{ relTime(line.captured_at) }}
           </p>
         </div>
       </li>
     </TransitionGroup>
 
-    <p v-if="!lines.length" class="m-0 type-meta leading-relaxed text-ink-35">
+    <p v-if="!lines.length" class="m-0 type-meta leading-relaxed text-ink-70">
       收藏的句子会出现在这里；游戏结束后到收件箱统一整理。
     </p>
     <RouterLink v-else :to="inboxLink" class="btn-quiet mt-4 self-start">去收件箱整理 →</RouterLink>
 
-    <div class="mt-auto border-t border-rule pt-[18px] type-micro leading-[1.9] text-ink-35">
-      <p class="kicker m-0 text-ink-50">键盘</p>
+    <div class="mt-auto border-t border-rule pt-[18px] type-micro leading-[1.9] text-ink-70">
+      <p class="kicker m-0 text-ink-70">键盘</p>
       <p class="num m-0">{{ shortcut }} 收藏这句</p>
     </div>
   </section>

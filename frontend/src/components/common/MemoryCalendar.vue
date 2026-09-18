@@ -33,7 +33,7 @@ defineExpose({ total })
       >
         <span
           class="num type-micro"
-          :class="d.today ? 'font-semibold text-accent' : d.count ? 'text-ink-50' : 'text-ink-35'"
+          :class="d.today ? 'font-semibold text-accent' : d.count ? 'text-ink' : 'text-ink-70'"
           >{{ d.count || '·' }}</span
         >
         <div
@@ -51,7 +51,7 @@ defineExpose({ total })
         v-for="d in bars"
         :key="d.date"
         class="num flex-1 text-center type-micro"
-        :class="d.today ? 'font-semibold text-accent' : 'text-ink-35'"
+        :class="d.today ? 'font-semibold text-accent' : 'text-ink-70'"
         >{{ d.label }}</span
       >
     </div>

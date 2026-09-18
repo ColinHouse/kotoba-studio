@@ -7,8 +7,8 @@ defineProps<{ status: string | null }>()
 const CLS: Record<string, string> = {
   unknown: 'border-ink text-ink',
   learning: 'border-divider text-ink-70',
-  known: 'border-divider text-ink-50',
-  ignored: 'border-divider text-ink-35 line-through',
+  known: 'border-divider text-ink-70',
+  ignored: 'border-divider text-ink-70 line-through',
 }
 </script>
 

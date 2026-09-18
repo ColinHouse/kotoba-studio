@@ -14,7 +14,7 @@
   --ink: #201f1d;
   --ink-70: #605d5d;
   --ink-50: #7d7979;
-  --ink-35: #9b9797;
+  --ink-35: #858181;
   --divider: rgba(32, 31, 29, 0.16);
   --rule-2: rgba(32, 31, 29, 0.07);
   --accent: #b68235;
@@ -227,7 +227,7 @@ rt {
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-35);
+  color: var(--ink-70);
   line-height: 1.2;
 }
 
@@ -270,7 +270,7 @@ rt {
 @utility btn-quiet {
   font-family: var(--font-body);
   font-size: 13px;
-  color: var(--ink-50);
+  color: var(--ink-70);
   border: 0;
   border-bottom: 1px solid var(--divider);
   border-radius: 0;
@@ -347,7 +347,7 @@ rt {
 @utility seg-opt {
   padding: 7px 14px;
   font-size: 14px;
-  color: var(--ink-50);
+  color: var(--ink-70);
   cursor: pointer;
   background: none;
   border: 0;

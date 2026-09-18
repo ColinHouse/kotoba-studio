@@ -117,7 +117,7 @@ async function startSession(source: Source) {
         <p class="kicker text-accent">{{ today }}</p>
         <h1 class="page-title mt-1 text-[32px] md:text-[38px]">今天</h1>
       </div>
-      <div class="type-meta leading-[1.8] text-ink-50 md:text-right">
+      <div class="type-meta leading-[1.8] text-ink-70 md:text-right">
         <p class="m-0">
           {{
             device.kind === 'desktop'
@@ -160,7 +160,7 @@ async function startSession(source: Source) {
     <section v-if="forecast.length" class="mt-[26px]">
       <div class="flex items-baseline justify-between gap-3">
         <span class="kicker">记忆日历 · 未来{{ forecast.length <= 7 ? '一周' : '两周' }}到期</span>
-        <span class="num type-micro text-ink-35">
+        <span class="num type-micro text-ink-70">
           共 {{ forecastTotal }} 张 · 空白日＝可以放心去玩
         </span>
       </div>
@@ -183,9 +183,9 @@ async function startSession(source: Source) {
             <div class="flex items-baseline justify-between gap-3">
               <span class="font-head text-[17px] md:text-[19px]">
                 {{ s.title }}
-                <span v-if="s.title_ja" class="jp type-meta text-ink-35">{{ s.title_ja }}</span>
+                <span v-if="s.title_ja" class="jp type-meta text-ink-70">{{ s.title_ja }}</span>
               </span>
-              <span class="num shrink-0 type-micro text-ink-50">
+              <span class="num shrink-0 type-micro text-ink-70">
                 已掌握 {{ s.known_term_count }} / {{ s.term_count }} 词
               </span>
             </div>
@@ -199,7 +199,7 @@ async function startSession(source: Source) {
                 }"
               />
             </div>
-            <p class="num mt-[5px] mb-0 type-micro text-ink-35">
+            <p class="num mt-[5px] mb-0 type-micro text-ink-70">
               <template v-if="s.line_count">
                 {{ s.line_count }} 句 · {{ s.region ? '已设对话区域' : '未设对话区域' }}
               </template>
@@ -216,7 +216,7 @@ async function startSession(source: Source) {
             </p>
           </li>
         </TransitionGroup>
-        <p v-if="!sources.length" class="mt-3 type-note text-ink-50">
+        <p v-if="!sources.length" class="mt-3 type-note text-ink-70">
           还没有作品。<RouterLink to="/sources" class="text-accent">添加一部</RouterLink
           >，然后开始第一次会话。
         </p>
@@ -230,7 +230,7 @@ async function startSession(source: Source) {
           <TransitionGroup tag="tbody" name="list" class="relative">
             <tr v-for="s in sessions" :key="s.id">
               <td class="pl-0">{{ s.source_title ?? '—' }}</td>
-              <td class="num text-ink-50">{{ s.line_count }} 句 · {{ relTime(s.started_at) }}</td>
+              <td class="num text-ink-70">{{ s.line_count }} 句 · {{ relTime(s.started_at) }}</td>
               <td class="pr-0 text-right">
                 <RouterLink :to="`/inbox?session=${s.id}`" class="text-accent">收件箱</RouterLink>
                 ·
@@ -239,8 +239,8 @@ async function startSession(source: Source) {
             </tr>
           </TransitionGroup>
         </table>
-        <p v-else class="m-0 type-note text-ink-35">还没有会话。</p>
-        <p class="mt-4 mb-0 type-micro leading-[1.7] text-ink-35">
+        <p v-else class="m-0 type-note text-ink-70">还没有会话。</p>
+        <p class="mt-4 mb-0 type-micro leading-[1.7] text-ink-70">
           日历回答的不是"有多少"，而是"今天要花多久、哪天可以歇"。
         </p>
       </section>

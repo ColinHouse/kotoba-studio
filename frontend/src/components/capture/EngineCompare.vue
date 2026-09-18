@@ -23,8 +23,8 @@ const emit = defineEmits<{
       </button>
     </div>
 
-    <p v-if="running" class="mt-3 type-note text-ink-50">正在对同一区域跑一遍可用引擎…</p>
-    <p v-else-if="!results.length" class="mt-3 type-note text-ink-35">
+    <p v-if="running" class="mt-3 type-note text-ink-70">正在对同一区域跑一遍可用引擎…</p>
+    <p v-else-if="!results.length" class="mt-3 type-note text-ink-70">
       {{
         canRun
           ? '还没有结果。跑一次，并排看看哪个引擎认得最准。'
@@ -47,9 +47,9 @@ const emit = defineEmits<{
       >
         <span class="flex w-full items-baseline justify-between gap-2">
           <span class="font-head type-body">{{ row.provider }}</span>
-          <span class="num type-micro text-ink-35">{{ row.ms }} ms</span>
+          <span class="num type-micro text-ink-70">{{ row.ms }} ms</span>
         </span>
-        <span v-if="row.error" class="mt-2 type-meta text-ink-50">
+        <span v-if="row.error" class="mt-2 type-meta text-ink-70">
           识别失败 · {{ row.error }}
         </span>
         <span v-else class="jp mt-2 whitespace-pre-wrap type-body leading-[1.8] text-ink">
