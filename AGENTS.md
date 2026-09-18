@@ -106,7 +106,10 @@ Committing without being asked each time is fine. Doing the following is not.
 4. Come with a test when it changes behaviour — one that fails before the change and passes
    after. Bug fixes especially.
 5. Include an Alembic revision when it changes a model.
-6. Use Simplified Chinese for any new user-facing string, English for identifiers and comments.
+6. Put user-facing strings in the i18n resources (`frontend/src/i18n/zh-CN.ts` is the baseline, and
+   the English table mirrors its keys); identifiers, comments and commit messages are English.
+   Backend error messages are mapped by `error.code` on the frontend, never translated in the
+   backend.
 7. Keep `backend/pyproject.toml` and `frontend/package.json` on the same version when you
    bump either — CI fails if they disagree. The Python package reads its own version from
    the manifest, so there is no third copy to update.

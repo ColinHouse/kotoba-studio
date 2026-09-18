@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { t, type MessagePath } from '@/i18n'
 import { useAppStore } from '@/stores/app'
 import { useDeviceStore } from '@/stores/device'
 
@@ -10,21 +11,21 @@ const route = useRoute()
 
 interface NavItem {
   to: string
-  label: string
+  key: MessagePath
   mobile: boolean
   desktopOnly?: boolean
 }
 
 const NAV: NavItem[] = [
-  { to: '/', label: '首页', mobile: true },
-  { to: '/capture', label: '采集', mobile: false, desktopOnly: true },
-  { to: '/inbox', label: '收件箱', mobile: true },
-  { to: '/review', label: '复习', mobile: true },
-  { to: '/stats', label: '统计', mobile: true },
-  { to: '/library', label: '词库', mobile: true },
-  { to: '/kanji', label: '汉字', mobile: false },
-  { to: '/sources', label: '作品', mobile: false },
-  { to: '/settings', label: '设置', mobile: true },
+  { to: '/', key: 'nav.home', mobile: true },
+  { to: '/capture', key: 'nav.capture', mobile: false, desktopOnly: true },
+  { to: '/inbox', key: 'nav.inbox', mobile: true },
+  { to: '/review', key: 'nav.review', mobile: true },
+  { to: '/stats', key: 'nav.stats', mobile: true },
+  { to: '/library', key: 'nav.library', mobile: true },
+  { to: '/kanji', key: 'nav.kanji', mobile: false },
+  { to: '/sources', key: 'nav.sources', mobile: false },
+  { to: '/settings', key: 'nav.settings', mobile: true },
 ]
 
 const nav = computed(() => NAV.filter((i) => !i.desktopOnly || device.kind === 'desktop'))
@@ -52,7 +53,7 @@ function active(to: string) {
         >
         <span>
           <span class="block font-head text-[18px] leading-tight text-ink">ことばこ</span>
-          <span class="block type-micro text-ink-35">会记住语境的伴读</span>
+          <span class="block type-micro text-ink-35">{{ t('shell.tagline') }}</span>
         </span>
       </RouterLink>
 
@@ -65,17 +66,17 @@ function active(to: string) {
           :class="active(item.to) ? 'text-accent' : 'text-ink-70 hover:text-ink'"
         >
           <span :class="active(item.to) ? 'border-b border-accent pb-[3px]' : ''">{{
-            item.label
+            t(item.key)
           }}</span>
         </RouterLink>
       </nav>
 
       <div class="mt-auto type-micro leading-[1.7] text-ink-35">
         <template v-if="app.activeSession">
-          <div class="border-t border-rule pt-2.5">进行中的会话</div>
+          <div class="border-t border-rule pt-2.5">{{ t('shell.activeSession') }}</div>
           <div class="text-ink-50">
-            {{ app.activeSession.source_title ?? '未指定作品' }} ·
-            <span class="num">{{ app.activeSession.line_count }}</span> 句
+            {{ app.activeSession.source_title ?? t('shell.noSource') }} ·
+            <span class="num">{{ app.activeSession.line_count }}</span> {{ t('shell.lines') }}
           </div>
         </template>
         <div class="num mt-2.5" :class="app.activeSession ? '' : 'border-t border-rule pt-2.5'">
@@ -86,7 +87,7 @@ function active(to: string) {
 
     <div class="flex min-h-dvh flex-1 flex-col">
       <p v-if="app.offline" class="m-0 bg-accent-100 px-5 py-2 type-meta text-gold">
-        无法连接 ことばこ 服务器。请确认桌面端正在运行，手机需与电脑在同一局域网。
+        {{ t('shell.offline') }}
       </p>
 
       <main class="flex-1">
@@ -113,7 +114,7 @@ function active(to: string) {
             v-if="active(item.to)"
             class="absolute left-1/2 top-0 h-0.5 w-[26px] -translate-x-1/2 bg-accent"
           />
-          {{ item.label }}
+          {{ t(item.key) }}
         </RouterLink>
       </nav>
     </div>
@@ -124,16 +125,16 @@ function active(to: string) {
     >
       <TransitionGroup name="rise">
         <p
-          v-for="t in app.toasts"
-          :key="t.id"
+          v-for="toast in app.toasts"
+          :key="toast.id"
           class="pointer-events-auto m-0 rounded-ui border px-4 py-2 type-note shadow-[var(--shadow)]"
           :class="
-            t.kind === 'error'
+            toast.kind === 'error'
               ? 'border-accent bg-accent-100 text-gold'
               : 'border-divider bg-paper text-ink'
           "
         >
-          {{ t.text }}
+          {{ toast.text }}
         </p>
       </TransitionGroup>
     </div>
