@@ -304,6 +304,7 @@ class TkOverlay:
                 return
             if command == "quit":
                 self._root.destroy()
+                self._root = None
                 return
             if command == "toggle":
                 command = "hide" if self._visible else "show"

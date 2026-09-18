@@ -21,22 +21,22 @@ def import_pitches(client, entries: list):
     )
 
 
-def seed(client, card_types=("reading",)) -> dict:
+def seed(client, card_types=("reading",), gloss_zh=None) -> dict:
     src = client.post("/api/sources", json={"title": "作品"}).json()
     ses = client.post("/api/sessions", json={"source_id": src["id"]}).json()
     line = client.post("/api/lines", json={"session_id": ses["id"], "text": "水が好き"}).json()[
         "line"
     ]
-    enc = client.post(
-        "/api/encounters",
-        json={
-            "line_id": line["id"],
-            "headword": "水",
-            "reading": "みず",
-            "surface": "水",
-            "card_types": list(card_types),
-        },
-    ).json()
+    body = {
+        "line_id": line["id"],
+        "headword": "水",
+        "reading": "みず",
+        "surface": "水",
+        "card_types": list(card_types),
+    }
+    if gloss_zh:
+        body["sense"] = {"gloss_zh": gloss_zh}
+    enc = client.post("/api/encounters", json=body).json()
     return {"source": src, "session": ses, "line": line, "card": enc["cards"][0]}
 
 
@@ -55,6 +55,13 @@ def test_card_without_pitch_data_has_no_pitches(client):
     queue = client.get("/api/reviews/queue", params={"device_kind": "desktop"}).json()
     face = next(c for c in queue["cards"] if c["id"] == data["card"]["id"])
     assert face["pitches"] == []
+
+
+def test_session_quiz_asks_reading_cloze_meaning_by_default(client):
+    import_pitches(client, [["水", "pitch", {"reading": "みず", "pitches": [{"position": 0}]}]])
+    data = seed(client, gloss_zh="水")
+    items = client.post(f"/api/quiz/sessions/{data['session']['id']}").json()["items"]
+    assert {item["kind"] for item in items} == {"reading", "cloze", "meaning"}
 
 
 def test_pitch_quiz_offers_four_choices_and_grades(client):

@@ -6,6 +6,7 @@ from kotoba.services.capture.screen import Region
 from kotoba.services.overlay import (
     OverlayController,
     OverlayWord,
+    TkOverlay,
     latest_line,
     overlay_position,
     overlay_words,
@@ -209,6 +210,36 @@ def test_controller_callbacks_read_the_active_session(client, monkeypatch):
 
     position = ctrl._position((600, 200))
     assert len(position) == 3 and position[2] >= 520
+
+
+class FakeRoot:
+    """Stands in for the Tk root so the tick loop can be tested without a display."""
+
+    def __init__(self) -> None:
+        self.destroyed = False
+        self.after_calls = 0
+
+    def destroy(self) -> None:
+        self.destroyed = True
+
+    def after(self, *_args) -> str:
+        self.after_calls += 1
+        return "after#1"
+
+
+def test_quit_stops_the_tick_loop_before_it_refreshes():
+    view = TkOverlay(lambda: None, lambda word: {}, lambda size: (0, 0, 520))
+    root = FakeRoot()
+    view._root = root
+    view._visible = True
+
+    view.command("quit")
+    view._tick()
+
+    assert root.destroyed is True
+    assert view._root is None
+    assert view.last_error is None
+    assert root.after_calls == 0
 
 
 def test_overlay_endpoints_report_status(client, monkeypatch):
