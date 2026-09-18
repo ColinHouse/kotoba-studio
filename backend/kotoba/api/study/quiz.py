@@ -28,7 +28,7 @@ class QuizAnswer(BaseModel):
 @router.post("/sessions/{session_id}")
 def build_quiz(
     session_id: int,
-    kinds: str = Query("reading,cloze,meaning,pitch"),
+    kinds: str = Query("reading,cloze,meaning"),
     limit: int = 10,
     db: Session = Depends(get_db),
 ) -> dict:

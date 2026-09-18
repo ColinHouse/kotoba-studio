@@ -50,6 +50,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Fixed
 
+- 短测：默认不再出音高题，回到读音/填空/释义；音高仍出现在卡背音高线与词条详情里，
+  需要时接口也仍可显式指定 `pitch`。音高数据与正式复习安排不受影响。
 - 覆盖层：关闭时不再在窗口销毁后继续刷新 Tk，控制台不会再打出
   `application has been destroyed` 的回溯；关闭行为本身不变。
 
