@@ -32,7 +32,7 @@ watch(
   <section class="flex min-w-0 flex-col">
     <div class="flex items-baseline justify-between">
       <h2 class="m-0 font-head text-[18px] font-normal">本次收藏</h2>
-      <span class="num text-[11px] text-ink-35">
+      <span class="num type-micro text-ink-35">
         {{ lines.length }} 句<template v-if="elapsed"> · {{ elapsed }}</template>
       </span>
     </div>
@@ -52,26 +52,26 @@ watch(
           alt=""
         />
         <div class="min-w-0">
-          <p class="jp m-0 text-[14px] leading-[1.7]" :class="i === 0 ? 'text-ink' : 'text-ink-70'">
+          <p class="jp m-0 type-body leading-[1.7]" :class="i === 0 ? 'text-ink' : 'text-ink-70'">
             <!-- 同一行的文字变长（去重时会就地更新）只让文字淡入，整行不重新入场；
                  新建的行由上面的 list 过渡负责整行出现。 -->
             <Transition name="ink"
               ><span :key="line.text">{{ line.text }}</span></Transition
             >
           </p>
-          <p class="m-0 mt-px text-[10px] text-ink-35">
+          <p class="m-0 mt-px type-micro text-ink-35">
             {{ line.origin }} · {{ relTime(line.captured_at) }}
           </p>
         </div>
       </li>
     </TransitionGroup>
 
-    <p v-if="!lines.length" class="m-0 text-[12px] leading-relaxed text-ink-35">
+    <p v-if="!lines.length" class="m-0 type-meta leading-relaxed text-ink-35">
       收藏的句子会出现在这里；游戏结束后到收件箱统一整理。
     </p>
     <RouterLink v-else :to="inboxLink" class="btn-quiet mt-4 self-start">去收件箱整理 →</RouterLink>
 
-    <div class="mt-auto border-t border-rule pt-[18px] text-[11px] leading-[1.9] text-ink-35">
+    <div class="mt-auto border-t border-rule pt-[18px] type-micro leading-[1.9] text-ink-35">
       <p class="kicker m-0 text-ink-50">键盘</p>
       <p class="num m-0">{{ shortcut }} 收藏这句</p>
     </div>

@@ -108,11 +108,11 @@ function onKey(e: KeyboardEvent) {
     <header class="flex items-baseline justify-between gap-3 border-b border-divider pb-3">
       <div class="flex items-baseline gap-2.5">
         <span class="jp text-[24px] font-semibold md:text-[26px]">{{ picked.surface }}</span>
-        <span class="text-[12px] text-ink-35">
+        <span class="type-meta text-ink-35">
           {{ picked.is_expression ? '固定表达' : (picked.pos ?? '') }}
         </span>
       </div>
-      <span class="shrink-0 text-[11px] text-ink-35">
+      <span class="shrink-0 type-micro text-ink-35">
         {{ picked.known_status ? `词库中：${picked.known_status}` : '尚未在词库' }}
       </span>
     </header>
@@ -139,7 +139,7 @@ function onKey(e: KeyboardEvent) {
               >{{ entry.headword }}</span
             >
             <span
-              class="jp text-[13px]"
+              class="jp type-note"
               :class="candidate?.id === entry.id ? 'text-gold' : 'text-ink-50'"
               >{{ entry.reading }}</span
             >
@@ -148,13 +148,13 @@ function onKey(e: KeyboardEvent) {
             >
           </span>
           <span
-            class="mt-0.5 block text-[12px] leading-snug"
+            class="mt-0.5 block type-meta leading-snug"
             :class="candidate?.id === entry.id ? 'text-gold' : 'text-ink-50'"
             >{{ entry.senses[0]?.gloss_en.slice(0, 3).join('; ') }}</span
           >
         </button>
       </div>
-      <p v-else class="m-0 text-[12px] text-ink-35">词典里没有候选，请手填词条与释义。</p>
+      <p v-else class="m-0 type-meta text-ink-35">词典里没有候选，请手填词条与释义。</p>
 
       <div class="flex flex-col gap-3">
         <div class="grid grid-cols-2 gap-3">
@@ -184,7 +184,7 @@ function onKey(e: KeyboardEvent) {
           <input id="term-gloss-en" v-model="glossEn" class="input" />
         </div>
         <div>
-          <p class="mb-1.5 text-[12px] text-ink-50">建哪几张卡</p>
+          <p class="mb-1.5 type-meta text-ink-50">建哪几张卡</p>
           <div class="seg">
             <button
               v-for="type in OFFERED"
@@ -206,7 +206,7 @@ function onKey(e: KeyboardEvent) {
         {{ cardTypes.length ? '确认并建卡' : '只记录语境' }}
       </button>
       <button class="btn btn-secondary" @click="$emit('cancel')">取消</button>
-      <span class="num ml-auto hidden text-[11px] text-ink-35 md:inline"
+      <span class="num ml-auto hidden type-micro text-ink-35 md:inline"
         >{{ shortcut }} 确认 · Esc 取消</span
       >
     </footer>

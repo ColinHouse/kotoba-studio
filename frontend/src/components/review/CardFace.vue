@@ -66,7 +66,7 @@ const prompt = computed(
             controls
             class="mx-auto"
           />
-          <p v-else class="m-0 text-[13px] text-ink-35">这张卡还没有音频。</p>
+          <p v-else class="m-0 type-note text-ink-35">这张卡还没有音频。</p>
         </div>
         <div v-else class="py-6 text-center">
           <p
@@ -90,7 +90,7 @@ const prompt = computed(
 
         <div class="h-px bg-divider" />
         <p
-          class="mt-3.5 mb-0 text-[14px] leading-[1.7] text-ink-70"
+          class="mt-3.5 mb-0 type-body leading-[1.7] text-ink-70"
           :class="face.card_type === 'cloze' ? '' : 'text-center'"
         >
           {{ prompt }}
@@ -115,7 +115,7 @@ const prompt = computed(
             <p v-if="glosses.length" class="mt-1.5 mb-0 text-[19px] leading-[1.6] md:text-[21px]">
               {{ glosses.join('；') }}
             </p>
-            <p v-else class="mt-1.5 mb-0 text-[15px] text-ink-35">还没有填释义。</p>
+            <p v-else class="mt-1.5 mb-0 type-body text-ink-35">还没有填释义。</p>
             <div v-if="face.pitches.length" class="mt-3.5 flex flex-wrap gap-x-5 gap-y-2">
               <PitchLine
                 v-for="p in face.pitches"
@@ -159,7 +159,7 @@ const prompt = computed(
               controls
               class="mt-2.5 w-full"
             />
-            <div class="mt-2.5 flex items-baseline justify-between gap-3 text-[12px] text-ink-50">
+            <div class="mt-2.5 flex items-baseline justify-between gap-3 type-meta text-ink-50">
               <span v-if="face.encounter?.contraction_of" class="jp"
                 >{{ face.encounter.surface }} ← {{ face.encounter.contraction_of }}</span
               >

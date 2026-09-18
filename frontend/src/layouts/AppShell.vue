@@ -52,11 +52,11 @@ function active(to: string) {
         >
         <span>
           <span class="block font-head text-[18px] leading-tight text-ink">ことばこ</span>
-          <span class="block text-[11px] text-ink-35">会记住语境的伴读</span>
+          <span class="block type-micro text-ink-35">会记住语境的伴读</span>
         </span>
       </RouterLink>
 
-      <nav class="flex flex-col gap-0.5 text-[14px]">
+      <nav class="flex flex-col gap-0.5 type-body">
         <RouterLink
           v-for="item in nav"
           :key="item.to"
@@ -70,7 +70,7 @@ function active(to: string) {
         </RouterLink>
       </nav>
 
-      <div class="mt-auto text-[11px] leading-[1.7] text-ink-35">
+      <div class="mt-auto type-micro leading-[1.7] text-ink-35">
         <template v-if="app.activeSession">
           <div class="border-t border-rule pt-2.5">进行中的会话</div>
           <div class="text-ink-50">
@@ -85,7 +85,7 @@ function active(to: string) {
     </aside>
 
     <div class="flex min-h-dvh flex-1 flex-col">
-      <p v-if="app.offline" class="m-0 bg-accent-100 px-5 py-2 text-[12px] text-gold">
+      <p v-if="app.offline" class="m-0 bg-accent-100 px-5 py-2 type-meta text-gold">
         无法连接 ことばこ 服务器。请确认桌面端正在运行，手机需与电脑在同一局域网。
       </p>
 
@@ -99,7 +99,7 @@ function active(to: string) {
 
       <!-- 手机底部 Tab：文字，无图标；底部留安全区 -->
       <nav
-        class="fixed inset-x-0 bottom-0 z-20 flex border-t border-divider bg-bg font-head text-[13px] md:hidden"
+        class="fixed inset-x-0 bottom-0 z-20 flex border-t border-divider bg-bg font-head type-note md:hidden"
         style="padding-bottom: max(26px, env(safe-area-inset-bottom))"
       >
         <RouterLink
@@ -126,7 +126,7 @@ function active(to: string) {
         <p
           v-for="t in app.toasts"
           :key="t.id"
-          class="pointer-events-auto m-0 rounded-ui border px-4 py-2 text-[13px] shadow-[var(--shadow)]"
+          class="pointer-events-auto m-0 rounded-ui border px-4 py-2 type-note shadow-[var(--shadow)]"
           :class="
             t.kind === 'error'
               ? 'border-accent bg-accent-100 text-gold'

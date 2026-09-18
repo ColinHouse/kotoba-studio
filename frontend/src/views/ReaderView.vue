@@ -105,14 +105,14 @@ function preload() {
             </button>
           </span>
         </label>
-        <p v-if="current" class="num m-0 text-[13px] text-ink-50">
+        <p v-if="current" class="num m-0 type-note text-ink-50">
           第 {{ current.page }} / {{ pages.length }} 页
         </p>
       </div>
     </header>
 
-    <p v-if="loading" class="mt-6 m-0 text-[13px] text-ink-50">正在打开…</p>
-    <p v-else-if="!pages.length" class="mt-6 m-0 text-[13px] text-ink-50">
+    <p v-if="loading" class="mt-6 m-0 type-note text-ink-50">正在打开…</p>
+    <p v-else-if="!pages.length" class="mt-6 m-0 type-note text-ink-50">
       这部作品还没有按页导入的内容。用 mokuro 处理漫画后，把 .mokuro 或整卷 zip 导入到它下面。
     </p>
 
@@ -144,7 +144,7 @@ function preload() {
           <button class="btn btn-secondary" :disabled="index === 0" @click="turn('prev')">
             {{ prevLabel }}
           </button>
-          <span class="hidden text-[11px] text-ink-35 md:inline">← → 翻页 · 双指缩放</span>
+          <span class="hidden type-micro text-ink-35 md:inline">← → 翻页 · 双指缩放</span>
           <button
             class="btn btn-secondary"
             :disabled="index >= pages.length - 1"
@@ -191,7 +191,7 @@ function preload() {
                 @pick="builder.picked.value = $event"
               />
             </div>
-            <p v-else class="mt-4 m-0 text-[12px] text-ink-35">正在分词…</p>
+            <p v-else class="mt-4 m-0 type-meta text-ink-35">正在分词…</p>
 
             <TermEditor
               v-if="builder.picked.value"
@@ -202,7 +202,7 @@ function preload() {
               @cancel="builder.picked.value = null"
             />
 
-            <div v-if="builder.result.value" class="framed mt-4 px-4 py-3 text-[13px]">
+            <div v-if="builder.result.value" class="framed mt-4 px-4 py-3 type-note">
               已记录
               <RouterLink
                 :to="`/terms/${builder.result.value.term.id}`"
@@ -214,7 +214,7 @@ function preload() {
             </div>
           </div>
         </template>
-        <p v-else class="mt-1 text-[13px] text-ink-35 lg:mt-0">
+        <p v-else class="mt-1 type-note text-ink-35 lg:mt-0">
           点画面上的文字框查词建卡；已建过卡的框墨色更深。
         </p>
       </aside>

@@ -41,7 +41,7 @@ const STEPS = [
         class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-rule py-3 last:border-0 last:pb-0"
       >
         <span
-          class="font-head text-[15px]"
+          class="font-head type-body"
           :class="progress[step.key] ? 'text-ink-35' : 'text-ink'"
           >{{ step.label }}</span
         >
@@ -51,10 +51,10 @@ const STEPS = [
         <RouterLink
           v-if="!progress[step.key]"
           :to="step.to"
-          class="text-[12px] text-accent no-underline"
+          class="type-meta text-accent no-underline"
           >去处理 →</RouterLink
         >
-        <span class="w-full text-[11px] leading-[1.7] text-ink-35">{{ step.hint }}</span>
+        <span class="w-full type-micro leading-[1.7] text-ink-35">{{ step.hint }}</span>
       </li>
     </ul>
   </section>

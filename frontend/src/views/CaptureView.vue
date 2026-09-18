@@ -214,22 +214,20 @@ const elapsed = computed(() =>
     <header class="flex flex-wrap items-center justify-between gap-4 border-b border-divider pb-3">
       <div class="flex items-baseline gap-3">
         <h1 class="page-title text-[26px] md:text-[28px]">采集</h1>
-        <span v-if="session" class="inline-flex items-center gap-[7px] text-[12px] text-ink-50">
+        <span v-if="session" class="inline-flex items-center gap-[7px] type-meta text-ink-50">
           <i class="size-1.5 rounded-full bg-accent" />会话进行中 ·
           {{ currentSource?.title ?? '未指定作品' }}
         </span>
       </div>
-      <button v-if="session" class="btn btn-secondary" style="font-size: 13px" @click="endSession">
-        结束会话并整理
-      </button>
+      <button v-if="session" class="btn btn-secondary" @click="endSession">结束会话并整理</button>
     </header>
 
-    <p v-if="device.kind !== 'desktop'" class="framed mt-5 p-4 text-[13px]">
+    <p v-if="device.kind !== 'desktop'" class="framed mt-5 p-4 type-note">
       采集需要在运行 ことばこ 的电脑上进行；手机端请使用收件箱与复习。
     </p>
 
     <section v-if="!session" class="framed mt-5 flex flex-wrap items-center gap-3 p-4">
-      <label class="text-[13px]" for="session-source">先选择作品并开始会话：</label>
+      <label class="type-note" for="session-source">先选择作品并开始会话：</label>
       <select id="session-source" v-model="sourceId" class="input w-56">
         <option v-for="s in sources" :key="s.id" :value="s.id">{{ s.title }}</option>
       </select>
@@ -240,14 +238,14 @@ const elapsed = computed(() =>
     <template v-else>
       <!-- 一次性设置压成一条线，不和主动作抢注意力 -->
       <div
-        class="flex flex-wrap items-center gap-x-[22px] gap-y-2 border-b border-rule py-2.5 text-[12px] text-ink-50"
+        class="flex flex-wrap items-center gap-x-[22px] gap-y-2 border-b border-rule py-2.5 type-meta text-ink-50"
       >
         <span class="kicker">一次性设置</span>
         <label class="flex items-center gap-1.5">
           显示器
           <select
             v-model.number="capture.display.value"
-            class="num border-0 border-b border-divider bg-transparent text-[12px] text-ink-50"
+            class="num border-0 border-b border-divider bg-transparent type-meta text-ink-50"
           >
             <option v-for="d in capture.displays.value" :key="d.index" :value="d.index">
               {{ d.index + 1 }} · {{ d.width }}×{{ d.height }}
@@ -258,7 +256,7 @@ const elapsed = computed(() =>
           OCR
           <select
             v-model="capture.provider.value"
-            class="border-0 border-b border-divider bg-transparent text-[12px] text-ink-50"
+            class="border-0 border-b border-divider bg-transparent type-meta text-ink-50"
           >
             <option value="auto">自动</option>
             <option
@@ -274,7 +272,7 @@ const elapsed = computed(() =>
         <label class="flex items-center gap-1.5">
           游戏窗口
           <select
-            class="max-w-64 border-0 border-b border-divider bg-transparent text-[12px] text-ink-50"
+            class="max-w-64 border-0 border-b border-divider bg-transparent type-meta text-ink-50"
             :value="boundWindow?.handle ?? ''"
             @change="pickWindow"
           >
@@ -316,11 +314,11 @@ const elapsed = computed(() =>
             :scale="capture.shot.value.scale"
             :display="capture.display.value"
           />
-          <div v-else class="framed grid place-items-center p-10 text-[13px] text-ink-35">
+          <div v-else class="framed grid place-items-center p-10 type-note text-ink-35">
             正在截取屏幕预览…
           </div>
 
-          <div class="mt-2 flex items-baseline justify-between gap-3 text-[11px]">
+          <div class="mt-2 flex items-baseline justify-between gap-3 type-micro">
             <span v-if="capture.region.value" class="num text-ink-35">
               区域：{{ capture.region.value.left }}, {{ capture.region.value.top }} ·
               {{ capture.region.value.width }}×{{ capture.region.value.height }}（已随作品保存）
@@ -343,7 +341,7 @@ const elapsed = computed(() =>
               <span class="block font-head text-[32px] leading-none md:text-[38px]">
                 {{ capture.busy.value === 'collect' ? '收藏中…' : '收藏这句' }}
               </span>
-              <span class="mt-1 block text-[12px]">
+              <span class="mt-1 block type-meta">
                 {{ framed ? '保存台词 + 截图到收件箱，不打断游戏' : '先框选对话框区域才能收藏' }}
               </span>
             </span>
@@ -353,7 +351,7 @@ const elapsed = computed(() =>
             </span>
           </button>
 
-          <div class="mt-2.5 flex flex-wrap items-center gap-[18px] text-[12px] text-ink-50">
+          <div class="mt-2.5 flex flex-wrap items-center gap-[18px] type-meta text-ink-50">
             <button class="btn-quiet" :disabled="!framed || busy" @click="capture.runOcr">
               {{ capture.busy.value === 'ocr' ? '识别中…' : '只识别，不保存' }}
             </button>

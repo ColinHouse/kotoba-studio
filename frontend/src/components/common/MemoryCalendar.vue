@@ -32,7 +32,7 @@ defineExpose({ total })
         class="flex flex-1 flex-col items-center justify-end gap-1.5"
       >
         <span
-          class="num text-[11px]"
+          class="num type-micro"
           :class="d.today ? 'font-semibold text-accent' : d.count ? 'text-ink-50' : 'text-ink-35'"
           >{{ d.count || '·' }}</span
         >
@@ -50,7 +50,7 @@ defineExpose({ total })
       <span
         v-for="d in bars"
         :key="d.date"
-        class="num flex-1 text-center text-[10px]"
+        class="num flex-1 text-center type-micro"
         :class="d.today ? 'font-semibold text-accent' : 'text-ink-35'"
         >{{ d.label }}</span
       >
