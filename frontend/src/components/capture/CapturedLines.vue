@@ -1,13 +1,31 @@
 <script setup lang="ts">
+import { nextTick, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { mediaUrl } from '@/api/client'
 import type { Line } from '@/api/types'
 import { relTime } from '@/utils/format'
 import { confirmShortcut } from '@/utils/platform'
+import { followsNewest } from '@/utils/scroll'
 
-defineProps<{ lines: Line[]; inboxLink: string; elapsed?: string | null }>()
+const props = defineProps<{ lines: Line[]; inboxLink: string; elapsed?: string | null }>()
 
 const shortcut = confirmShortcut(navigator.userAgent)
+
+/**
+ * New lines arrive while the user may be reading earlier ones. Grow-only: an
+ * in-place dedup update keeps the row and its scroll position; a genuinely new
+ * line follows only when the reader was already at the bottom.
+ */
+watch(
+  () => props.lines.length,
+  async (now, before) => {
+    if (now <= before) return
+    const scroll = document.documentElement
+    const follow = followsNewest(window.scrollY, window.innerHeight, scroll.scrollHeight)
+    await nextTick()
+    if (follow) window.scrollTo({ top: document.documentElement.scrollHeight })
+  },
+)
 </script>
 
 <template>
@@ -35,7 +53,11 @@ const shortcut = confirmShortcut(navigator.userAgent)
         />
         <div class="min-w-0">
           <p class="jp m-0 text-[14px] leading-[1.7]" :class="i === 0 ? 'text-ink' : 'text-ink-70'">
-            {{ line.text }}
+            <!-- 同一行的文字变长（去重时会就地更新）只让文字淡入，整行不重新入场；
+                 新建的行由上面的 list 过渡负责整行出现。 -->
+            <Transition name="ink"
+              ><span :key="line.text">{{ line.text }}</span></Transition
+            >
           </p>
           <p class="m-0 mt-px text-[10px] text-ink-35">
             {{ line.origin }} · {{ relTime(line.captured_at) }}
@@ -55,3 +77,14 @@ const shortcut = confirmShortcut(navigator.userAgent)
     </div>
   </section>
 </template>
+
+<style scoped>
+/* No leave classes on purpose: the changed text is replaced at once and only
+   the new text fades in — removing a line's text would look like a deletion. */
+.ink-enter-active {
+  transition: opacity var(--mo-quick) var(--ease-soft);
+}
+.ink-enter-from {
+  opacity: 0;
+}
+</style>
