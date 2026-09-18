@@ -34,7 +34,7 @@ function submit() {
           保存
         </button>
       </div>
-      <p class="mt-2 mb-0 type-micro leading-relaxed text-ink-35">
+      <p class="mt-2 mb-0 type-micro leading-relaxed text-ink-70">
         Hook 工具可直接连接 WebSocket <code class="num">{{ wsUrl('/ws/hook') }}</code
         >，发送纯文本或 {"text": "…"}。
       </p>

@@ -64,15 +64,15 @@ async function installPitch() {
         <li v-for="d in dict.dictionaries" :key="d.id">
           <span>{{ d.title }}</span>
           <span class="tag tag-fact ml-1.5 align-middle">{{ dictionaryKindLabel(d.kind) }}</span>
-          <span class="text-ink-50">
+          <span class="text-ink-70">
             （{{ dictionaryCountLabel(d) }}<template v-if="d.revision">，{{ d.revision }}</template
             >）
           </span>
-          <span v-if="d.attribution" class="block text-xs text-ink-35">{{ d.attribution }}</span>
+          <span v-if="d.attribution" class="block text-xs text-ink-70">{{ d.attribution }}</span>
         </li>
       </ul>
     </template>
-    <p v-else-if="dict" class="text-sm text-ink-50">
+    <p v-else-if="dict" class="text-sm text-ink-70">
       尚未安装 JMdict，也还没有导入其他词典。安装后可查词、识别表达、给出候选释义（约 25 MB 下载）。
     </p>
     <div class="flex flex-wrap items-center gap-2">
@@ -119,17 +119,17 @@ async function installPitch() {
     <div class="space-y-2 border-t border-divider pt-3">
       <p class="text-sm">
         音高重音：{{ dict?.has_pitch ? '已安装' : '未安装' }}
-        <span class="text-ink-50">（用于卡面音高线与音高小测）</span>
+        <span class="text-ink-70">（用于卡面音高线与音高小测）</span>
       </p>
       <div class="flex flex-wrap items-center gap-2">
         <button class="btn btn-secondary" :disabled="pitchBusy()" @click="installPitch">
           {{ pitchBusy() ? '安装中…' : dict?.has_pitch ? '更新音高数据' : '安装音高数据' }}
         </button>
-        <span v-if="dict && dict.pitch.state !== 'idle'" class="text-sm text-ink-50">{{
+        <span v-if="dict && dict.pitch.state !== 'idle'" class="text-sm text-ink-70">{{
           dict.pitch.message
         }}</span>
       </div>
-      <p class="text-xs text-ink-50">
+      <p class="text-xs text-ink-70">
         音高数据来自
         <a
           class="underline"

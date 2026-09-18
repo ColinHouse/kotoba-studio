@@ -53,7 +53,7 @@ function active(to: string) {
         >
         <span>
           <span class="block font-head text-[18px] leading-tight text-ink">ことばこ</span>
-          <span class="block type-micro text-ink-35">{{ t('shell.tagline') }}</span>
+          <span class="block type-micro text-ink-70">{{ t('shell.tagline') }}</span>
         </span>
       </RouterLink>
 
@@ -71,10 +71,10 @@ function active(to: string) {
         </RouterLink>
       </nav>
 
-      <div class="mt-auto type-micro leading-[1.7] text-ink-35">
+      <div class="mt-auto type-micro leading-[1.7] text-ink-70">
         <template v-if="app.activeSession">
           <div class="border-t border-rule pt-2.5">{{ t('shell.activeSession') }}</div>
-          <div class="text-ink-50">
+          <div class="text-ink-70">
             {{ app.activeSession.source_title ?? t('shell.noSource') }} ·
             <span class="num">{{ app.activeSession.line_count }}</span> {{ t('shell.lines') }}
           </div>
@@ -108,7 +108,7 @@ function active(to: string) {
           :key="item.to"
           :to="item.to"
           class="relative flex-1 py-2.5 text-center no-underline"
-          :class="active(item.to) ? 'text-accent' : 'text-ink-50'"
+          :class="active(item.to) ? 'text-accent' : 'text-ink-70'"
         >
           <span
             v-if="active(item.to)"

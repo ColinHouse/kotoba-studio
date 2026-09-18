@@ -58,14 +58,14 @@ watch(
             :class="selectedId === line.id ? 'text-ink' : 'text-ink-70'"
             >{{ line.text }}</span
           >
-          <span class="num mt-0.5 block type-micro text-ink-35">
+          <span class="num mt-0.5 block type-micro text-ink-70">
             {{ relTime(line.captured_at)
             }}<template v-if="line.encounter_count"> · {{ line.encounter_count }} 个词</template>
             <template v-if="line.status === 'kept'"> · 已确认</template>
             <span
               v-if="line.unknown_count !== null && line.unknown_count > 0"
               class="tag tag-state ml-1.5 align-middle"
-              :class="line.unknown_count === 1 ? 'text-ink' : 'text-ink-50'"
+              :class="line.unknown_count === 1 ? 'text-ink' : 'text-ink-70'"
             >
               {{ line.unknown_count === 1 ? 'i+1' : `${line.unknown_count} 个生词` }}
             </span>
@@ -74,7 +74,7 @@ watch(
       </button>
     </li>
   </TransitionGroup>
-  <p v-if="!lines.length" class="m-0 py-4 type-note text-ink-35">{{ emptyHint }}</p>
+  <p v-if="!lines.length" class="m-0 py-4 type-note text-ink-70">{{ emptyHint }}</p>
 </template>
 
 <style scoped>

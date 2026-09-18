@@ -81,7 +81,7 @@ onMounted(async () => {
   <div>
     <header class="mb-5">
       <h1 class="m-0 font-head text-[24px] text-ink">汉字</h1>
-      <p class="mt-1 type-meta text-ink-50">
+      <p class="mt-1 type-meta text-ink-70">
         常用汉字表按掌握度着色，墨色越深越熟；点一个字看它出现在哪些词里。
       </p>
     </header>
@@ -91,11 +91,11 @@ onMounted(async () => {
       <button class="btn btn-primary mt-3" :disabled="installing" @click="install">
         导入汉字表
       </button>
-      <p v-if="installMessage" class="mt-2 type-meta text-ink-50">{{ installMessage }}</p>
+      <p v-if="installMessage" class="mt-2 type-meta text-ink-70">{{ installMessage }}</p>
     </div>
 
     <template v-else-if="grid">
-      <p class="num mb-3 type-meta text-ink-50">
+      <p class="num mb-3 type-meta text-ink-70">
         常用 <span class="text-ink">{{ grid.summary.total }}</span> 字 · 已掌握
         {{ grid.summary.mastered }} · 学习中 {{ grid.summary.learning }} · 见过
         {{ grid.summary.seen }} · 未见过 {{ grid.summary.unseen }}
@@ -118,7 +118,7 @@ onMounted(async () => {
       <section v-if="selected" class="mt-6 border-t border-rule pt-4">
         <h2 class="m-0 font-head text-[18px] text-ink">
           <span class="jp">{{ selected }}</span>
-          <span class="ml-2 type-meta text-ink-50">{{ terms.length }} 个词</span>
+          <span class="ml-2 type-meta text-ink-70">{{ terms.length }} 个词</span>
         </h2>
         <ul v-if="terms.length" class="mt-2 list-none p-0">
           <li
@@ -128,20 +128,20 @@ onMounted(async () => {
           >
             <RouterLink :to="`/terms/${term.term_id}`" class="no-underline">
               <span class="jp text-ink">{{ term.headword }}</span>
-              <span class="jp ml-2 type-meta text-ink-50">{{ term.reading }}</span>
+              <span class="jp ml-2 type-meta text-ink-70">{{ term.reading }}</span>
             </RouterLink>
             <span v-if="term.has_card" class="ml-2 type-micro text-gold">有卡</span>
-            <span v-else-if="term.known_status === 'known'" class="ml-2 type-micro text-ink-50"
+            <span v-else-if="term.known_status === 'known'" class="ml-2 type-micro text-ink-70"
               >已知</span
             >
           </li>
         </ul>
-        <p v-else class="mt-2 type-note text-ink-35">还没有含这个字的词。</p>
+        <p v-else class="mt-2 type-note text-ink-70">还没有含这个字的词。</p>
       </section>
 
       <section class="mt-6 border-t border-rule pt-4">
         <h2 class="m-0 font-head type-body text-ink">作品里的超纲字</h2>
-        <p class="mt-1 type-meta text-ink-50">超出常用汉字表的字，按在这部作品里的出现次数排。</p>
+        <p class="mt-1 type-meta text-ink-70">超出常用汉字表的字，按在这部作品里的出现次数排。</p>
         <select
           v-model="sourceId"
           class="mt-2 border border-rule bg-transparent px-2 py-1 type-note text-ink"
@@ -161,11 +161,11 @@ onMounted(async () => {
               @click="pick(item.character)"
             >
               {{ item.character
-              }}<span class="num ml-1 type-micro text-ink-50">{{ item.occurrences }}</span>
+              }}<span class="num ml-1 type-micro text-ink-70">{{ item.occurrences }}</span>
             </button>
           </li>
         </ul>
-        <p v-else-if="sourceId" class="mt-2 type-note text-ink-35">
+        <p v-else-if="sourceId" class="mt-2 type-note text-ink-70">
           这部作品没有超出常用汉字表的字，或者还没有遇到词。
         </p>
       </section>

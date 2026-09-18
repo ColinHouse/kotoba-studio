@@ -67,11 +67,11 @@ onMounted(async () => {
 
 <template>
   <SettingsSection v-if="settings" title="游戏内覆盖层">
-    <p class="m-0 text-xs text-ink-50">
+    <p class="m-0 text-xs text-ink-70">
       覆盖层的面板悬在对话框上方，显示当前句的分词；点词看释义，按「收藏这个词」记下它。
       面板以外的区域点击穿透，不会挡住游戏操作。
     </p>
-    <p class="mt-1 mb-0 text-xs text-ink-35">
+    <p class="mt-1 mb-0 text-xs text-ink-70">
       只在窗口化 / 无边框窗口下可用，独占全屏显示不出来。目前仅支持 Windows（tkinter）。
     </p>
 
@@ -105,13 +105,13 @@ onMounted(async () => {
         <span class="text-accent">{{ status.note }}</span>
       </template>
       <template v-else-if="status.running">
-        <span class="text-ink-50">
+        <span class="text-ink-70">
           {{ status.visible ? '面板显示中' : '面板已隐藏' }} ·
           <span class="num">{{ status.hotkey }}</span> 呼出/隐藏
         </span>
       </template>
       <template v-else>
-        <span class="text-ink-35">未启用</span>
+        <span class="text-ink-70">未启用</span>
       </template>
       <span v-if="status.available && status.last_error" class="text-accent">
         · {{ status.last_error }}
