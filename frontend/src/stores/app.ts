@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { api, ApiError } from '@/api/client'
+import { translateError } from '@/i18n'
 import type { Session, Settings } from '@/api/types'
 
 export interface Toast {
@@ -49,7 +50,8 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function fail(err: unknown, fallback = '操作失败') {
-    const message = err instanceof ApiError ? err.message : fallback
+    // 中文下 translateError 原样返回后端 message；英文按 code 映射（#130 决策二）。
+    const message = err instanceof ApiError ? translateError(err.code, err.message) : fallback
     toast(message, 'error')
   }
 

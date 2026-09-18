@@ -2,14 +2,15 @@
 import { onMounted, ref } from 'vue'
 import { api } from '@/api/client'
 import type { ConnectInfo } from '@/api/types'
+import { useAppStore } from '@/stores/app'
 
+const app = useAppStore()
 const info = ref<ConnectInfo | null>(null)
-const error = ref('')
 onMounted(async () => {
   try {
     info.value = await api.get<ConnectInfo>('/api/connect-info')
   } catch (e) {
-    error.value = (e as Error).message
+    app.fail(e) // the same path as everywhere else, so errors get translated too
   }
 })
 </script>
@@ -29,7 +30,6 @@ onMounted(async () => {
       <p v-if="info?.hint" class="mt-2 rounded-lg bg-accent/10 p-2 text-accent-2">
         {{ info.hint }}
       </p>
-      <p v-if="error" class="text-red-600">{{ error }}</p>
     </div>
   </div>
 </template>

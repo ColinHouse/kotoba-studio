@@ -6,6 +6,7 @@ import DictionarySection from '@/components/settings/DictionarySection.vue'
 import ExportSection from '@/components/settings/ExportSection.vue'
 import HotkeySection from '@/components/settings/HotkeySection.vue'
 import KnownImportSection from '@/components/settings/KnownImportSection.vue'
+import LanguageSection from '@/components/settings/LanguageSection.vue'
 import OcrSection from '@/components/settings/OcrSection.vue'
 import OverlaySection from '@/components/settings/OverlaySection.vue'
 import QrConnect from '@/components/settings/QrConnect.vue'
@@ -23,6 +24,8 @@ const app = useAppStore()
     <SettingsSection title="连接手机">
       <QrConnect />
     </SettingsSection>
+
+    <LanguageSection />
 
     <DeviceSection />
     <ReviewSection />
