@@ -107,7 +107,7 @@ function pick(choice: string) {
   <div class="mx-auto max-w-[660px]">
     <header class="flex items-baseline justify-between gap-3 border-b border-divider pb-3">
       <h1 class="page-title text-[26px] md:text-[28px]">会后短测</h1>
-      <span class="num text-[12px] text-ink-50">
+      <span class="num text-[12px] text-ink-70">
         {{ Math.min(index + 1, items.length) }} / {{ items.length }} · 对 {{ score.correct }}
       </span>
     </header>
@@ -136,7 +136,7 @@ function pick(choice: string) {
         <p v-else class="jp mt-2.5 mb-0 text-[23px] leading-[2.1] md:text-[26px]">
           {{ current.prompt }}
         </p>
-        <p class="mt-2 mb-0 text-[13px] text-ink-50">{{ current.hint }}</p>
+        <p class="mt-2 mb-0 text-[13px] text-ink-70">{{ current.hint }}</p>
 
         <div v-if="!result" class="mt-5">
           <template v-if="current.kind === 'meaning'">
@@ -177,7 +177,7 @@ function pick(choice: string) {
         <div v-else class="mt-[22px] border-t border-rule pt-[18px]">
           <dl class="m-0 grid grid-cols-[64px_1fr] items-baseline gap-x-3.5 gap-y-2.5">
             <template v-if="current.kind !== 'meaning'">
-              <dt class="text-right text-[11px] tracking-[0.1em] text-ink-35">你写的</dt>
+              <dt class="text-right text-[11px] tracking-[0.1em] text-ink-70">你写的</dt>
               <dd class="jp m-0 text-[22px] md:text-[24px]">
                 <template v-if="pieces.length">
                   <span
@@ -190,7 +190,7 @@ function pick(choice: string) {
                 <template v-else>{{ given || '（空）' }}</template>
               </dd>
             </template>
-            <dt class="text-right text-[11px] tracking-[0.1em] text-ink-35">
+            <dt class="text-right text-[11px] tracking-[0.1em] text-ink-70">
               {{ result.correct ? '正确' : '正确答案' }}
             </dt>
             <dd class="jp m-0 text-[22px] md:text-[24px]">
@@ -213,7 +213,7 @@ function pick(choice: string) {
 
           <div class="mt-5 flex flex-wrap items-center gap-3.5">
             <button class="btn btn-primary" @click="next">下一题</button>
-            <span class="text-[11px] text-ink-35">短测只作记录，不改变 FSRS 的正式安排。</span>
+            <span class="text-[11px] text-ink-70">短测只作记录，不改变 FSRS 的正式安排。</span>
           </div>
         </div>
       </div>
@@ -225,7 +225,7 @@ function pick(choice: string) {
           <p class="m-0 mt-1.5 font-head text-[26px] md:text-[30px]">
             {{ session?.source_title ?? '本次会话' }}
           </p>
-          <p class="num m-0 text-[12px] text-ink-50">时长 {{ fmtDuration(summary.duration_s) }}</p>
+          <p class="num m-0 text-[12px] text-ink-70">时长 {{ fmtDuration(summary.duration_s) }}</p>
         </div>
 
         <div class="mt-[22px] grid grid-cols-4">
@@ -242,11 +242,11 @@ function pick(choice: string) {
           >
             <p
               class="num m-0 font-head text-[34px] leading-none md:text-[40px]"
-              :class="stat.n ? 'text-ink' : 'text-ink-35'"
+              :class="stat.n ? 'text-ink' : 'text-ink-70'"
             >
               {{ stat.n }}
             </p>
-            <p class="m-0 mt-1.5 text-[11px] tracking-[0.1em] text-ink-50">{{ stat.label }}</p>
+            <p class="m-0 mt-1.5 text-[11px] tracking-[0.1em] text-ink-70">{{ stat.label }}</p>
           </div>
         </div>
 

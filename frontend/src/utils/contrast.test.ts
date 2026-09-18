@@ -1,19 +1,19 @@
 import { readFileSync } from 'node:fs'
+import { globSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 /**
  * The design system encodes learning state in ink density, so contrast is not
  * decoration here — it is information. These tests parse the tokens out of
- * style.css and pin which combinations fall short of WCAG 2.1 AA (4.5:1) on
- * purpose, so a token change that improves or worsens them is a deliberate edit
- * to this table, not a silent drift.
+ * style.css and hold each tier to the threshold for the size it is actually
+ * used at.
  *
- * Measured (2026-09): light ink-50 is 3.55–4.13 and ink-35 is 2.38–2.77 across
- * bg/surface/paper; dark ink-35 is 3.60–4.12. Everything else clears AA.
- * Recommendations live in the issue (#76), not in this file.
+ * The four tiers exist for the *sentence*, which renders at 24px (30px on
+ * desktop) — WCAG 2.1 "large text", so the bar there is 3:1. The top two tiers
+ * are also used for ordinary small text, so they are held to 4.5:1. The lower
+ * two must therefore never appear on small text; the last test enforces that,
+ * because it is the only thing keeping the 3:1 allowance honest.
  */
-// vitest runs with the frontend directory as cwd; import.meta.url is not a
-// file: URL under the happy-dom environment, so read the file by path.
 const css = readFileSync('src/style.css', 'utf8')
 
 type Palette = Record<string, string>
@@ -45,42 +45,63 @@ function ratio(foreground: string, background: string): number {
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
 }
 
-const INKS = ['ink', 'ink-70', 'ink-50', 'ink-35'] as const
 const SURFACES = ['bg', 'surface', 'paper'] as const
+const THEMES = [
+  ['light', light],
+  ['dark', dark],
+] as const
 
-function failures(p: Palette): string[] {
-  return SURFACES.flatMap((background) =>
-    INKS.filter((ink) => ratio(p[ink]!, p[background]!) < 4.5).map(
-      (ink) => `${ink} on ${background}`,
-    ),
-  )
-}
-
-describe('ink contrast (WCAG 2.1 AA, 4.5:1)', () => {
-  it('the reading levels clear AA on every layer, in both themes', () => {
-    for (const p of [light, dark]) {
-      for (const background of SURFACES) {
-        expect(ratio(p['ink']!, p[background]!), `ink on ${background}`).toBeGreaterThanOrEqual(4.5)
-        expect(
-          ratio(p['ink-70']!, p[background]!),
-          `ink-70 on ${background}`,
-        ).toBeGreaterThanOrEqual(4.5)
+describe('ink contrast', () => {
+  it.each(THEMES)('%s: text tiers clear AA for small text (4.5:1)', (_name, p) => {
+    for (const background of SURFACES) {
+      for (const ink of ['ink', 'ink-70'] as const) {
+        expect(ratio(p[ink]!, p[background]!), `${ink} on ${background}`).toBeGreaterThanOrEqual(
+          4.5,
+        )
       }
     }
   })
 
-  it('the current light-theme shortfalls are exactly these', () => {
-    expect(failures(light)).toEqual([
-      'ink-50 on bg',
-      'ink-35 on bg',
-      'ink-50 on surface',
-      'ink-35 on surface',
-      'ink-50 on paper',
-      'ink-35 on paper',
-    ])
+  it.each(THEMES)('%s: sentence tiers clear AA for large text (3:1)', (_name, p) => {
+    for (const background of SURFACES) {
+      for (const ink of ['ink-50', 'ink-35'] as const) {
+        expect(ratio(p[ink]!, p[background]!), `${ink} on ${background}`).toBeGreaterThanOrEqual(3)
+      }
+    }
   })
 
-  it('the current dark-theme shortfalls are exactly these', () => {
-    expect(failures(dark)).toEqual(['ink-35 on bg', 'ink-35 on surface', 'ink-35 on paper'])
+  it.each(THEMES)('%s: the four tiers stay ordered, lightest last', (_name, p) => {
+    const onPaper = (['ink', 'ink-70', 'ink-50', 'ink-35'] as const).map((ink) =>
+      ratio(p[ink]!, p['paper']!),
+    )
+    for (let i = 1; i < onPaper.length; i++) {
+      expect(onPaper[i]!, `tier ${i} must be lighter than tier ${i - 1}`).toBeLessThan(
+        onPaper[i - 1]!,
+      )
+    }
+  })
+})
+
+/**
+ * The 3:1 allowance above is only legitimate while these tiers stay on the
+ * sentence. Pair one with a small size and it becomes small text that fails AA.
+ */
+describe('the lower two tiers stay off small text', () => {
+  const SMALL = /text-(xs|sm|base|lg|xl|\[(\d|1\d|2[0-3])px\])/
+
+  it('no class list pairs ink-50 or ink-35 with a size below 24px', () => {
+    // The legend under the sentence names the ink levels ("浅墨 = 已掌握") and
+    // paints each sample in the level it names. A swatch that does not match the
+    // thing it describes is worse than a faint one, so it stays as it is.
+    const SWATCH = 'font-light text-ink-50'
+    const offenders: string[] = []
+    for (const file of globSync('src/**/*.vue')) {
+      const source = readFileSync(file, 'utf8')
+      for (const match of source.matchAll(/class="([^"]*text-ink-(?:50|35)[^"]*)"/g)) {
+        if (match[1] === SWATCH) continue
+        if (SMALL.test(match[1]!)) offenders.push(`${file}: ${match[1]!.slice(0, 70)}`)
+      }
+    }
+    expect(offenders, `${offenders.length} small-text uses of the sentence tiers`).toEqual([])
   })
 })

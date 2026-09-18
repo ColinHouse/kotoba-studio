@@ -99,7 +99,7 @@ const glossOf = (t: Term) =>
         <input
           id="library-search"
           v-model="q"
-          class="jp w-[200px] border-0 border-b border-divider bg-transparent pb-[5px] text-[14px] text-ink outline-none placeholder:text-ink-35 focus-visible:border-accent md:w-[260px]"
+          class="jp w-[200px] border-0 border-b border-divider bg-transparent pb-[5px] text-[14px] text-ink outline-none placeholder:text-ink-70 focus-visible:border-accent md:w-[260px]"
           placeholder="搜索词或读音…"
         />
         <div class="seg">
@@ -126,13 +126,13 @@ const glossOf = (t: Term) =>
             {{ s.label }}
           </button>
         </div>
-        <span v-else class="text-[11px] text-ink-35" title="在设置页导入 Yomitan 频率词典后可用">
+        <span v-else class="text-[11px] text-ink-70" title="在设置页导入 Yomitan 频率词典后可用">
           频率排序需先导入频率词典
         </span>
       </div>
     </header>
 
-    <p v-if="route.query.source" class="mt-3 mb-0 text-[11px] text-ink-35">
+    <p v-if="route.query.source" class="mt-3 mb-0 text-[11px] text-ink-70">
       仅显示该作品中遇见的词。<RouterLink to="/library" class="text-accent">清除筛选</RouterLink>
     </p>
 
@@ -189,7 +189,7 @@ const glossOf = (t: Term) =>
                   >— 不是「{{ t.trap.zh_reading_meaning }}」</span
                 >
               </span>
-              <span class="num w-[96px] shrink-0 text-[11px] text-ink-35 md:text-right">
+              <span class="num w-[96px] shrink-0 text-[11px] text-ink-70 md:text-right">
                 {{ t.encounter_count }} 次 · {{ t.source_count }} 部
               </span>
               <span class="flex w-[184px] shrink-0 items-center justify-end gap-1.5">
@@ -206,11 +206,11 @@ const glossOf = (t: Term) =>
             </RouterLink>
           </li>
         </ul>
-        <p class="mt-4 mb-0 text-[11px] leading-[1.7] text-ink-35">
+        <p class="mt-4 mb-0 text-[11px] leading-[1.7] text-ink-70">
           未学的词最黑最重，已掌握的退到浅墨——扫一眼就知道哪几行还欠着。
         </p>
       </div>
-      <p v-else-if="!loading && !terms.length" class="mt-5 text-[13px] text-ink-50">
+      <p v-else-if="!loading && !terms.length" class="mt-5 text-[13px] text-ink-70">
         还没有词条。在收件箱里确认句子中的词，就会出现在这里。
       </p>
     </Transition>

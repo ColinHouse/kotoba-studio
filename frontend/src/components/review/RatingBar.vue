@@ -32,7 +32,7 @@ const BUTTONS = [
         <i v-for="n in b.rating" :key="n" class="block h-[11px] w-px bg-current" />
       </span>
       <span class="font-head text-[16px] leading-none md:text-[17px]">{{ b.label }}</span>
-      <span class="num text-[11px] text-ink-50">{{ humanInterval(preview[b.key]) }}</span>
+      <span class="num text-[11px] text-ink-70">{{ humanInterval(preview[b.key]) }}</span>
     </button>
   </div>
 </template>

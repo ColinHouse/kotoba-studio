@@ -137,7 +137,7 @@ const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.co
   <div class="flex min-h-[calc(100dvh-160px)] flex-col md:min-h-0">
     <header class="flex items-baseline justify-between gap-3">
       <h1 class="page-title text-[27px] md:text-[32px]">复习</h1>
-      <span class="num text-[12px] text-ink-50 md:text-[13px]">
+      <span class="num text-[12px] text-ink-70 md:text-[13px]">
         本设备（{{ deviceLabel }}）· 剩余 {{ remaining }} · 已复习 {{ done
         }}<template v-if="pending.length"> · {{ pending.length }} 条待同步</template>
       </span>
@@ -146,11 +146,11 @@ const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.co
       <div class="h-0.5 bg-accent transition-[width]" :style="{ width: `${progress}%` }" />
     </div>
 
-    <p v-if="offline" class="mt-3 mb-0 text-[11px] text-ink-50">
+    <p v-if="offline" class="mt-3 mb-0 text-[11px] text-ink-70">
       当前无法连接服务器，正在用上次取到的卡片复习；记录会保存在本机，联网后自动同步。
     </p>
 
-    <p v-if="loading" class="mt-10 text-center text-[13px] text-ink-35">加载中…</p>
+    <p v-if="loading" class="mt-10 text-center text-[13px] text-ink-70">加载中…</p>
 
     <template v-else-if="current">
       <div class="flex flex-1 flex-col justify-center py-5">
@@ -169,20 +169,20 @@ const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.co
               class="flex h-[58px] w-full items-center justify-center gap-2.5 rounded-ui border border-accent font-head text-[19px] text-accent hover:bg-accent-100"
               @click="revealed = true"
             >
-              显示答案<span class="text-[12px] tracking-wider text-ink-50">空格</span>
+              显示答案<span class="text-[12px] tracking-wider text-ink-70">空格</span>
             </button>
             <RatingBar v-else key="rating" :preview="current.preview" @rate="rate" />
           </Transition>
         </div>
         <div
-          class="hidden w-[190px] shrink-0 border-l border-divider pl-4 text-[11px] leading-[1.9] text-ink-35 md:block"
+          class="hidden w-[190px] shrink-0 border-l border-divider pl-4 text-[11px] leading-[1.9] text-ink-70 md:block"
         >
           <p class="kicker mb-0.5 text-ink-50">键盘</p>
           <p class="m-0">空格 显示答案</p>
           <p class="num m-0">1／2／3／4 评分</p>
         </div>
       </div>
-      <p class="mt-2.5 mb-0 text-center text-[11px] text-ink-35">
+      <p class="mt-2.5 mb-0 text-center text-[11px] text-ink-70">
         评分交给 FSRS 安排下次复习；会后短测不影响这里的进度。
       </p>
     </template>
@@ -192,7 +192,7 @@ const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.co
         <p class="m-0 font-head text-[25px] leading-snug">
           {{ done ? `今天的复习完成了，共 ${done} 张。` : '这个设备上没有到期的卡片。' }}
         </p>
-        <p class="mt-2 mb-0 text-[13px] leading-relaxed text-ink-50">
+        <p class="mt-2 mb-0 text-[13px] leading-relaxed text-ink-70">
           卡片按归属端分配：只有归属于本设备（或"任意"）的卡片会出现在这里。可在词条详情或设置中调整。
         </p>
 
@@ -207,7 +207,7 @@ const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.co
               <span
                 class="num text-[11px]"
                 :class="
-                  i === 0 ? 'font-semibold text-accent' : d.count ? 'text-ink-50' : 'text-ink-35'
+                  i === 0 ? 'font-semibold text-accent' : d.count ? 'text-ink' : 'text-ink-70'
                 "
                 >{{ d.count || '·' }}</span
               >
@@ -230,7 +230,7 @@ const maxForecast = computed(() => Math.max(1, ...forecast.value.map((d) => d.co
               v-for="(d, i) in forecast"
               :key="d.date"
               class="num flex-1 text-center text-[10px]"
-              :class="i === 0 ? 'font-semibold text-accent' : 'text-ink-35'"
+              :class="i === 0 ? 'font-semibold text-accent' : 'text-ink-70'"
               >{{ Number(d.date.slice(8, 10)) }}</span
             >
           </div>

@@ -101,7 +101,7 @@ function restorePrevious() {
 
     <div class="space-y-2 border-t border-divider pt-3">
       <p class="kicker m-0">个人化参数</p>
-      <p class="text-xs text-ink-50">
+      <p class="text-xs text-ink-70">
         {{
           settings.fsrs_parameters
             ? '已启用你自己的参数（由复习记录拟合）。'
@@ -120,7 +120,7 @@ function restorePrevious() {
           还原上一组参数
         </button>
       </div>
-      <p v-if="optimize && optimize.state !== 'idle'" class="m-0 text-xs text-ink-50">
+      <p v-if="optimize && optimize.state !== 'idle'" class="m-0 text-xs text-ink-70">
         {{ optimize.message }}
         <template v-if="optimize.result">
           · 复习 {{ optimize.result.review_count }} 条 · 建议保持率
@@ -129,7 +129,7 @@ function restorePrevious() {
       </p>
       <div v-if="optimize?.result" class="flex flex-wrap items-center gap-2">
         <button class="btn btn-primary" @click="applyParameters">应用新参数</button>
-        <span class="text-xs text-ink-35">只在你确认后写入；旧参数留一份，可随时还原。</span>
+        <span class="text-xs text-ink-70">只在你确认后写入；旧参数留一份，可随时还原。</span>
       </div>
     </div>
   </SettingsSection>

@@ -71,7 +71,7 @@ async function submit() {
         <input
           id="known-file"
           type="file"
-          class="text-[12px] text-ink-50"
+          class="text-[12px] text-ink-70"
           accept=".txt,.apkg,.json"
           @change="pick"
         />
@@ -81,7 +81,7 @@ async function submit() {
       </button>
     </div>
     <p v-if="result" class="text-[13px] text-ink-70">{{ result }}</p>
-    <p class="text-[12px] text-ink-35">
+    <p class="text-[12px] text-ink-70">
       文本列表支持 UTF-8 与 Shift_JIS，`#` 开头的行是注释，`词&lt;Tab&gt;读法` 可以带读法。
     </p>
   </SettingsSection>

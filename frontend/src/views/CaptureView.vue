@@ -203,7 +203,7 @@ const elapsed = computed(() =>
     <header class="flex flex-wrap items-center justify-between gap-4 border-b border-divider pb-3">
       <div class="flex items-baseline gap-3">
         <h1 class="page-title text-[26px] md:text-[28px]">采集</h1>
-        <span v-if="session" class="inline-flex items-center gap-[7px] text-[12px] text-ink-50">
+        <span v-if="session" class="inline-flex items-center gap-[7px] text-[12px] text-ink-70">
           <i class="size-1.5 rounded-full bg-accent" />会话进行中 ·
           {{ currentSource?.title ?? '未指定作品' }}
         </span>
@@ -229,14 +229,14 @@ const elapsed = computed(() =>
     <template v-else>
       <!-- 一次性设置压成一条线，不和主动作抢注意力 -->
       <div
-        class="flex flex-wrap items-center gap-x-[22px] gap-y-2 border-b border-rule py-2.5 text-[12px] text-ink-50"
+        class="flex flex-wrap items-center gap-x-[22px] gap-y-2 border-b border-rule py-2.5 text-[12px] text-ink-70"
       >
         <span class="kicker">一次性设置</span>
         <label class="flex items-center gap-1.5">
           显示器
           <select
             v-model.number="capture.display.value"
-            class="num border-0 border-b border-divider bg-transparent text-[12px] text-ink-50"
+            class="num border-0 border-b border-divider bg-transparent text-[12px] text-ink-70"
           >
             <option v-for="d in capture.displays.value" :key="d.index" :value="d.index">
               {{ d.index + 1 }} · {{ d.width }}×{{ d.height }}
@@ -247,7 +247,7 @@ const elapsed = computed(() =>
           OCR
           <select
             v-model="capture.provider.value"
-            class="border-0 border-b border-divider bg-transparent text-[12px] text-ink-50"
+            class="border-0 border-b border-divider bg-transparent text-[12px] text-ink-70"
           >
             <option value="auto">自动</option>
             <option
@@ -263,7 +263,7 @@ const elapsed = computed(() =>
         <label class="flex items-center gap-1.5">
           游戏窗口
           <select
-            class="max-w-64 border-0 border-b border-divider bg-transparent text-[12px] text-ink-50"
+            class="max-w-64 border-0 border-b border-divider bg-transparent text-[12px] text-ink-70"
             :value="boundWindow?.handle ?? ''"
             @change="pickWindow"
           >
@@ -281,7 +281,7 @@ const elapsed = computed(() =>
         </button>
         <button class="btn-quiet" :disabled="busy" @click="capture.takeShot">重新截取预览</button>
         <ManualPaste @submit="addManual" />
-        <span class="ml-auto" :class="framed ? 'text-accent' : 'text-ink-35'">
+        <span class="ml-auto" :class="framed ? 'text-accent' : 'text-ink-70'">
           {{
             framed
               ? boundWindow
@@ -305,12 +305,12 @@ const elapsed = computed(() =>
             :scale="capture.shot.value.scale"
             :display="capture.display.value"
           />
-          <div v-else class="framed grid place-items-center p-10 text-[13px] text-ink-35">
+          <div v-else class="framed grid place-items-center p-10 text-[13px] text-ink-70">
             正在截取屏幕预览…
           </div>
 
           <div class="mt-2 flex items-baseline justify-between gap-3 text-[11px]">
-            <span v-if="capture.region.value" class="num text-ink-35">
+            <span v-if="capture.region.value" class="num text-ink-70">
               区域：{{ capture.region.value.left }}, {{ capture.region.value.top }} ·
               {{ capture.region.value.width }}×{{ capture.region.value.height }}（已随作品保存）
             </span>
@@ -342,11 +342,11 @@ const elapsed = computed(() =>
             </span>
           </button>
 
-          <div class="mt-2.5 flex flex-wrap items-center gap-[18px] text-[12px] text-ink-50">
+          <div class="mt-2.5 flex flex-wrap items-center gap-[18px] text-[12px] text-ink-70">
             <button class="btn-quiet" :disabled="!framed || busy" @click="capture.runOcr">
               {{ capture.busy.value === 'ocr' ? '识别中…' : '只识别，不保存' }}
             </button>
-            <span class="text-ink-35">按一次就回游戏；识别结果在右边核对。</span>
+            <span class="text-ink-70">按一次就回游戏；识别结果在右边核对。</span>
           </div>
         </div>
 

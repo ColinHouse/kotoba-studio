@@ -143,7 +143,7 @@ function pick(c: Chip) {
 
     <div
       v-if="legend"
-      class="mt-4 flex flex-wrap items-center gap-x-[18px] gap-y-1.5 text-[11px] text-ink-50"
+      class="mt-4 flex flex-wrap items-center gap-x-[18px] gap-y-1.5 text-[11px] text-ink-70"
     >
       <span class="kicker">读法</span>
       <span
@@ -154,6 +154,8 @@ function pick(c: Chip) {
         ><span class="text-ink-70" style="border-bottom: 1px dashed var(--ink-50)">中墨＋虚线</span>
         学习中</span
       >
+      <!-- The swatch must be the colour it names: ink-50 is what .tok-known paints.
+           Exempted in contrast.test.ts for exactly that reason. -->
       <span><span class="font-light text-ink-50">浅墨</span> 已掌握</span>
       <span
         ><span class="rounded-chip border border-divider px-1">方框</span>

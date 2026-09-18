@@ -83,7 +83,7 @@ const forecastBars = computed(() => {
         <p class="kicker text-accent">记忆轨迹</p>
         <h1 class="page-title mt-1 text-[32px] md:text-[38px]">学习统计</h1>
       </div>
-      <div class="text-[12px] leading-[1.8] text-ink-50 md:text-right">
+      <div class="text-[12px] leading-[1.8] text-ink-70 md:text-right">
         <p class="m-0">所有复习记录与留存指标由 SQL 聚合计算，诚实反映长期记忆轨迹。</p>
         <p v-if="summary?.streak_days" class="num m-0">
           连续复习第 <b class="font-semibold text-ink">{{ summary.streak_days }}</b> 天
@@ -92,57 +92,57 @@ const forecastBars = computed(() => {
     </header>
 
     <!-- Loading State -->
-    <div v-if="loading" class="py-12 text-center text-sm text-ink-35">正在聚合统计数据…</div>
+    <div v-if="loading" class="py-12 text-center text-sm text-ink-70">正在聚合统计数据…</div>
 
     <div v-else class="space-y-6">
       <!-- 1. Key Metrics Cards -->
       <section class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <div class="rounded-chip border border-divider bg-paper p-3.5 shadow-sm">
-          <div class="text-[11px] text-ink-50">真实保留率</div>
+          <div class="text-[11px] text-ink-70">真实保留率</div>
           <div class="num mt-1 text-xl font-bold text-ink">
             {{ formatPercent(summary?.real_retention) }}
           </div>
-          <div class="mt-1 text-[10px] text-ink-35">
+          <div class="mt-1 text-[10px] text-ink-70">
             目标 {{ formatPercent(summary?.target_retention) }}
           </div>
         </div>
 
         <div class="rounded-chip border border-divider bg-paper p-3.5 shadow-sm">
-          <div class="text-[11px] text-ink-50">连续复习</div>
+          <div class="text-[11px] text-ink-70">连续复习</div>
           <div class="num mt-1 text-xl font-bold text-accent">
-            {{ summary?.streak_days ?? 0 }} <span class="text-xs font-normal text-ink-50">天</span>
+            {{ summary?.streak_days ?? 0 }} <span class="text-xs font-normal text-ink-70">天</span>
           </div>
-          <div class="mt-1 text-[10px] text-ink-35">
+          <div class="mt-1 text-[10px] text-ink-70">
             累计活跃 {{ summary?.days_active ?? 0 }} 天
           </div>
         </div>
 
         <div class="rounded-chip border border-divider bg-paper p-3.5 shadow-sm">
-          <div class="text-[11px] text-ink-50">总复习量</div>
+          <div class="text-[11px] text-ink-70">总复习量</div>
           <div class="num mt-1 text-xl font-bold text-ink">
             {{ summary?.total_reviews ?? 0 }}
-            <span class="text-xs font-normal text-ink-50">次</span>
+            <span class="text-xs font-normal text-ink-70">次</span>
           </div>
-          <div class="mt-1 text-[10px] text-ink-35">仅计已调度复习</div>
+          <div class="mt-1 text-[10px] text-ink-70">仅计已调度复习</div>
         </div>
 
         <div class="rounded-chip border border-divider bg-paper p-3.5 shadow-sm">
-          <div class="text-[11px] text-ink-50">已掌握卡片</div>
+          <div class="text-[11px] text-ink-70">已掌握卡片</div>
           <div class="num mt-1 text-xl font-bold text-ink">
             {{ summary?.mastered_cards ?? 0 }}
-            <span class="text-xs font-normal text-ink-50">张</span>
+            <span class="text-xs font-normal text-ink-70">张</span>
           </div>
-          <div class="mt-1 text-[10px] text-ink-35">全部 {{ summary?.total_cards ?? 0 }} 张</div>
+          <div class="mt-1 text-[10px] text-ink-70">全部 {{ summary?.total_cards ?? 0 }} 张</div>
         </div>
 
         <div
           class="col-span-2 rounded-chip border border-divider bg-paper p-3.5 shadow-sm sm:col-span-1"
         >
-          <div class="text-[11px] text-ink-50">未来 30 天到期</div>
+          <div class="text-[11px] text-ink-70">未来 30 天到期</div>
           <div class="num mt-1 text-xl font-bold text-ink">
-            {{ forecastTotal }} <span class="text-xs font-normal text-ink-50">张</span>
+            {{ forecastTotal }} <span class="text-xs font-normal text-ink-70">张</span>
           </div>
-          <div class="mt-1 text-[10px] text-ink-35">包含今日与已到期</div>
+          <div class="mt-1 text-[10px] text-ink-70">包含今日与已到期</div>
         </div>
       </section>
 
@@ -153,10 +153,10 @@ const forecastBars = computed(() => {
         >
           <div>
             <h2 class="text-sm font-bold text-ink">近 90 天复习量与正确率</h2>
-            <p class="text-[11px] text-ink-35">柱状表示当日复习次数，曲线表示 7 日滚动正确率</p>
+            <p class="text-[11px] text-ink-70">柱状表示当日复习次数，曲线表示 7 日滚动正确率</p>
           </div>
           <!-- Legend -->
-          <div class="flex items-center gap-3 text-[11px] text-ink-50">
+          <div class="flex items-center gap-3 text-[11px] text-ink-70">
             <span class="flex items-center gap-1">
               <span class="inline-block size-2.5 rounded-xs bg-ink-35 opacity-40" />
               复习量
@@ -175,7 +175,7 @@ const forecastBars = computed(() => {
         <!-- Insufficient History Notice -->
         <div
           v-if="!summary?.has_enough_history"
-          class="mt-3 rounded-xs border border-rule-2 bg-surface px-3 py-2 text-xs text-ink-50"
+          class="mt-3 rounded-xs border border-rule-2 bg-surface px-3 py-2 text-xs text-ink-70"
         >
           数据还太少（当前累计活跃 {{ summary?.days_active ?? 0 }} 天）：持续复习满 14
           天后将在此展示正确率趋势线，不凭空外推。
@@ -237,7 +237,7 @@ const forecastBars = computed(() => {
         </div>
 
         <!-- Chart Footer / Hover Info -->
-        <div class="mt-2 flex h-5 items-center justify-between text-[11px] text-ink-50">
+        <div class="mt-2 flex h-5 items-center justify-between text-[11px] text-ink-70">
           <div>
             <span v-if="hoveredDay" class="num">
               {{ hoveredDay.date }}: 复习 {{ hoveredDay.count }} 次
@@ -245,9 +245,9 @@ const forecastBars = computed(() => {
                 · 正确 {{ hoveredDay.correct }} · 正确率 {{ formatPercent(hoveredDay.accuracy) }}
               </template>
             </span>
-            <span v-else class="text-ink-35">悬停或触碰柱状查看单日详情</span>
+            <span v-else class="text-ink-70">悬停或触碰柱状查看单日详情</span>
           </div>
-          <div class="num text-ink-35">
+          <div class="num text-ink-70">
             {{ dailyReviews[0]?.date }} 至 {{ dailyReviews[dailyReviews.length - 1]?.date }}
           </div>
         </div>
@@ -257,7 +257,7 @@ const forecastBars = computed(() => {
       <section class="rounded-chip border border-divider bg-paper p-4 md:p-5 shadow-sm">
         <div class="border-b border-divider pb-3">
           <h2 class="text-sm font-bold text-ink">未来 30 天到期预测</h2>
-          <p class="text-[11px] text-ink-35">
+          <p class="text-[11px] text-ink-70">
             根据 FSRS 记忆稳定性计算的到期分布；首日包含今天已到期与未复习卡片
           </p>
         </div>
@@ -292,7 +292,7 @@ const forecastBars = computed(() => {
           </svg>
         </div>
 
-        <div class="mt-2 flex justify-between text-[11px] text-ink-35">
+        <div class="mt-2 flex justify-between text-[11px] text-ink-70">
           <span class="num text-accent font-medium"
             >今天 / 已到期 ({{ forecast[0]?.count ?? 0 }})</span
           >
@@ -304,10 +304,10 @@ const forecastBars = computed(() => {
       <section class="rounded-chip border border-divider bg-paper p-4 md:p-5 shadow-sm">
         <div class="border-b border-divider pb-3">
           <h2 class="text-sm font-bold text-ink">按作品统计</h2>
-          <p class="text-[11px] text-ink-35">各作品的生词沉淀与掌握程度</p>
+          <p class="text-[11px] text-ink-70">各作品的生词沉淀与掌握程度</p>
         </div>
 
-        <div v-if="sources.length === 0" class="py-8 text-center text-xs text-ink-35">
+        <div v-if="sources.length === 0" class="py-8 text-center text-xs text-ink-70">
           暂无作品数据。导入作品并建卡后在此展示。
         </div>
 
@@ -315,7 +315,7 @@ const forecastBars = computed(() => {
         <div v-else class="mt-3 hidden md:block overflow-x-auto">
           <table class="w-full text-left text-xs">
             <thead>
-              <tr class="border-b border-divider text-[11px] text-ink-50">
+              <tr class="border-b border-divider text-[11px] text-ink-70">
                 <th class="py-2.5 font-normal">作品</th>
                 <th class="py-2.5 font-normal text-right">建卡数</th>
                 <th class="py-2.5 font-normal text-right">已掌握</th>
@@ -339,7 +339,7 @@ const forecastBars = computed(() => {
         <div v-if="sources.length > 0" class="mt-3 divide-y divide-rule-2 md:hidden">
           <div v-for="s in sources" :key="s.source_id" class="py-3">
             <div class="font-medium text-ink text-sm">{{ s.title }}</div>
-            <div class="mt-1.5 flex items-center justify-between text-xs text-ink-50">
+            <div class="mt-1.5 flex items-center justify-between text-xs text-ink-70">
               <span
                 >建卡 <span class="num font-semibold text-ink">{{ s.cards_count }}</span></span
               >
