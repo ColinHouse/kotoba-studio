@@ -110,6 +110,10 @@ Committing without being asked each time is fine. Doing the following is not.
 7. Keep `backend/pyproject.toml` and `frontend/package.json` on the same version when you
    bump either — CI fails if they disagree. The Python package reads its own version from
    the manifest, so there is no third copy to update.
+8. Update `CHANGELOG.md`'s `[Unreleased]` when the change is user-visible. CI fails a pull
+   request whose `feat(...)`/`fix(...)` commits do not touch the CHANGELOG; a human can excuse
+   a pure refactor, test or CI change with the `no-changelog` label. Labels are visible on the
+   pull request; do not expect a keyword in the commit message to work.
 
 ### Stop and ask instead of improvising when
 

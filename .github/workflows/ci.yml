@@ -121,6 +121,31 @@ jobs:
             esac
           fi
 
+      # Users read the CHANGELOG, not the commit log. A feature that ships without
+      # an entry is invisible, and 27 of them accumulated that way once. The exit
+      # is a label on the PR (visible, auditable), never a magic commit keyword.
+      - name: Features and fixes update the CHANGELOG
+        if: github.event_name == 'pull_request'
+        env:
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          git fetch --quiet origin ${{ github.base_ref }}
+          subjects=$(git log --format=%s origin/${{ github.base_ref }}..HEAD)
+          if ! printf '%s\n' "$subjects" | grep -Eq '^(feat|fix)(\(|:|!)'; then
+            exit 0
+          fi
+          case ",$LABELS," in
+            *,no-changelog,*)
+              echo "feat/fix commits without a CHANGELOG change, excused by no-changelog"
+              exit 0 ;;
+          esac
+          changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- CHANGELOG.md)
+          if [ -z "$changed" ]; then
+            echo "::error::this PR has feat/fix commits but does not touch CHANGELOG.md"
+            echo "Update [Unreleased], or have a human add the no-changelog label."
+            exit 1
+          fi
+
   backend:
     name: backend (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
