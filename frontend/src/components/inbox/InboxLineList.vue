@@ -1,23 +1,48 @@
 <script setup lang="ts">
+import { nextTick, watch } from 'vue'
 import { mediaUrl } from '@/api/client'
 import type { Line } from '@/api/types'
 import { relTime } from '@/utils/format'
 
-defineProps<{ lines: Line[]; selectedId: number | null; emptyHint: string }>()
+const props = defineProps<{
+  lines: Line[]
+  selectedId: number | null
+  cursorId?: number | null
+  emptyHint: string
+}>()
 defineEmits<{ select: [line: Line] }>()
+
+/** 键盘光标移动时把那一行带进视口；滚轮/触摸滚动不受影响。 */
+const rowEls = new Map<number, HTMLElement>()
+function setRow(id: number) {
+  return (el: unknown) => {
+    if (el instanceof HTMLElement) rowEls.set(id, el)
+    else rowEls.delete(id)
+  }
+}
+watch(
+  () => props.cursorId,
+  async (id) => {
+    if (id == null) return
+    await nextTick()
+    rowEls.get(id)?.scrollIntoView({ block: 'nearest' })
+  },
+)
 </script>
 
 <template>
   <TransitionGroup tag="ul" name="list" class="relative m-0 flex list-none flex-col p-0">
     <li v-for="line in lines" :key="line.id">
       <button
+        :ref="setRow(line.id)"
         type="button"
         class="line-row flex w-full gap-3 border-0 bg-transparent p-3 text-left"
-        :class="
+        :class="[
           selectedId === line.id
             ? 'lifted'
-            : 'cursor-pointer border-b border-rule px-3 pt-3.5 pb-[13px] hover:bg-surface/60'
-        "
+            : 'cursor-pointer border-b border-rule px-3 pt-3.5 pb-[13px] hover:bg-surface/60',
+          cursorId === line.id && selectedId !== line.id ? 'bg-surface/60' : '',
+        ]"
         @click="$emit('select', line)"
       >
         <img

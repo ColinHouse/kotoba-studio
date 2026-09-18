@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { api, mediaUrl } from '@/api/client'
 import type { DictStatus, Line } from '@/api/types'
@@ -9,6 +9,7 @@ import TermEditor, { type ConfirmPayload } from '@/components/inbox/TermEditor.v
 import TokenChips from '@/components/inbox/TokenChips.vue'
 import ExplanationBlock from '@/components/review/ExplanationBlock.vue'
 import { useInboxLines, type LineSort, type LineStatus } from '@/composables/useInboxLines'
+import { useListKeys } from '@/composables/useListKeys'
 import { useTermBuilder } from '@/composables/useTermBuilder'
 import { useAppStore } from '@/stores/app'
 import { relTime } from '@/utils/format'
@@ -30,6 +31,28 @@ const {
 const hasFrequencies = ref(false)
 /** 手机上列表与整理是同一层级的两屏，返回即回列表。 */
 const showDetailOnMobile = ref(false)
+const showHelp = ref(false)
+
+/** 键盘：j/k 或 ↑/↓ 移动光标，Enter 打开选中的句子，? 开关帮助。 */
+const { cursor } = useListKeys(
+  computed(() => inbox.lines.value.length),
+  {
+    onEnter: (index) => {
+      const line = inbox.lines.value[index]
+      if (line) selectLine(line)
+    },
+    onHelp: () => (showHelp.value = !showHelp.value),
+  },
+)
+const cursorId = computed(() => inbox.lines.value[cursor.value]?.id ?? null)
+watch(
+  () => inbox.selected.value?.id,
+  (id) => {
+    if (id == null) return
+    const index = inbox.lines.value.findIndex((line) => line.id === id)
+    if (index >= 0) cursor.value = index
+  },
+)
 
 const FILTERS: { value: LineStatus; label: string }[] = [
   { value: 'inbox', label: '待整理' },
@@ -81,7 +104,10 @@ const emptyHint = computed(() =>
       <div>
         <h1 class="page-title text-[27px] md:text-[32px]">收件箱</h1>
         <p class="mt-0.5 mb-0 text-[13px] text-ink-50">
-          点句子 → 点不认识的词 → 选释义 → 确认建卡。整理放在会后，不打断剧情。
+          点句子 → 点不认识的词 → 选释义 → 确认建卡。整理放在会后，不打断剧情。 键盘：<kbd
+            class="key"
+            >j</kbd
+          ><kbd class="key">k</kbd> 选句， <kbd class="key">?</kbd> 看全部。
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-3.5">
@@ -128,11 +154,33 @@ const emptyHint = computed(() =>
       </div>
     </header>
 
+    <div v-if="showHelp" class="framed mt-4 p-4 text-[13px] leading-[2.1]">
+      <div class="flex items-baseline justify-between gap-3">
+        <p class="kicker m-0">键盘</p>
+        <button class="btn-quiet" @click="showHelp = false">关闭</button>
+      </div>
+      <p class="m-0 mt-2">
+        <kbd class="key">j</kbd><kbd class="key">k</kbd> 或 <kbd class="key">↑</kbd
+        ><kbd class="key">↓</kbd> 选句 · <kbd class="key">Enter</kbd> 打开选中的句子
+      </p>
+      <p class="m-0">
+        <kbd class="key">Tab</kbd> 在词之间移动 · <kbd class="key">Enter</kbd> 打开词条编辑器
+      </p>
+      <p class="m-0">
+        <kbd class="key">⌘/Ctrl</kbd>+<kbd class="key">Enter</kbd> 确认建卡 ·
+        <kbd class="key">Esc</kbd> 取消
+      </p>
+      <p class="m-0 text-ink-50">
+        输入框里打字时单键不会触发导航；再按 <kbd class="key">?</kbd> 关闭本帮助。
+      </p>
+    </div>
+
     <div class="mt-5 md:grid md:grid-cols-[2fr_1px_3fr]">
       <section :class="showDetailOnMobile ? 'hidden md:block' : ''" class="md:pr-[26px]">
         <InboxLineList
           :lines="inbox.lines.value"
           :selected-id="inbox.selected.value?.id ?? null"
+          :cursor-id="cursorId"
           :empty-hint="emptyHint"
           @select="selectLine"
         />
