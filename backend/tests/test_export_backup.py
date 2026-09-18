@@ -277,3 +277,54 @@ def test_backup_roundtrip(client, data_dir):
     assert len(client.get("/api/backups").json()) == 2
     assert client.post("/api/backups/restore", json={"name": "../evil.zip"}).status_code == 400
     assert client.post("/api/backups/restore", json={"name": "missing.zip"}).status_code == 404
+
+
+def _tampered_backup(client, data_dir, member: str) -> str:
+    """A real backup with one extra member whose path points outside media/."""
+    name = client.post("/api/backups").json()["name"]
+    source = data_dir / "backups" / name
+    with zipfile.ZipFile(source) as zf:
+        entries = [(info, zf.read(info.filename)) for info in zf.infolist()]
+    with zipfile.ZipFile(source, "w") as zf:
+        for info, payload in entries:
+            zf.writestr(info, payload)
+        zf.writestr(member, b"payload")
+    return name
+
+
+def test_restore_refuses_a_member_that_escapes_the_media_directory(client, data_dir):
+    """A backup is a file users carry between machines, so its paths are untrusted."""
+    _seed(client, data_dir)
+    name = _tampered_backup(client, data_dir, "media/../../escaped.txt")
+    term = client.get("/api/terms", params={"q": "奢"}).json()[0]
+    client.patch(f"/api/terms/{term['id']}", json={"known_status": "ignored"})
+
+    response = client.post("/api/backups/restore", json={"name": name})
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "invalid_backup"
+    assert not (data_dir.parent / "escaped.txt").exists()
+    # Refused before anything was replaced: a half-restored database is worse than none.
+    # The pre-restore snapshot is only taken once the paths check out, so its absence
+    # says the refusal happened first, and the edit above survives untouched.
+    assert not list((data_dir / "backups").glob("pre-restore-*.zip"))
+    assert client.get(f"/api/terms/{term['id']}").json()["known_status"] == "ignored"
+
+
+def test_restore_refuses_an_absolute_member_path(client, data_dir, tmp_path):
+    _seed(client, data_dir)
+    target = tmp_path / "absolute.txt"
+    name = _tampered_backup(client, data_dir, f"media/{target}")
+
+    response = client.post("/api/backups/restore", json={"name": name})
+
+    assert response.status_code == 400
+    assert not target.exists()
+
+
+def test_restore_still_accepts_an_ordinary_nested_member(client, data_dir):
+    """The guard must not reject the deep paths a real backup is full of."""
+    _seed(client, data_dir)
+    name = _tampered_backup(client, data_dir, "media/screens/20260916/nested/ok.png")
+    assert client.post("/api/backups/restore", json={"name": name}).status_code == 200
+    assert (data_dir / "media" / "screens" / "20260916" / "nested" / "ok.png").is_file()

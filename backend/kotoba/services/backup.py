@@ -25,6 +25,31 @@ def _snapshot_db(db_path: Path, dest: Path) -> None:
         conn.close()
 
 
+MEDIA_PREFIX = "media/"
+
+
+def _media_targets(names: list[str], media_dir: Path) -> list[tuple[str, Path]]:
+    """Map each media member to where it will be written, refusing any that escapes.
+
+    A backup is a file people carry between machines, so the paths inside it are
+    untrusted input: `media/../../x` would otherwise be written outside the media
+    directory, and `mkdir(parents=True)` would create the way there. Everything is
+    checked before the first byte is written — a half-restored database is a worse
+    outcome than a refused one.
+    """
+    root = media_dir.resolve()
+    targets = []
+    for member in names:
+        if not member.startswith(MEDIA_PREFIX) or member.endswith("/"):
+            continue
+        relative = member[len(MEDIA_PREFIX) :]
+        target = (media_dir / relative).resolve()
+        if target == root or root not in target.parents:
+            raise ApiError("invalid_backup", f"backup contains an unsafe path: {member}")
+        targets.append((member, target))
+    return targets
+
+
 def create(paths: Paths, prefix: str = "kotoba-backup") -> Path:
     paths.backups_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
@@ -69,6 +94,8 @@ def restore(paths: Paths, name: str) -> dict:
         names = zf.namelist()
         if DB_NAME not in names:
             raise ApiError("invalid_backup", "backup does not contain kotoba.db")
+        # Validate every path first: this must raise before the database is touched.
+        targets = _media_targets(names, paths.media_dir)
         snapshot = create(paths, prefix="pre-restore") if paths.db_path.exists() else None
         for suffix in ("", "-wal", "-shm"):
             p = Path(str(paths.db_path) + suffix)
@@ -77,11 +104,9 @@ def restore(paths: Paths, name: str) -> dict:
         with zf.open(DB_NAME) as src, paths.db_path.open("wb") as dst:
             shutil.copyfileobj(src, dst)
         media_count = 0
-        for member in names:
-            if member.startswith("media/") and not member.endswith("/"):
-                target = paths.media_dir / member[len("media/") :]
-                target.parent.mkdir(parents=True, exist_ok=True)
-                with zf.open(member) as src, target.open("wb") as dst:
-                    shutil.copyfileobj(src, dst)
-                media_count += 1
+        for member, target in targets:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with zf.open(member) as src, target.open("wb") as dst:
+                shutil.copyfileobj(src, dst)
+            media_count += 1
     return {"restored": name, "snapshot": snapshot.name if snapshot else None, "media": media_count}
