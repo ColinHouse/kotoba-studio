@@ -32,6 +32,15 @@ _ALPHABET = (
 
 JP = st.text(st.sampled_from(_ALPHABET), max_size=12)
 
+# `sampled_from` draws single characters, so the half-width `ｶﾞ` above also lets a
+# bare voiced mark be generated on its own, anywhere in the string. That is worth
+# keeping — OCR really does emit stray marks — but a mark means whatever precedes
+# it, so any property that *removes a character* is not well defined against one.
+_DANGLING_MARKS = "ﾞﾟ゛゜"
+JP_NO_DANGLING_MARKS = st.text(
+    st.sampled_from([ch for ch in _ALPHABET if ch not in _DANGLING_MARKS]), max_size=12
+)
+
 # Bounded on purpose: CI should not pay for the generator, only for the finding.
 _QUICK = settings(max_examples=200, deadline=None)
 _SLOW = settings(max_examples=80, deadline=None, suppress_health_check=[HealthCheck.too_slow])
@@ -75,11 +84,24 @@ def test_parse_subtitles_returns_cues_or_a_readable_error(text):
 
 
 @_QUICK
-@given(JP)
+@given(JP_NO_DANGLING_MARKS)
 def test_mora_count_is_non_negative_and_ignores_small_kana_positions(text):
     assert mora_count(text) >= 0
     small_kana = "ぁぃぅぇぉゃゅょゎァィゥェォャュョヮ"
     assert mora_count(text) == mora_count("".join(ch for ch in text if ch not in small_kana))
+
+
+def test_a_voiced_mark_belongs_to_whatever_precedes_it():
+    """Why the property above excludes bare marks, pinned so the reason survives.
+
+    `mora_count` normalises before counting, so a mark that follows a small kana
+    stays separate, while the same mark after a full kana composes into one. Take
+    the small kana out and the mark changes owner — the count legitimately drops.
+    Neither order of normalise-and-remove avoids this; it is what a combining
+    character means, not a defect in `mora_count`.
+    """
+    assert mora_count("かゎﾞ") == 2  # か + ゎ, mark cannot attach to the small kana
+    assert mora_count("かﾞ") == 1  # composes to が
 
 
 @_QUICK
