@@ -73,45 +73,67 @@ def available() -> bool:
     return sys.platform == "win32"
 
 
-def default_relative_region(width: int, height: int) -> dict:
-    """The initial dialogue box inside a client area, before the user refines it."""
-    left = round(width * DEFAULT_LEFT)
-    top = round(height * DEFAULT_TOP)
+RATIO_UNIT = "ratio"
+
+
+def default_relative_region() -> dict:
+    """The initial dialogue box inside a client area, as fractions of its size."""
     return {
-        "left": left,
-        "top": top,
-        "width": max(1, round(width * DEFAULT_WIDTH)),
-        "height": max(1, round(height * DEFAULT_HEIGHT)),
+        "unit": RATIO_UNIT,
+        "left": DEFAULT_LEFT,
+        "top": DEFAULT_TOP,
+        "width": DEFAULT_WIDTH,
+        "height": DEFAULT_HEIGHT,
     }
 
 
 def relative_from_region(region: Region, window: WindowInfo) -> dict | None:
-    """`region` rewritten relative to the window's client area, or None when outside."""
+    """`region` rewritten as fractions of the client area, or None when outside.
+
+    Fractions, not pixels: a resized or maximised window moves and scales the
+    dialogue box, so the bound region has to scale with it (issue #124).
+    """
     cx = region.left + region.width / 2
     cy = region.top + region.height / 2
     left, top, width, height = window.client
     if not (left <= cx < left + width and top <= cy < top + height):
         return None
     return {
-        "left": region.left - left,
-        "top": region.top - top,
-        "width": region.width,
-        "height": region.height,
+        "unit": RATIO_UNIT,
+        "left": round((region.left - left) / width, 4),
+        "top": round((region.top - top) / height, 4),
+        "width": round(region.width / width, 4),
+        "height": round(region.height / height, 4),
     }
 
 
 def region_for(window: WindowInfo, relative: dict) -> Region | None:
-    """The absolute region to grab, clamped to the client area; None when unusable."""
+    """The absolute region to grab, clamped to the client area; None when unusable.
+
+    Bindings saved before #124 carry pixel offsets and no `unit`: they are read
+    as before so an upgrade does not scramble anyone's region. `round(ratio *
+    client)` happens exactly once, so a resize cannot accumulate drift.
+    """
     left, top, width, height = window.client
-    rel_left = max(0, int(relative.get("left", 0)))
-    rel_top = max(0, int(relative.get("top", 0)))
+    if relative.get("unit") == RATIO_UNIT:
+        rel_left = round(float(relative.get("left", 0.0)) * width)
+        rel_top = round(float(relative.get("top", 0.0)) * height)
+        rel_width = round(float(relative.get("width", 0.0)) * width)
+        rel_height = round(float(relative.get("height", 0.0)) * height)
+    else:
+        rel_left = int(relative.get("left", 0))
+        rel_top = int(relative.get("top", 0))
+        rel_width = int(relative.get("width", 1))
+        rel_height = int(relative.get("height", 1))
+    rel_left = max(0, rel_left)
+    rel_top = max(0, rel_top)
     if rel_left >= width or rel_top >= height:
         return None
     return Region(
         left=left + rel_left,
         top=top + rel_top,
-        width=max(1, min(int(relative.get("width", 1)), width - rel_left)),
-        height=max(1, min(int(relative.get("height", 1)), height - rel_top)),
+        width=max(1, min(rel_width, width - rel_left)),
+        height=max(1, min(rel_height, height - rel_top)),
         display=window.display,
     )
 

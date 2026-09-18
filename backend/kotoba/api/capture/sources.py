@@ -127,7 +127,7 @@ def _bind_window(src: Source, window: dict | None) -> None:
         saved = windows.saved_region(src)
         relative = windows.relative_from_region(saved, found) if saved and found else None
         if relative is None and found is not None:
-            relative = windows.default_relative_region(*found.client[2:])
+            relative = windows.default_relative_region()
     src.window_json = json.dumps({"process": process, "title": title, "region": relative})
 
 
