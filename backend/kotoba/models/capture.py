@@ -28,6 +28,9 @@ class Source(Base):
     title_ja: Mapped[str | None] = mapped_column(String(200))
     region_json: Mapped[str | None] = mapped_column(Text)
     window_json: Mapped[str | None] = mapped_column(Text)
+    # Where the user dragged the overlay for this work; None means the automatic
+    # spot. Kept as JSON {"x": .., "y": ..} so the shape can grow without a migration.
+    overlay_position_json: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
