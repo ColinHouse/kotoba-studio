@@ -30,6 +30,8 @@ export function useScreenCapture({ sessionId, persistRegion, onLine }: Options) 
   const shot = ref<Screenshot | null>(null)
   const region = ref<Region | null>(null)
   const ocr = ref<OcrResult | null>(null)
+  /** The screenshot the current `ocr` blocks belong to, when one was saved. */
+  const ocrImagePath = ref<string | null>(null)
   const busy = ref<'' | 'shot' | 'ocr' | 'collect'>('')
   let saveTimer: number | undefined
 
@@ -62,6 +64,8 @@ export function useScreenCapture({ sessionId, persistRegion, onLine }: Options) 
         region: region.value,
         provider: chosenProvider(),
       })
+      // Nothing was saved: the view falls back to the screen preview crop.
+      ocrImagePath.value = null
     } catch (e) {
       app.fail(e)
     } finally {
@@ -79,6 +83,7 @@ export function useScreenCapture({ sessionId, persistRegion, onLine }: Options) 
         provider: chosenProvider(),
       })
       ocr.value = result.ocr
+      ocrImagePath.value = result.screenshot_path
       if (!result.line) app.toast('没有识别到文字', 'error')
       else if (result.duplicate) app.toast('这句已经收藏过了')
       else app.toast('已收藏', 'success')
@@ -111,6 +116,7 @@ export function useScreenCapture({ sessionId, persistRegion, onLine }: Options) 
     shot,
     region,
     ocr,
+    ocrImagePath,
     busy,
     init,
     takeShot,

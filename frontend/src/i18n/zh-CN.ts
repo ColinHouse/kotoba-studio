@@ -54,6 +54,13 @@ export const zhCN: Messages = {
       testOk: '连接正常',
       testFail: '还是连不上，按下面的说明检查一下。',
     },
+    ocr: {
+      result: '识别结果',
+      copied: '已复制',
+      copyHint: '点一下框，复制那一块的文字',
+      noBlocks: '这个引擎只给整段文本，不提供分块坐标。',
+      noImage: '没有可叠加的截图，先按整段文本显示。',
+    },
   },
   errors: {},
 }
