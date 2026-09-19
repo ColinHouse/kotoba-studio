@@ -31,3 +31,8 @@ async def connect_hook(name: str, request: Request, body: HookConnectIn | None =
 @router.post("/{name}/disconnect")
 async def disconnect_hook(name: str, request: Request) -> dict:
     return await _manager(request).disconnect(name)
+
+
+@router.post("/{name}/probe")
+async def probe_hook(name: str, request: Request, body: HookConnectIn | None = None) -> dict:
+    return await _manager(request).probe(name, body.url if body else None)

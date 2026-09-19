@@ -58,6 +58,8 @@ def test_presets_are_listed(client):
     assert listed["agent"]["url"] == "ws://127.0.0.1:9001"
     assert listed["luna"]["url"] == "ws://127.0.0.1:2333"
     assert all(hook["connected"] is False for hook in listed.values())
+    assert all(hook["status"] == "idle" for hook in listed.values())
+    assert all(hook["last_text"] is None for hook in listed.values())
     assert all(hook["last_text_at"] is None for hook in listed.values())
 
 
@@ -66,6 +68,7 @@ def test_unknown_target_needs_a_url(client):
     assert r.status_code == 400
     assert r.json()["error"]["code"] == "unknown_hook"
     assert client.post("/api/capture/hooks/nope/disconnect").status_code == 404
+    assert client.post("/api/capture/hooks/nope/probe").status_code == 400
 
 
 def test_hook_client_ingests_text_then_reconnects(client):
@@ -87,7 +90,9 @@ def test_hook_client_ingests_text_then_reconnects(client):
         assert wait_for(lambda: len(line_texts(client, ses["id"])) == 2)
         live = hooks(client)["test"]
         assert live["connected"] is True
+        assert live["status"] == "connected"
         assert live["last_text_at"] is not None
+        assert live["last_text"] == "本当に？"
         assert line_texts(client, ses["id"]) == {"今日は俺が奢ってやるよ。", "本当に？"}
         lines = client.get("/api/lines", params={"session_id": ses["id"]}).json()
         assert {line["origin"] for line in lines} == {"hook"}
@@ -100,9 +105,54 @@ def test_hook_client_ingests_text_then_reconnects(client):
     assert wait_for(lambda: hooks(client)["test"]["connected"] is False)
     assert wait_for(lambda: hooks(client)["test"]["error"] is not None)
     assert client.app.state.hook_manager.get("test").running is True
+    assert hooks(client)["test"]["status"] == "connecting"
 
     stopped = client.post("/api/capture/hooks/test/disconnect").json()
     assert stopped["connected"] is False
+    assert stopped["status"] == "idle"
+
+
+def test_probe_answers_immediately_without_starting_a_client(client):
+    def handler(ws):
+        pass
+
+    server, thread, port = run_server(handler)
+    try:
+        live = client.post(
+            "/api/capture/hooks/textractor/probe", json={"url": f"ws://127.0.0.1:{port}"}
+        )
+        assert live.status_code == 200
+        assert live.json() == {"ok": True, "error": None}
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+
+    dead = client.post(
+        "/api/capture/hooks/textractor/probe", json={"url": f"ws://127.0.0.1:{unused_port()}"}
+    )
+    assert dead.status_code == 200
+    assert dead.json()["ok"] is False
+    assert dead.json()["error"]
+
+    # Probing is not connecting: nothing was left behind for the retry loop.
+    assert hooks(client)["textractor"]["status"] == "idle"
+    assert client.app.state.hook_manager.get("textractor") is None
+
+
+def test_probe_reuses_the_configured_url(client):
+    def handler(ws):
+        pass
+
+    server, thread, port = run_server(handler)
+    try:
+        client.post("/api/capture/hooks/textractor/connect", json={"url": f"ws://127.0.0.1:{port}"})
+        # No body: the probe must test the configured address, not the preset.
+        probed = client.post("/api/capture/hooks/textractor/probe")
+        assert probed.json() == {"ok": True, "error": None}
+    finally:
+        client.post("/api/capture/hooks/textractor/disconnect")
+        server.shutdown()
+        thread.join(timeout=2)
 
 
 def test_connect_failures_are_debug_logged(client, caplog):

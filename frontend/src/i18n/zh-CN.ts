@@ -30,5 +30,30 @@ export const zhCN: Messages = {
       en: 'English',
     },
   },
+  capture: {
+    hook: {
+      title: 'Hook 文本源',
+      state: {
+        idle: '未检测到',
+        connecting: '正在连接',
+        connected: '已连接',
+      },
+      lastHeard: '最后收到',
+      connect: '连接',
+      disconnect: '断开',
+      test: '测试连接',
+      advanced: '高级',
+      address: 'WebSocket 地址',
+      saveAndConnect: '保存并连接',
+      lastError: '最近一次错误',
+      helpTextractor:
+        '连不上通常是因为 Textractor 还缺 WebSocket 扩展：它不随 Textractor 自带，要单独安装一次。',
+      helpTextractorLink: '查看安装方法',
+      helpOther: '请先启动这个工具，并打开它的 WebSocket 服务。',
+      inboundHint: '也可以让 Hook 工具主动连到 ことばこ：',
+      testOk: '连接正常',
+      testFail: '还是连不上，按下面的说明检查一下。',
+    },
+  },
   errors: {},
 }

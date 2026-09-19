@@ -135,6 +135,24 @@ export interface CollectResult {
   duplicate: boolean
 }
 
+/** One outbound hook tool, as `GET /api/capture/hooks` reports it. */
+export type HookState = 'idle' | 'connecting' | 'connected'
+
+export interface HookStatus {
+  name: string
+  url: string
+  connected: boolean
+  status: HookState
+  last_text: string | null
+  last_text_at: string | null
+  error: string | null
+}
+
+export interface HookProbe {
+  ok: boolean
+  error: string | null
+}
+
 export interface HotkeyStatus {
   available: boolean
   note: string | null
