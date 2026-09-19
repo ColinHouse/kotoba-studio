@@ -7,6 +7,7 @@ from kotoba.services.overlay import (
     OverlayController,
     OverlayWord,
     TkOverlay,
+    apply_user_position,
     latest_line,
     overlay_position,
     overlay_words,
@@ -273,3 +274,21 @@ def test_overlay_is_windows_only(monkeypatch, platform):
     monkeypatch.setattr(sys, "platform", platform)
     ok, note = overlay.OverlayController(lambda: None).available()
     assert ok is False and note
+
+
+def test_a_dragged_position_wins_over_the_computed_one():
+    """Otherwise the next line snaps the panel back: _position() runs every refresh."""
+    auto = (100, 200)
+    assert apply_user_position(None, auto, (520, 160), (1920, 1080)) == auto
+    assert apply_user_position((40, 60), auto, (520, 160), (1920, 1080)) == (40, 60)
+
+
+def test_a_dragged_position_is_kept_on_screen():
+    """Dragged half off the edge, or the same spot after the resolution changed."""
+    size, screen = (520, 160), (1920, 1080)
+    assert apply_user_position((5000, 5000), (0, 0), size, screen) == (1400, 920)
+    assert apply_user_position((-80, -30), (0, 0), size, screen) == (0, 0)
+
+
+def test_a_panel_wider_than_the_screen_still_lands_at_the_origin():
+    assert apply_user_position((300, 300), (0, 0), (2400, 1400), (1920, 1080)) == (0, 0)
