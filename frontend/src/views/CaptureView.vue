@@ -26,6 +26,7 @@ import { useAppStore } from '@/stores/app'
 import { useDeviceStore } from '@/stores/device'
 import { fmtDuration } from '@/utils/format'
 import { commandKey } from '@/utils/platform'
+import { OCR_ENABLED } from '@/features'
 
 const app = useAppStore()
 const device = useDeviceStore()
@@ -300,6 +301,7 @@ const elapsed = computed(() =>
     <template v-else>
       <!-- 一次性设置压成一条线，不和主动作抢注意力 -->
       <div
+        v-if="OCR_ENABLED"
         class="flex flex-wrap items-center gap-x-[22px] gap-y-2 border-b border-rule py-2.5 type-meta text-ink-70"
       >
         <span class="kicker">一次性设置</span>
@@ -365,7 +367,7 @@ const elapsed = computed(() =>
         </span>
       </div>
 
-      <div id="ocr-collect" class="mt-5 md:grid md:grid-cols-[3fr_1px_2fr]">
+      <div v-if="OCR_ENABLED" id="ocr-collect" class="mt-5 md:grid md:grid-cols-[3fr_1px_2fr]">
         <div class="md:pr-[26px]">
           <RegionPicker
             v-if="capture.shot.value"
@@ -438,7 +440,17 @@ const elapsed = computed(() =>
         </div>
       </div>
 
-      <Transition name="rise">
+      <!-- Without the OCR column this is the only place a captured line shows up,
+           and hook lines land here too -- it must survive the switch. -->
+      <CapturedLines
+        v-else
+        :lines="lines"
+        :elapsed="elapsed"
+        :inbox-link="session ? `/inbox?session=${session.id}` : '/inbox'"
+        class="mt-5"
+      />
+
+      <Transition v-if="OCR_ENABLED" name="rise">
         <EngineCompare
           :results="compare.results.value"
           :current="app.settings?.ocr_provider ?? 'auto'"

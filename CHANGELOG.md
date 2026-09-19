@@ -6,6 +6,13 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Changed
+
+- 第一版先不提供屏幕识别（OCR）。文本来源只保留 Hook：Textractor / Agent / LunaTranslator，
+  以及 Textractor 自带的「复制到剪贴板」配合剪贴板监视。屏幕识别需要一套还不存在的框选
+  体验，准确度也还没调到能用，先发出来只会让人觉得整个软件不可靠。
+  已经用屏幕识别采集过的句子不受影响，照常显示和复习；引擎和接口都还在，没有删除。
+
 ### Added
 
 - 采集：剪贴板监听有了界面入口——开启后，任何把台词复制到剪贴板的工具（包括 Textractor 的

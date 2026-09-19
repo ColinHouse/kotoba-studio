@@ -8,6 +8,7 @@ import HotkeySection from '@/components/settings/HotkeySection.vue'
 import KnownImportSection from '@/components/settings/KnownImportSection.vue'
 import LanguageSection from '@/components/settings/LanguageSection.vue'
 import OcrSection from '@/components/settings/OcrSection.vue'
+import { OCR_ENABLED } from '@/features'
 import OverlaySection from '@/components/settings/OverlaySection.vue'
 import QrConnect from '@/components/settings/QrConnect.vue'
 import ReviewSection from '@/components/settings/ReviewSection.vue'
@@ -32,8 +33,10 @@ const app = useAppStore()
     <AiSection />
     <DictionarySection />
     <KnownImportSection />
-    <OcrSection />
-    <HotkeySection />
+    <!-- Both are screen-capture settings: the engine picker configures OCR, and the
+         capture hotkey's only job is to run an OCR collect. -->
+    <OcrSection v-if="OCR_ENABLED" />
+    <HotkeySection v-if="OCR_ENABLED" />
     <OverlaySection />
     <ExportSection />
     <BackupSection />
