@@ -27,6 +27,30 @@ export interface Messages {
       en: string
     }
   }
+  capture: {
+    hook: {
+      title: string
+      state: {
+        idle: string
+        connecting: string
+        connected: string
+      }
+      lastHeard: string
+      connect: string
+      disconnect: string
+      test: string
+      advanced: string
+      address: string
+      saveAndConnect: string
+      lastError: string
+      helpTextractor: string
+      helpTextractorLink: string
+      helpOther: string
+      inboundHint: string
+      testOk: string
+      testFail: string
+    }
+  }
   /** 中文留空：`translateError` 回退到后端原文，中文用户看到的字一个不变。 */
   errors: Partial<Record<ErrorCode, string>>
 }

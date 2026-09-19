@@ -5,6 +5,7 @@ import { api, mediaUrl } from '@/api/client'
 import type { GameWindow, Line, Region, Session, Source, WindowBinding } from '@/api/types'
 import CapturedLines from '@/components/capture/CapturedLines.vue'
 import EngineCompare from '@/components/capture/EngineCompare.vue'
+import HookStatus from '@/components/capture/HookStatus.vue'
 import ManualPaste from '@/components/capture/ManualPaste.vue'
 import RegionPicker from '@/components/capture/RegionPicker.vue'
 import { useOcrCompare } from '@/composables/useOcrCompare'
@@ -225,6 +226,8 @@ const elapsed = computed(() =>
     <p v-if="device.kind !== 'desktop'" class="framed mt-5 p-4 type-note">
       采集需要在运行 ことばこ 的电脑上进行；手机端请使用收件箱与复习。
     </p>
+
+    <HookStatus v-if="device.kind === 'desktop'" />
 
     <section v-if="!session" class="framed mt-5 flex flex-wrap items-center gap-3 p-4">
       <label class="type-note" for="session-source">先选择作品并开始会话：</label>

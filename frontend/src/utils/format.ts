@@ -24,6 +24,17 @@ export function relTime(iso: string, now: Date = new Date()): string {
   return new Date(iso).toLocaleDateString('zh-CN')
 }
 
+/** Seconds-first relative time for a live feed, where "刚刚" is not proof of life. */
+export function relSeconds(iso: string, now: Date = new Date()): string {
+  const s = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 1000))
+  if (s < 60) return `${s} 秒前`
+  const m = Math.round(s / 60)
+  if (m < 60) return `${m} 分钟前`
+  const h = Math.round(m / 60)
+  if (h < 24) return `${h} 小时前`
+  return `${Math.round(h / 24)} 天前`
+}
+
 export function fmtDateTime(iso: string): string {
   return new Date(iso).toLocaleString('zh-CN', { hour12: false })
 }

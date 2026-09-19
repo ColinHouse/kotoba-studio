@@ -34,6 +34,31 @@ export const en: Messages & { errors: Record<ErrorCode, string> } = {
       en: 'English',
     },
   },
+  capture: {
+    hook: {
+      title: 'Hook text source',
+      state: {
+        idle: 'Not detected',
+        connecting: 'Connecting',
+        connected: 'Connected',
+      },
+      lastHeard: 'Last heard',
+      connect: 'Connect',
+      disconnect: 'Disconnect',
+      test: 'Test connection',
+      advanced: 'Advanced',
+      address: 'WebSocket address',
+      saveAndConnect: 'Save and connect',
+      lastError: 'Last error',
+      helpTextractor:
+        'The usual cause is the missing WebSocket extension: Textractor does not ship one, so it has to be installed separately.',
+      helpTextractorLink: 'How to install it',
+      helpOther: 'Start the tool first and turn on its WebSocket server.',
+      inboundHint: 'Hook tools can also connect to Kotobako themselves:',
+      testOk: 'The connection works',
+      testFail: 'Still cannot connect — check the steps below.',
+    },
+  },
   errors: {
     ai_failed: 'The AI explanation failed. You can retry, or keep working without it.',
     anki_error: 'AnkiConnect reported an error. Check that Anki is running with the add-on.',

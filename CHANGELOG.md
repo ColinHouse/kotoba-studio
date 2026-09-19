@@ -24,6 +24,10 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   重复的台词自动去重；「收藏这句」快捷键与它共用同一套解析。
 - 采集：主动连接 Hook 工具（Textractor 6677 / Agent 9001 / LunaTranslator 2333），
   也可以让它看着剪贴板（默认关闭），游戏文本直接进收件箱。
+- 采集：Hook 文本源现在看得懂状态了——Textractor / Agent / LunaTranslator 三选一，
+  显示「未检测到 / 正在连接 / 已连接」和最后收到的那句台词；连不上时说明要单独给
+  Textractor 装 WebSocket 扩展并给安装方法，「测试连接」立即给出结果；地址与端口
+  收进折叠的「高级」，主界面不再出现 `ws://`。
 - 采集：字幕导入（.srt/.ass）按时间轴切成台词；之后可以配上本地视频，为每一句切原声与截图。
 - 采集：引擎对比——同一区域把可用引擎并排跑一遍，看谁认得最准，点一下换成默认；
   失败的引擎不可选。

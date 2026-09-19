@@ -34,6 +34,10 @@ PRESETS: dict[str, str] = {
     "luna": "ws://127.0.0.1:2333",
 }
 
+# A one-shot connection test must answer quickly; the retrying client is the
+# patient one.
+PROBE_TIMEOUT = 2.0
+
 
 class HookClient:
     """One outbound WebSocket with exponential backoff between attempts."""
@@ -56,11 +60,19 @@ class HookClient:
         self._task: asyncio.Task[None] | None = None
         self.connected = False
         self.last_text_at: datetime | None = None
+        self.last_text: str | None = None
         self.error: str | None = None
 
     @property
     def running(self) -> bool:
         return self._task is not None and not self._task.done()
+
+    @property
+    def state(self) -> str:
+        """idle / connecting / connected — the three states the capture UI shows."""
+        if self.connected:
+            return "connected"
+        return "connecting" if self.running else "idle"
 
     def start(self) -> None:
         if self.running:
@@ -93,6 +105,9 @@ class HookClient:
                         # every 0.5s for ever instead of backing off.
                         backoff = self._initial_backoff
                         self.last_text_at = utcnow()
+                        # The parsed text, not the raw frame: a JSON payload should
+                        # not show up as JSON in the status line.
+                        self.last_text = parse_hook_message(raw).get("text", "").strip() or None
                         try:
                             self._on_text(raw)
                         except Exception:  # noqa: BLE001 - one bad line must not end the reconnect loop
@@ -173,6 +188,8 @@ class HookManager:
             "name": name,
             "url": client.url if client is not None else PRESETS.get(name, ""),
             "connected": client.connected if client is not None else False,
+            "status": client.state if client is not None else "idle",
+            "last_text": client.last_text if client is not None else None,
             "last_text_at": (
                 client.last_text_at.isoformat()
                 if client is not None and client.last_text_at is not None
@@ -180,6 +197,25 @@ class HookManager:
             ),
             "error": client.error if client is not None else None,
         }
+
+    async def probe(self, name: str, url: str | None = None) -> dict:
+        """Open one connection and close it, without touching the retrying client.
+
+        This backs the UI's test button: an immediate yes/no instead of watching
+        a backoff that may be 30 seconds long.
+        """
+        client = self._clients.get(name)
+        target = url or (client.url if client is not None else None) or PRESETS.get(name) or ""
+        target = target.strip()
+        if not target:
+            raise ApiError("unknown_hook", f"未知的 Hook 目标：{name}")
+        try:
+            async with asyncio.timeout(PROBE_TIMEOUT):
+                async with websockets.connect(target):
+                    pass
+        except Exception as exc:  # noqa: BLE001 - any failure is simply "not reachable"
+            return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        return {"ok": True, "error": None}
 
     async def shutdown(self) -> None:
         for client in list(self._clients.values()):

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { wsUrl } from '@/api/client'
 
 const emit = defineEmits<{ submit: [text: string] }>()
 const open = ref(false)
@@ -34,10 +33,6 @@ function submit() {
           保存
         </button>
       </div>
-      <p class="mt-2 mb-0 type-micro leading-relaxed text-ink-70">
-        Hook 工具可直接连接 WebSocket <code class="num">{{ wsUrl('/ws/hook') }}</code
-        >，发送纯文本或 {"text": "…"}。
-      </p>
     </div>
   </div>
 </template>
