@@ -18,6 +18,8 @@ export interface Settings {
   ai_base_url: string
   ai_model: string
   ocr_provider: string
+  /** Which capture route the UI recommends first; both stay usable. */
+  preferred_text_source: 'hook' | 'ocr'
   active_session_id: number | null
   ui_language: string
   capture_hotkey: string

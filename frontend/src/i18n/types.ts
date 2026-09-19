@@ -49,6 +49,19 @@ export interface Messages {
       inboundHint: string
       testOk: string
       testFail: string
+      idleHint: string
+      idleHintLink: string
+    }
+    source: {
+      title: string
+      recommended: string
+      prefer: string
+      hookTitle: string
+      hookReason: string
+      hookLink: string
+      ocrTitle: string
+      ocrReason: string
+      ocrLink: string
     }
     ocr: {
       result: string

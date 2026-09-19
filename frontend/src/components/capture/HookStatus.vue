@@ -179,6 +179,12 @@ onBeforeUnmount(() => window.clearInterval(poll))
       <template v-else>{{ t('capture.hook.helpOther') }}</template>
     </p>
 
+    <!-- 勾不到的游戏不是死路：把兜底路径指出来，别让人卡在这里 -->
+    <p v-if="state === 'idle'" class="mt-1 mb-0 type-micro leading-relaxed text-ink-70">
+      {{ t('capture.hook.idleHint') }}
+      <a class="underline" href="#ocr-collect">{{ t('capture.hook.idleHintLink') }}</a>
+    </p>
+
     <div v-if="showAdvanced" class="mt-2.5 border-t border-divider pt-2.5">
       <label class="field-label" :for="`hook-url-${tool}`">{{ t('capture.hook.address') }}</label>
       <div class="flex gap-2">

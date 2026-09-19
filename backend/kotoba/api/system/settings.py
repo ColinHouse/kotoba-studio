@@ -20,7 +20,7 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 
 @router.get("")
 def get_settings(db: Session = Depends(get_db)) -> dict[str, Any]:
-    return settings_store.all_values(db)
+    return settings_store.public_values(db)
 
 
 @router.put("")
@@ -40,6 +40,8 @@ def put_settings(body: dict[str, Any], db: Session = Depends(get_db)) -> dict[st
         "any",
     ):
         raise ApiError("invalid_value", "review_owner_default must be desktop/mobile/any/null")
+    if "preferred_text_source" in body and body["preferred_text_source"] not in ("hook", "ocr"):
+        raise ApiError("invalid_value", "preferred_text_source must be hook or ocr")
     if body.get("fsrs_parameters") is not None:
         try:
             Scheduler(parameters=[float(value) for value in body["fsrs_parameters"]])
@@ -72,7 +74,7 @@ def put_settings(body: dict[str, Any], db: Session = Depends(get_db)) -> dict[st
     for key, value in body.items():
         settings_store.set_value(db, key, value)
     db.commit()
-    return settings_store.all_values(db)
+    return settings_store.public_values(db)
 
 
 class AiKeyIn(BaseModel):

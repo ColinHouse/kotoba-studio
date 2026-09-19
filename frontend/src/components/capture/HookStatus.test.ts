@@ -60,6 +60,15 @@ describe('HookStatus', () => {
     wrapper.unmount()
   })
 
+  it('points to screen recognition while the tool is not detected', async () => {
+    const wrapper = await mountPanel()
+
+    expect(wrapper.text()).toContain('可以改用屏幕识别')
+    expect(wrapper.find('a[href="#ocr-collect"]').exists()).toBe(true)
+
+    wrapper.unmount()
+  })
+
   it('shows the last line and how fresh it is once connected', async () => {
     listHooks.mockResolvedValue([
       hook({
