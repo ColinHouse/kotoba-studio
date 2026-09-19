@@ -22,7 +22,7 @@ from kotoba.services import settings_store
 from kotoba.services.capture.buffer import MediaBuffer
 from kotoba.services.capture.framehash import StabilityTracker, dhash
 from kotoba.services.capture.gate import gate
-from kotoba.services.capture.screen import Grab, Region, grab
+from kotoba.services.capture.screen import Grab, Region, grab, mask_rect
 from kotoba.services.capture.windows import capture_trust
 from kotoba.services.dictionary.lookup import has_form
 from kotoba.services.jp.normalize import normalize_ocr
@@ -49,6 +49,7 @@ class RegionWatcher:
         interval: float = DEFAULT_INTERVAL,
         source_id: int | None = None,
         buffer: MediaBuffer | None = None,
+        mask: Callable[[], tuple[int, int, int, int] | None] | None = None,
     ) -> None:
         self.region = region
         self.source_id = source_id
@@ -58,6 +59,7 @@ class RegionWatcher:
         self._region_provider = region_provider
         self._interval = interval
         self._buffer = buffer
+        self._mask = mask
         self._tracker = StabilityTracker()
         self._stop = threading.Event()
         self._lock = threading.Lock()
@@ -108,7 +110,14 @@ class RegionWatcher:
                 if region is None:
                     self.last_error = "找不到绑定的游戏窗口：确认游戏还在运行"
                     continue
-                png = self._grabber(region).png
+                grab = self._grabber(region)
+                png = grab.png
+                if self._mask is not None and grab.source == "screen":
+                    rect = self._mask()
+                    if rect is not None:
+                        # The overlay sits above the region and was read back as
+                        # game text; black it out before the frame is judged.
+                        png = mask_rect(png, rect, origin=grab.origin, scale=grab.scale)
                 if self._buffer is not None:
                     self._buffer.add_frame(png)
                 image = Image.open(io.BytesIO(png))

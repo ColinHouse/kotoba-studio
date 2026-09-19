@@ -64,6 +64,23 @@ def _grabber(request: Request):
     return getattr(request.app.state, "capture_grabber", None) or screen.grab
 
 
+def _overlay_rect(request: Request) -> tuple[int, int, int, int] | None:
+    overlay = getattr(request.app.state, "overlay", None)
+    return overlay.screen_rect() if overlay is not None else None
+
+
+def _masked(request: Request, shot: screen.Grab) -> bytes:
+    """OCR input from a screen grab, with our own overlay blacked out.
+
+    Window grabs come from `PrintWindow` and never contain the panel, so only
+    the screen path needs this.
+    """
+    rect = _overlay_rect(request)
+    if rect is None or shot.source != "screen":
+        return shot.png
+    return screen.mask_rect(shot.png, rect, origin=shot.origin, scale=shot.scale)
+
+
 def _provider(request: Request, db: Session, name: str | None):
     override = getattr(request.app.state, "ocr_provider", None)
     if override is not None and name in (None, "", "auto"):
@@ -129,7 +146,7 @@ def ocr(body: OcrIn, request: Request, db: Session = Depends(get_db)) -> dict:
             raise ApiError("not_found", f"media {body.path} not found", 404)
         png = file.read_bytes()
     elif body.region:
-        png = _grabber(request)(body.region.to_region()).png
+        png = _masked(request, _grabber(request)(body.region.to_region()))
     else:
         raise ApiError("validation_error", "region or path is required", 422)
     result = provider.recognize(png)
@@ -145,7 +162,7 @@ def ocr_compare(body: OcrCompareIn, request: Request) -> list[dict]:
             raise ApiError("not_found", f"media {body.path} not found", 404)
         png = file.read_bytes()
     elif body.region:
-        png = _grabber(request)(body.region.to_region()).png
+        png = _masked(request, _grabber(request)(body.region.to_region()))
     else:
         raise ApiError("validation_error", "region or path is required", 422)
     return registry.compare(png)
@@ -167,6 +184,7 @@ def collect(body: CollectIn, request: Request, db: Session = Depends(get_db)) ->
         provider,
         grabber=_grabber(request),
         source_id=body.source_id,
+        mask=lambda: _overlay_rect(request),
     )
 
 
@@ -221,6 +239,7 @@ def watch_start(body: WatchIn, request: Request, db: Session = Depends(get_db)) 
         region_provider=region_provider if body.source_id is not None else None,
         source_id=body.source_id,
         buffer=getattr(request.app.state, "media_buffer", None),
+        mask=lambda: _overlay_rect(request),
     )
     request.app.state.region_watcher = watcher
     watcher.start()

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from kotoba.core.config import Paths
 from kotoba.core.errors import ApiError
 from kotoba.schemas import LineCreate, LineDTO
-from kotoba.services.capture.screen import Grab, Region, grab, save_screenshot
+from kotoba.services.capture.screen import Grab, Region, grab, mask_rect, save_screenshot
 from kotoba.services.capture.windows import WindowInfo, capture_trust, grab_from_window
 from kotoba.services.dictionary.lookup import has_form
 from kotoba.services.jp.normalize import normalize_ocr
@@ -18,6 +18,7 @@ from kotoba.services.ocr.base import OcrProvider
 from kotoba.services.text.ingest import create_line
 
 Grabber = Callable[[Region], Grab]
+MaskRect = Callable[[], tuple[int, int, int, int] | None]
 
 
 def collect(
@@ -30,8 +31,13 @@ def collect(
     source_id: int | None = None,
     save: bool = True,
     window: WindowInfo | None = None,
+    mask: MaskRect | None = None,
 ) -> dict:
-    """`window` overrides the one `capture_trust` resolves; only tests pass it."""
+    """`window` overrides the one `capture_trust` resolves; only tests pass it.
+
+    `mask` returns the overlay's screen rectangle, if it is visible; its pixels
+    are blacked out before OCR so the panel cannot read itself back in.
+    """
     # Refuse before grabbing anything: if the bound game is not the window the
     # user is looking at, every pixel in this region belongs to something else.
     trust = capture_trust(db, source_id)
@@ -45,11 +51,16 @@ def collect(
     shot = grab_from_window(target, region) if target is not None else None
     if shot is None:
         shot = grabber(region)
-    result = provider.recognize(shot.png)
+    png = shot.png
+    if mask is not None and shot.source == "screen":
+        rect = mask()
+        if rect is not None:
+            png = mask_rect(png, rect, origin=shot.origin, scale=shot.scale)
+    result = provider.recognize(png)
     text = normalize_ocr(result.text)
     text = repair_ocr(text, lambda form: has_form(db, form))
     # Only keep the screenshot when there is text to attach it to (no orphan files).
-    screenshot_path = save_screenshot(shot.png, paths) if (save and text) else None
+    screenshot_path = save_screenshot(png, paths) if (save and text) else None
     payload = {
         "ocr": result.to_dict(),
         "screenshot_path": screenshot_path,
