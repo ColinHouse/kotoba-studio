@@ -13,7 +13,9 @@ from kotoba.services.capture import collect as collect_service
 from kotoba.services.capture import screen
 from kotoba.services.capture import windows as windows_service
 from kotoba.services.capture.watcher import RegionWatcher
+from kotoba.services.dictionary.lookup import has_form
 from kotoba.services.jp.normalize import normalize_ocr
+from kotoba.services.jp.repair import repair_ocr
 from kotoba.services.ocr import registry
 
 router = APIRouter(prefix="/capture", tags=["capture"])
@@ -131,7 +133,8 @@ def ocr(body: OcrIn, request: Request, db: Session = Depends(get_db)) -> dict:
     else:
         raise ApiError("validation_error", "region or path is required", 422)
     result = provider.recognize(png)
-    return {**result.to_dict(), "normalized": normalize_ocr(result.text)}
+    text = normalize_ocr(result.text)
+    return {**result.to_dict(), "normalized": repair_ocr(text, lambda form: has_form(db, form))}
 
 
 @router.post("/ocr/compare")

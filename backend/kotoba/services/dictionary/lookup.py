@@ -85,6 +85,14 @@ def lookup(db: Session, q: str, limit: int = 10) -> list[EntryDTO]:
     return out
 
 
+def has_form(db: Session, text: str) -> bool:
+    """Whether any imported dictionary has this exact written form."""
+    if not text:
+        return False
+    stmt = select(DictForm.id).where(DictForm.text == text).limit(1)
+    return db.execute(stmt).first() is not None
+
+
 def candidates_for_token(db: Session, token: Token, limit: int = 5) -> list[EntryDTO]:
     """Dictionary candidates for a token, trying surface, base form, lemma and readings."""
     keys: list[str] = []

@@ -11,7 +11,9 @@ from kotoba.core.errors import ApiError
 from kotoba.schemas import LineCreate, LineDTO
 from kotoba.services.capture.screen import Grab, Region, grab, save_screenshot
 from kotoba.services.capture.windows import WindowInfo, capture_trust, grab_from_window
+from kotoba.services.dictionary.lookup import has_form
 from kotoba.services.jp.normalize import normalize_ocr
+from kotoba.services.jp.repair import repair_ocr
 from kotoba.services.ocr.base import OcrProvider
 from kotoba.services.text.ingest import create_line
 
@@ -45,6 +47,7 @@ def collect(
         shot = grabber(region)
     result = provider.recognize(shot.png)
     text = normalize_ocr(result.text)
+    text = repair_ocr(text, lambda form: has_form(db, form))
     # Only keep the screenshot when there is text to attach it to (no orphan files).
     screenshot_path = save_screenshot(shot.png, paths) if (save and text) else None
     payload = {

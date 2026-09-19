@@ -24,7 +24,9 @@ from kotoba.services.capture.framehash import StabilityTracker, dhash
 from kotoba.services.capture.gate import gate
 from kotoba.services.capture.screen import Grab, Region, grab
 from kotoba.services.capture.windows import capture_trust
+from kotoba.services.dictionary.lookup import has_form
 from kotoba.services.jp.normalize import normalize_ocr
+from kotoba.services.jp.repair import repair_ocr
 from kotoba.services.ocr.base import OcrProvider
 from kotoba.services.text.ingest import create_line
 
@@ -146,6 +148,7 @@ class RegionWatcher:
                 return
             db = self._session_factory()
             try:
+                text = repair_ocr(text, lambda form: has_form(db, form))
                 session_id = settings_store.get(db, "active_session_id")
                 _, duplicate = create_line(
                     db,

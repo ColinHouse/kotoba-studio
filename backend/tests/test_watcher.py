@@ -147,6 +147,20 @@ def test_watcher_creates_one_line_per_settled_scene(client):
     assert watcher.running is False
 
 
+def test_watcher_repairs_kana_the_dictionary_knows(client, jmdict_fixture):
+    session_id = start_session(client)
+    frames = ScriptedFrames(*TWO_SCENES[:6])
+    watcher = make_watcher(client, frames, ScriptedProvider("てかみ"))
+    watcher.start()
+    try:
+        assert wait_for(lambda: watcher.captured == 1)
+    finally:
+        watcher.stop()
+
+    lines = client.get("/api/lines", params={"session_id": session_id}).json()
+    assert [line["text"] for line in lines] == ["てがみ"]
+
+
 def test_watcher_survives_ocr_failure(client):
     start_session(client)
     frames = ScriptedFrames(*TWO_SCENES[:6])
