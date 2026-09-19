@@ -1,6 +1,13 @@
-/** 采集域接口：OCR 引擎对比、默认引擎设置、Hook 文本源。 */
+/** 采集域接口：OCR 引擎对比、默认引擎设置、Hook 文本源、剪贴板监听。 */
 import { api } from './client'
-import type { CompareResult, HookProbe, HookStatus, Region, Settings } from './types'
+import type {
+  ClipboardStatus,
+  CompareResult,
+  HookProbe,
+  HookStatus,
+  Region,
+  Settings,
+} from './types'
 
 export function compareOcr(region: Region): Promise<CompareResult[]> {
   return api.post<CompareResult[]>('/api/capture/ocr/compare', { region })
@@ -24,4 +31,16 @@ export function disconnectHook(name: string): Promise<HookStatus> {
 
 export function probeHook(name: string, url?: string): Promise<HookProbe> {
   return api.post<HookProbe>(`/api/capture/hooks/${name}/probe`, { url: url ?? null })
+}
+
+export function clipboardStatus(): Promise<ClipboardStatus> {
+  return api.get<ClipboardStatus>('/api/capture/clipboard/status')
+}
+
+export function startClipboard(): Promise<ClipboardStatus> {
+  return api.post<ClipboardStatus>('/api/capture/clipboard/start')
+}
+
+export function stopClipboard(): Promise<ClipboardStatus> {
+  return api.post<ClipboardStatus>('/api/capture/clipboard/stop')
 }

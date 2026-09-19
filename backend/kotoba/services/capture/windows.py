@@ -364,18 +364,27 @@ def grab_from_window(window: WindowInfo, region: Region | None = None) -> Grab |
     client_left, client_top, client_width, client_height = window.client
     offset_x, offset_y = client_left - window.left, client_top - window.top
     image = image.crop((offset_x, offset_y, offset_x + client_width, offset_y + client_height))
+    origin = (client_left, client_top)
     if region is not None:
         left, top = region.left - client_left, region.top - client_top
         right, bottom = left + region.width, top + region.height
         if left < 0 or top < 0 or right > client_width or bottom > client_height:
             return None
         image = image.crop((left, top, right, bottom))
+        origin = (region.left, region.top)
 
     if image.getextrema() == ((0, 0), (0, 0), (0, 0)):
         return None  # the engine painted nothing; let the caller grab the screen
     out = io.BytesIO()
     image.save(out, format="PNG", optimize=False)
-    return Grab(png=out.getvalue(), width=image.width, height=image.height, scale=1.0)
+    return Grab(
+        png=out.getvalue(),
+        width=image.width,
+        height=image.height,
+        scale=1.0,
+        origin=origin,
+        source="window",
+    )
 
 
 def list_windows(

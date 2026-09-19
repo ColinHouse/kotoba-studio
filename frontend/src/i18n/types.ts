@@ -70,6 +70,15 @@ export interface Messages {
       noBlocks: string
       noImage: string
     }
+    clipboard: {
+      title: string
+      on: string
+      off: string
+      captured: string
+      start: string
+      stop: string
+      hint: string
+    }
   }
   /** 中文留空：`translateError` 回退到后端原文，中文用户看到的字一个不变。 */
   errors: Partial<Record<ErrorCode, string>>

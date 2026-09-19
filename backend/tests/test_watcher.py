@@ -161,6 +161,35 @@ def test_watcher_repairs_kana_the_dictionary_knows(client, jmdict_fixture):
     assert [line["text"] for line in lines] == ["てがみ"]
 
 
+def test_watcher_blacks_out_a_visible_overlay(client):
+    class PixelProvider:
+        name = "pixel"
+        note = "test"
+
+        def __init__(self):
+            self.png: bytes | None = None
+
+        def available(self):
+            return True
+
+        def recognize(self, png):
+            self.png = png
+            return OcrResult("", [], self.name, 1)
+
+    provider = PixelProvider()
+    frames = ScriptedFrames(*TWO_SCENES[:6])
+    watcher = make_watcher(client, frames, provider, mask=lambda: (5, 5, 10, 10))
+    watcher.start()
+    try:
+        assert wait_for(lambda: provider.png is not None)
+    finally:
+        watcher.stop()
+
+    image = Image.open(io.BytesIO(provider.png)).convert("RGB")
+    assert image.getpixel((10, 10)) == (0, 0, 0)
+    assert image.getpixel((0, 0)) == (18, 18, 28)
+
+
 def test_watcher_survives_ocr_failure(client):
     start_session(client)
     frames = ScriptedFrames(*TWO_SCENES[:6])

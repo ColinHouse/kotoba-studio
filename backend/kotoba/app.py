@@ -49,6 +49,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 resolved_paths,
                 lambda db: registry.get_provider(settings_store.get(db, "ocr_provider")),
                 lambda: getattr(app.state, "region_watcher", None),
+                mask_for=lambda: app.state.overlay.screen_rect(),
             )
         )
         app.state.overlay = overlay_service.OverlayController(lambda: app.state.db.session())

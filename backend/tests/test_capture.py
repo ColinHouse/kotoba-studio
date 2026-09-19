@@ -110,6 +110,65 @@ def test_both_text_routes_stay_available_under_either_preference(capture_client,
     assert {"ocr", "hook"} <= origins
 
 
+def test_mask_rect_blacks_out_only_the_overlapping_area():
+    from kotoba.services.capture.screen import mask_rect
+
+    png = _png(50, 40)
+    masked = Image.open(
+        io.BytesIO(mask_rect(png, (10, 10, 20, 20), origin=(5, 5), scale=1.0))
+    ).convert("RGB")
+    # Screen rect (10,10)-(30,30) with the image starting at (5,5) is pixels 5..24.
+    assert masked.getpixel((5, 5)) == (0, 0, 0)
+    assert masked.getpixel((24, 24)) == (0, 0, 0)
+    assert masked.getpixel((4, 4)) == (20, 20, 30)
+    assert masked.getpixel((25, 25)) == (20, 20, 30)
+    # A rectangle that falls outside the image leaves the bytes untouched.
+    assert mask_rect(png, (500, 500, 10, 10), origin=(0, 0), scale=1.0) == png
+
+
+def test_mask_rect_scales_screen_points_to_image_pixels():
+    from kotoba.services.capture.screen import mask_rect
+
+    png = _png(50, 40)
+    scaled = Image.open(io.BytesIO(mask_rect(png, (5, 5, 5, 5), origin=(0, 0), scale=2.0))).convert(
+        "RGB"
+    )
+    assert scaled.getpixel((10, 10)) == (0, 0, 0)
+    assert scaled.getpixel((19, 19)) == (0, 0, 0)
+    assert scaled.getpixel((20, 20)) == (20, 20, 30)
+
+
+def test_collect_blacks_out_a_visible_overlay(capture_client, data_dir, monkeypatch):
+    class PixelProvider:
+        name = "pixel"
+        note = "test"
+
+        def __init__(self):
+            self.png: bytes | None = None
+
+        def available(self):
+            return True
+
+        def recognize(self, png):
+            self.png = png
+            return OcrResult(
+                "テスト", [OcrBlock("テスト", 0.9, (0.1, 0.1, 0.5, 0.2))], self.name, 1
+            )
+
+    provider = PixelProvider()
+    capture_client.app.state.ocr_provider = provider
+    monkeypatch.setattr(capture_client.app.state.overlay, "screen_rect", lambda: (40, 30, 20, 10))
+    region = {"left": 0, "top": 0, "width": 120, "height": 40}
+    body = capture_client.post("/api/capture/collect", json={"region": region}).json()
+
+    assert provider.png is not None
+    image = Image.open(io.BytesIO(provider.png)).convert("RGB")
+    assert image.getpixel((45, 35)) == (0, 0, 0)  # the overlay's rectangle
+    assert image.getpixel((5, 5)) == (20, 20, 30)  # everywhere else untouched
+    saved = Image.open(data_dir / "media" / body["screenshot_path"]).convert("RGB")
+    assert saved.getpixel((45, 35)) == (0, 0, 0)  # the stored screenshot too
+
+
 def test_collect_repairs_kana_the_dictionary_knows(capture_client, jmdict_fixture):
     capture_client.app.state.ocr_provider = FakeProvider("てかみ")
     src = capture_client.post("/api/sources", json={"title": "作品"}).json()

@@ -30,6 +30,8 @@ class Grab:
     width: int  # pixels of the PNG
     height: int
     scale: float  # pixels per logical point
+    origin: tuple[int, int] = (0, 0)  # screen point of the image's top-left
+    source: str = "screen"  # "screen" or "window"; only screen grabs can contain our overlay
 
 
 def _mss():
@@ -90,7 +92,49 @@ def grab(region: Region) -> Grab:
                 503,
             ) from exc
     png = _to_png(shot)
-    return Grab(png=png, width=shot.width, height=shot.height, scale=shot.width / region.width)
+    return Grab(
+        png=png,
+        width=shot.width,
+        height=shot.height,
+        scale=shot.width / region.width,
+        origin=(mon["left"] + region.left, mon["top"] + region.top),
+    )
+
+
+def mask_rect(
+    png: bytes,
+    rect: tuple[int, int, int, int],
+    *,
+    origin: tuple[int, int],
+    scale: float,
+) -> bytes:
+    """Black out a screen rectangle inside a grab (screen points → image pixels).
+
+    Used to keep our own overlay out of OCR: a topmost Tk panel that overlaps
+    the framed region is otherwise read as if it were game text, and the
+    previous line it displays is already contaminated by then.
+    """
+    if rect[2] <= 0 or rect[3] <= 0:
+        return png
+    from PIL import Image, ImageDraw
+
+    image = Image.open(io.BytesIO(png))
+    left = round((rect[0] - origin[0]) * scale)
+    top = round((rect[1] - origin[1]) * scale)
+    right = round((rect[0] + rect[2] - origin[0]) * scale) - 1
+    bottom = round((rect[1] + rect[3] - origin[1]) * scale) - 1
+    if right < left or bottom < top or right < 0 or bottom < 0:
+        return png
+    if left >= image.width or top >= image.height:
+        return png
+    draw = ImageDraw.Draw(image)
+    draw.rectangle(
+        (max(left, 0), max(top, 0), min(right, image.width - 1), min(bottom, image.height - 1)),
+        fill=(0, 0, 0),
+    )
+    buf = io.BytesIO()
+    image.save(buf, format="PNG", optimize=False)
+    return buf.getvalue()
 
 
 def grab_display(index: int = 0) -> tuple[Grab, dict]:

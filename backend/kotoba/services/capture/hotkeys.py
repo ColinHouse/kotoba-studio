@@ -276,6 +276,7 @@ def make_collector(
     watcher_for: Callable[[], RegionWatcher | None],
     *,
     grabber: Callable[[Region], Grab] = grab,
+    mask_for: Callable[[], tuple[int, int, int, int] | None] | None = None,
 ) -> Callable[[], bool]:
     """The hotkey action: screenshot the active region, OCR it, store the line.
 
@@ -309,6 +310,7 @@ def make_collector(
                     provider_for(db),
                     grabber=grabber,
                     source_id=source_id,
+                    mask=mask_for,
                 )
                 return payload["line"] is not None
             finally:

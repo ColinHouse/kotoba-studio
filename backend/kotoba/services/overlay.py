@@ -216,11 +216,19 @@ class TkOverlay:
         self._selected = -1
         self._collected: set[tuple[int, int]] = set()
         self._fingerprint: tuple | None = None
+        self._screen_rect: tuple[int, int, int, int] | None = None
         self.last_error: str | None = None
 
     @property
     def visible(self) -> bool:
         return self._visible
+
+    def screen_rect(self) -> tuple[int, int, int, int] | None:
+        """Where the panel is on screen while visible; OCR masks this away.
+
+        Read from other threads: the tuple is replaced wholesale, never mutated.
+        """
+        return self._screen_rect if self._visible else None
 
     def command(self, name: str) -> None:
         self._commands.put(name)
@@ -364,6 +372,7 @@ class TkOverlay:
                 self._root.lift()
             elif command == "hide":
                 self._visible = False
+                self._screen_rect = None
                 self._root.withdraw()
 
     def _tick(self) -> None:
@@ -393,6 +402,7 @@ class TkOverlay:
         size = (self._root.winfo_width(), self._root.winfo_height())
         x, y = apply_user_position((x, y), (x, y), size, _screen_size())
         self._user_position = (x, y)
+        self._screen_rect = (x, y, size[0], size[1])
         self._root.geometry(f"+{x}+{y}")
 
     def _drag_end(self, _event=None) -> None:
@@ -449,6 +459,7 @@ class TkOverlay:
         x, y = apply_user_position(user, (x, y), (width, height), _screen_size())
         self._line.configure(wraplength=width - 24)
         self._meaning.configure(wraplength=width - 24)
+        self._screen_rect = (x, y, width, height)
         self._root.geometry(f"{width}x{height}+{x}+{y}")
 
     def _render_words(self) -> None:
@@ -531,6 +542,11 @@ class OverlayController:
     @property
     def visible(self) -> bool:
         return self._view is not None and self._view.visible
+
+    def screen_rect(self) -> tuple[int, int, int, int] | None:
+        """The overlay's screen rectangle for OCR masking; None when not visible."""
+        view = self._view
+        return view.screen_rect() if view is not None else None
 
     def start(self) -> bool:
         if self.running:

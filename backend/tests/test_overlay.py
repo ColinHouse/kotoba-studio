@@ -280,6 +280,27 @@ def test_a_saved_position_comes_back_clamped_on_a_smaller_screen(client):
     assert apply_user_position(loaded, (0, 0), (520, 160), (1920, 1080)) == (1400, 920)
 
 
+def test_the_view_reports_its_rect_only_while_visible():
+    view = TkOverlay(lambda: None, lambda word: {}, lambda size: (0, 0, 520))
+    view._screen_rect = (10, 20, 300, 100)
+
+    assert view.screen_rect() is None  # hidden: nothing to mask
+    view._visible = True
+    assert view.screen_rect() == (10, 20, 300, 100)
+
+
+def test_the_controller_hands_out_the_view_rect():
+    ctrl = OverlayController(lambda: None)
+    assert ctrl.screen_rect() is None
+
+    class View:
+        def screen_rect(self):
+            return (1, 2, 3, 4)
+
+    ctrl._view = View()
+    assert ctrl.screen_rect() == (1, 2, 3, 4)
+
+
 def test_release_saves_the_dragged_spot_and_reset_clears_it():
     stored: list[tuple[int, int] | None] = []
     view = TkOverlay(
