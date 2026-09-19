@@ -2,13 +2,22 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { api, mediaUrl } from '@/api/client'
-import type { GameWindow, Line, Region, Session, Source, WindowBinding } from '@/api/types'
+import type {
+  GameWindow,
+  Line,
+  Region,
+  Session,
+  Settings,
+  Source,
+  WindowBinding,
+} from '@/api/types'
 import CapturedLines from '@/components/capture/CapturedLines.vue'
 import EngineCompare from '@/components/capture/EngineCompare.vue'
 import HookStatus from '@/components/capture/HookStatus.vue'
 import ManualPaste from '@/components/capture/ManualPaste.vue'
 import OcrResultView from '@/components/capture/OcrResultView.vue'
 import RegionPicker from '@/components/capture/RegionPicker.vue'
+import TextSourceGuide from '@/components/capture/TextSourceGuide.vue'
 import { useOcrCompare } from '@/composables/useOcrCompare'
 import { useScreenCapture } from '@/composables/useScreenCapture'
 import { useSessionLines } from '@/composables/useSessionLines'
@@ -44,6 +53,19 @@ async function persistRegion(region: Region) {
 
 const capture = useScreenCapture({ sessionId, persistRegion, onLine: upsert })
 const compare = useOcrCompare()
+
+const preferredSource = computed<'hook' | 'ocr'>(
+  () => app.settings?.preferred_text_source ?? 'hook',
+)
+
+/** Reorder the recommendation only; neither route is ever disabled by this. */
+async function chooseSource(source: 'hook' | 'ocr') {
+  try {
+    app.settings = await api.put<Settings>('/api/settings', { preferred_text_source: source })
+  } catch (e) {
+    app.fail(e)
+  }
+}
 
 /** The screenshot the OCR blocks belong to: the saved collect shot, or the
  *  framed region of the screen preview when nothing was saved. */
@@ -254,7 +276,15 @@ const elapsed = computed(() =>
       采集需要在运行 ことばこ 的电脑上进行；手机端请使用收件箱与复习。
     </p>
 
-    <HookStatus v-if="device.kind === 'desktop'" />
+    <TextSourceGuide
+      v-if="device.kind === 'desktop'"
+      :preferred="preferredSource"
+      @select="chooseSource"
+    />
+
+    <div v-if="device.kind === 'desktop'" id="hook-status">
+      <HookStatus />
+    </div>
 
     <section v-if="!session" class="framed mt-5 flex flex-wrap items-center gap-3 p-4">
       <label class="type-note" for="session-source">先选择作品并开始会话：</label>
@@ -333,7 +363,7 @@ const elapsed = computed(() =>
         </span>
       </div>
 
-      <div class="mt-5 md:grid md:grid-cols-[3fr_1px_2fr]">
+      <div id="ocr-collect" class="mt-5 md:grid md:grid-cols-[3fr_1px_2fr]">
         <div class="md:pr-[26px]">
           <RegionPicker
             v-if="capture.shot.value"

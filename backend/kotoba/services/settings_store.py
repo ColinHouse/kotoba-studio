@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kotoba.models import Setting
+from kotoba.models import Line, Setting
 
 DEFAULTS: dict[str, Any] = {
     "review_owner_default": None,  # None → auto (mobile if a phone is registered, else desktop)
@@ -19,6 +19,7 @@ DEFAULTS: dict[str, Any] = {
     "ai_base_url": "https://api.deepseek.com",
     "ai_model": "deepseek-flash",
     "ocr_provider": "auto",
+    "preferred_text_source": "hook",  # recommendation only; both routes stay usable
     "active_session_id": None,
     "ui_language": "zh-CN",
     "capture_hotkey": "Ctrl+Shift+S",
@@ -50,4 +51,25 @@ def all_values(db: Session) -> dict[str, Any]:
     out = dict(DEFAULTS)
     for row in db.scalars(select(Setting)).all():
         out[row.key] = json.loads(row.value_json)
+    return out
+
+
+def preferred_text_source(db: Session) -> str:
+    """The explicit choice, or OCR first for a user who already mines with OCR.
+
+    The key is new: before it existed, a user's route was whatever they had been
+    using. Someone with OCR history keeps OCR first and sees no nudge to switch;
+    only a user with no history gets the new default.
+    """
+    row = db.get(Setting, "preferred_text_source")
+    if row is not None:
+        return json.loads(row.value_json)
+    has_ocr = db.scalar(select(Line.id).where(Line.origin == "ocr").limit(1))
+    return "ocr" if has_ocr is not None else DEFAULTS["preferred_text_source"]
+
+
+def public_values(db: Session) -> dict[str, Any]:
+    """`all_values` with the text-source preference resolved for this user."""
+    out = all_values(db)
+    out["preferred_text_source"] = preferred_text_source(db)
     return out

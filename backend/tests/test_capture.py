@@ -90,6 +90,26 @@ def test_collect_creates_line_with_screenshot(capture_client, data_dir):
     assert again["duplicate"] is True and again["line"]["id"] == body["line"]["id"]
 
 
+@pytest.mark.parametrize("preference", ["hook", "ocr"])
+def test_both_text_routes_stay_available_under_either_preference(capture_client, preference):
+    """The preference only orders the recommendation; it must never be a switch."""
+    capture_client.put("/api/settings", json={"preferred_text_source": preference})
+    src = capture_client.post("/api/sources", json={"title": "作品"}).json()
+    ses = capture_client.post("/api/sessions", json={"source_id": src["id"]}).json()
+    region = {"left": 10, "top": 20, "width": 300, "height": 80}
+
+    body = capture_client.post(
+        "/api/capture/collect", json={"region": region, "session_id": ses["id"]}
+    ).json()
+    assert body["line"]["origin"] == "ocr"
+
+    with capture_client.websocket_connect("/ws/hook") as hook:
+        hook.send_text("今日は俺が奢ってやるよ。")
+        assert hook.receive_json()["ok"] is True
+    origins = {line["origin"] for line in capture_client.get("/api/lines").json()}
+    assert {"ocr", "hook"} <= origins
+
+
 def test_collect_repairs_kana_the_dictionary_knows(capture_client, jmdict_fixture):
     capture_client.app.state.ocr_provider = FakeProvider("てかみ")
     src = capture_client.post("/api/sources", json={"title": "作品"}).json()

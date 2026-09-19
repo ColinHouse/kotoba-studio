@@ -57,6 +57,21 @@ export const en: Messages & { errors: Record<ErrorCode, string> } = {
       inboundHint: 'Hook tools can also connect to Kotobako themselves:',
       testOk: 'The connection works',
       testFail: 'Still cannot connect — check the steps below.',
+      idleHint: 'This game may not be hookable — screen recognition still works.',
+      idleHintLink: 'Use screen recognition →',
+    },
+    source: {
+      title: 'Text source',
+      recommended: 'Recommended',
+      prefer: 'Prefer this',
+      hookTitle: 'Hook text source',
+      hookReason:
+        'Text is read straight from the game memory, with no recognition error; not every game can be hooked.',
+      hookLink: 'Connect a hook tool →',
+      ocrTitle: 'Screen recognition (OCR)',
+      ocrReason:
+        'It reads whatever is visible on screen — the fallback for games that cannot be hooked.',
+      ocrLink: 'Use screen recognition →',
     },
     ocr: {
       result: 'OCR result',
