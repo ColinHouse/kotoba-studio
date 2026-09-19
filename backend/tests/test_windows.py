@@ -5,6 +5,7 @@ import os
 import pytest
 from PIL import Image
 
+from kotoba.core.errors import ApiError
 from kotoba.services.capture import windows
 from kotoba.services.capture.screen import Grab, Region
 from kotoba.services.capture.watcher import RegionWatcher
@@ -268,7 +269,8 @@ def test_collect_prefers_the_window_pixels(client, db, monkeypatch):
     assert payload["line"]["text"] == "行けって"
 
 
-def test_collect_falls_back_to_the_screen_when_the_window_paints_nothing(client, db, monkeypatch):
+def test_collect_falls_back_to_the_screen_when_the_game_is_in_front(client, db, monkeypatch):
+    """PrintWindow fails on plenty of real games; the screen is fine *if* they are visible."""
     from kotoba.services.capture import collect as collect_service
 
     class TextProvider:
@@ -370,3 +372,97 @@ def test_watch_start_resolves_the_bound_window_each_cycle(capture_client, monkey
         assert (shot.width, shot.height) == (60, 20)
     finally:
         watcher.stop()
+
+
+def _bound_source(db, client):
+    from kotoba.models import Source
+
+    source = Source(title="サクラノ詩", kind="visual_novel")
+    source.window_json = json.dumps({"process": "sakura.exe", "title": "サクラノ詩"})
+    db.add(source)
+    db.commit()
+    return source
+
+
+def _collect_bound(client, db, source, monkeypatch, *, provider_text="行けって"):
+    from kotoba.services.capture import collect as collect_service
+
+    class TextProvider:
+        name = "fake"
+
+        def recognize(self, png):
+            return OcrResult(provider_text, [], "fake", 1)
+
+    calls = {"screen": 0}
+
+    def fake_screen_grab(region):
+        calls["screen"] += 1
+        return fake_grab(region)
+
+    payload = collect_service.collect(
+        db,
+        client.app.state.paths,
+        None,
+        Region(left=0, top=0, width=60, height=20),
+        TextProvider(),
+        grabber=fake_screen_grab,
+        source_id=source.id,
+    )
+    return payload, calls
+
+
+def test_collect_refuses_while_the_bound_game_is_behind_another_window(client, db, monkeypatch):
+    """Capturing the window on top would put Discord's text in the user's deck."""
+    source = _bound_source(db, client)
+    monkeypatch.setattr(windows, "available", lambda: True)
+    monkeypatch.setattr(windows, "find_window", lambda *a, **k: window_info())
+    monkeypatch.setattr(windows, "is_foreground", lambda win: False)
+
+    with pytest.raises(ApiError) as err:
+        _collect_bound(client, db, source, monkeypatch)
+
+    assert err.value.code == "capture_blocked"
+    assert client.get("/api/lines").json() == []
+
+
+def test_collect_refuses_when_the_bound_game_has_closed(client, db, monkeypatch):
+    source = _bound_source(db, client)
+    monkeypatch.setattr(windows, "available", lambda: True)
+    monkeypatch.setattr(windows, "find_window", lambda *a, **k: None)
+
+    with pytest.raises(ApiError) as err:
+        _collect_bound(client, db, source, monkeypatch)
+
+    assert err.value.code == "capture_blocked"
+    assert client.get("/api/lines").json() == []
+
+
+def test_collect_proceeds_when_the_bound_game_is_in_front(client, db, monkeypatch):
+    """The whole point: the game that fails PrintWindow must still be capturable."""
+    from kotoba.services.capture import collect as collect_service
+
+    source = _bound_source(db, client)
+    monkeypatch.setattr(windows, "available", lambda: True)
+    monkeypatch.setattr(windows, "find_window", lambda *a, **k: window_info())
+    monkeypatch.setattr(windows, "is_foreground", lambda win: True)
+    monkeypatch.setattr(collect_service, "grab_from_window", lambda win, region: None)
+
+    payload, calls = _collect_bound(client, db, source, monkeypatch)
+
+    assert calls["screen"] == 1
+    assert payload["line"]["text"] == "行けって"
+
+
+def test_collect_without_a_binding_is_unchanged(client, db, monkeypatch):
+    """No window identity (every macOS user, and anyone who never bound one)."""
+    from kotoba.models import Source
+
+    source = Source(title="unbound", kind="anime")
+    db.add(source)
+    db.commit()
+    monkeypatch.setattr(windows, "available", lambda: True)
+
+    payload, calls = _collect_bound(client, db, source, monkeypatch)
+
+    assert calls["screen"] == 1
+    assert payload["line"]["text"] == "行けって"

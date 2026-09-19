@@ -154,9 +154,8 @@ def collect(body: CollectIn, request: Request, db: Session = Depends(get_db)) ->
     session_id = body.session_id
     if session_id is None:
         session_id = settings_store.get(db, "active_session_id")
-    window = None
-    if body.source_id is not None and windows_service.available():
-        window = windows_service.window_for_source(db, body.source_id)
+    # No window lookup here: collect() asks capture_trust(), which resolves the
+    # window once and decides whether capturing is safe at the same time.
     return collect_service.collect(
         db,
         request.app.state.paths,
@@ -165,17 +164,19 @@ def collect(body: CollectIn, request: Request, db: Session = Depends(get_db)) ->
         provider,
         grabber=_grabber(request),
         source_id=body.source_id,
-        window=window,
     )
 
 
 def _watcher_status(watcher: RegionWatcher | None) -> dict:
     if watcher is None:
-        return {"running": False, "captured": 0, "last_error": None}
+        return {"running": False, "captured": 0, "last_error": None, "paused_reason": None}
     return {
         "running": watcher.running,
         "captured": watcher.captured,
         "last_error": watcher.last_error,
+        # Running but refusing to write: the UI must say so, or the watcher looks
+        # busy while it is quietly collecting nothing.
+        "paused_reason": watcher.paused_reason,
     }
 
 

@@ -186,7 +186,12 @@ def test_watch_endpoints_are_idempotent_and_stop_cleanly(client):
 
     started = client.post("/api/capture/watch/start", json={"region": REGION})
     assert started.status_code == 200
-    assert started.json() == {"running": True, "captured": 0, "last_error": None}
+    assert started.json() == {
+        "running": True,
+        "captured": 0,
+        "last_error": None,
+        "paused_reason": None,
+    }
 
     again = client.post("/api/capture/watch/start", json={"region": REGION})
     assert again.status_code == 200
@@ -197,8 +202,48 @@ def test_watch_endpoints_are_idempotent_and_stop_cleanly(client):
     assert status["running"] is True
 
     stopped = client.post("/api/capture/watch/stop").json()
-    assert stopped == {"running": False, "captured": 0, "last_error": None}
+    assert stopped == {"running": False, "captured": 0, "last_error": None, "paused_reason": None}
     assert watcher_threads() == 0
 
     idle = client.get("/api/capture/watch/status").json()
     assert idle["running"] is False
+
+
+def test_watcher_refuses_to_write_while_the_bound_game_is_behind_something(client, db, monkeypatch):
+    """The automatic path is the dangerous one: nobody is watching it collect."""
+    import json
+
+    from kotoba.models import Source
+    from kotoba.services.capture import watcher as watcher_module
+    from kotoba.services.capture.windows import Trust
+
+    source = Source(title="サクラノ詩", kind="visual_novel")
+    source.window_json = json.dumps({"process": "sakura.exe"})
+    db.add(source)
+    db.commit()
+
+    monkeypatch.setattr(
+        watcher_module,
+        "capture_trust",
+        lambda db_, source_id: Trust(False, None, "not_foreground", "游戏不在前台，采集已暂停"),
+    )
+
+    class LoudProvider:
+        name = "fake"
+        calls = 0
+
+        def recognize(self, png):
+            LoudProvider.calls += 1
+            raise AssertionError("OCR must not run on a frame we will not keep")
+
+    w = RegionWatcher(
+        Region(left=0, top=0, width=10, height=10),
+        lambda: db,
+        LoudProvider(),
+        source_id=source.id,
+    )
+    w._recognize(b"", Region(left=0, top=0, width=10, height=10))
+
+    assert LoudProvider.calls == 0
+    assert w.paused_reason == "游戏不在前台，采集已暂停"
+    assert client.get("/api/lines").json() == []

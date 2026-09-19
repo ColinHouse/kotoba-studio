@@ -7,9 +7,10 @@ from collections.abc import Callable
 from sqlalchemy.orm import Session
 
 from kotoba.core.config import Paths
+from kotoba.core.errors import ApiError
 from kotoba.schemas import LineCreate, LineDTO
 from kotoba.services.capture.screen import Grab, Region, grab, save_screenshot
-from kotoba.services.capture.windows import WindowInfo, grab_from_window
+from kotoba.services.capture.windows import WindowInfo, capture_trust, grab_from_window
 from kotoba.services.jp.normalize import normalize_ocr
 from kotoba.services.ocr.base import OcrProvider
 from kotoba.services.text.ingest import create_line
@@ -28,10 +29,18 @@ def collect(
     save: bool = True,
     window: WindowInfo | None = None,
 ) -> dict:
-    # A bound window is read from its own pixels first: the game may be covered
-    # by another window (or by our future overlay) and the screen grab would
-    # then contain the wrong picture.
-    shot = grab_from_window(window, region) if window is not None else None
+    """`window` overrides the one `capture_trust` resolves; only tests pass it."""
+    # Refuse before grabbing anything: if the bound game is not the window the
+    # user is looking at, every pixel in this region belongs to something else.
+    trust = capture_trust(db, source_id)
+    if not trust.ok:
+        raise ApiError("capture_blocked", trust.message)
+    # The window's own pixels are still preferred -- they survive our own overlay
+    # sitting on top. PrintWindow returns nothing for plenty of real games, and
+    # falling back to the screen is correct *because* trust just established that
+    # the game is the foreground window.
+    target = window if window is not None else trust.window
+    shot = grab_from_window(target, region) if target is not None else None
     if shot is None:
         shot = grabber(region)
     result = provider.recognize(shot.png)

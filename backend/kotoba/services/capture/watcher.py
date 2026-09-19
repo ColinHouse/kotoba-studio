@@ -23,6 +23,7 @@ from kotoba.services.capture.buffer import MediaBuffer
 from kotoba.services.capture.framehash import StabilityTracker, dhash
 from kotoba.services.capture.gate import gate
 from kotoba.services.capture.screen import Grab, Region, grab
+from kotoba.services.capture.windows import capture_trust
 from kotoba.services.jp.normalize import normalize_ocr
 from kotoba.services.ocr.base import OcrProvider
 from kotoba.services.text.ingest import create_line
@@ -61,6 +62,7 @@ class RegionWatcher:
         self._thread: threading.Thread | None = None
         self._captured = 0
         self.last_error: str | None = None
+        self.paused_reason: str | None = None
 
     @property
     def running(self) -> bool:
@@ -118,6 +120,20 @@ class RegionWatcher:
                 log.debug("region watcher failed a frame", exc_info=True)
 
     def _recognize(self, png: bytes, region: Region) -> None:
+        # Checked here rather than per tick: this is the only path that writes, and
+        # it runs only on a settled, changed frame -- so a user simply playing pays
+        # nothing, and the check sits exactly on the boundary that matters. Ahead of
+        # OCR because recognising a frame we are going to discard is the expensive
+        # half.
+        db = self._session_factory()
+        try:
+            trust = capture_trust(db, self.source_id)
+        finally:
+            db.close()
+        if not trust.ok:
+            self.paused_reason = trust.message
+            return
+        self.paused_reason = None
         result = self._provider.recognize(png)
         # Only a successful OCR clears the error: clearing it on the next quiet
         # frame would hide a failed engine from /watch/status almost at once.
