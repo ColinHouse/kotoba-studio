@@ -74,6 +74,15 @@ export const zhCN: Messages = {
       noBlocks: '这个引擎只给整段文本，不提供分块坐标。',
       noImage: '没有可叠加的截图，先按整段文本显示。',
     },
+    clipboard: {
+      title: '剪贴板监听',
+      on: '监听中',
+      off: '未开启',
+      captured: '已收到',
+      start: '开启监听',
+      stop: '停止监听',
+      hint: '不想给 Textractor 装扩展时：让 Textractor（或任何工具）把台词复制到剪贴板，这里开启后会自动接住。默认关闭。',
+    },
   },
   errors: {},
 }

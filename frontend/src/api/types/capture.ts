@@ -104,6 +104,12 @@ export interface Provider {
   recommended: boolean
 }
 
+/** The OS-clipboard watcher: a zero-install transport for hook tools. */
+export interface ClipboardStatus {
+  running: boolean
+  captured: number
+}
+
 export interface CompareResult {
   provider: string
   text: string

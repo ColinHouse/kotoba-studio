@@ -12,6 +12,7 @@ import type {
   WindowBinding,
 } from '@/api/types'
 import CapturedLines from '@/components/capture/CapturedLines.vue'
+import ClipboardWatch from '@/components/capture/ClipboardWatch.vue'
 import EngineCompare from '@/components/capture/EngineCompare.vue'
 import HookStatus from '@/components/capture/HookStatus.vue'
 import ManualPaste from '@/components/capture/ManualPaste.vue'
@@ -284,6 +285,7 @@ const elapsed = computed(() =>
 
     <div v-if="device.kind === 'desktop'" id="hook-status">
       <HookStatus />
+      <ClipboardWatch />
     </div>
 
     <section v-if="!session" class="framed mt-5 flex flex-wrap items-center gap-3 p-4">

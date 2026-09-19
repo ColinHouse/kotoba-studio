@@ -80,6 +80,15 @@ export const en: Messages & { errors: Record<ErrorCode, string> } = {
       noBlocks: 'This engine returns one block of text and no per-block boxes.',
       noImage: 'No screenshot is available to draw the boxes on; showing the plain text.',
     },
+    clipboard: {
+      title: 'Clipboard watch',
+      on: 'Watching',
+      off: 'Off',
+      captured: 'Captured',
+      start: 'Start watching',
+      stop: 'Stop watching',
+      hint: 'No Textractor extension? Have Textractor (or any tool) copy the line to the clipboard and it will be picked up here. Off by default.',
+    },
   },
   errors: {
     ai_failed: 'The AI explanation failed. You can retry, or keep working without it.',
