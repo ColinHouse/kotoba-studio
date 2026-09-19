@@ -50,6 +50,13 @@ export interface Messages {
       testOk: string
       testFail: string
     }
+    ocr: {
+      result: string
+      copied: string
+      copyHint: string
+      noBlocks: string
+      noImage: string
+    }
   }
   /** 中文留空：`translateError` 回退到后端原文，中文用户看到的字一个不变。 */
   errors: Partial<Record<ErrorCode, string>>

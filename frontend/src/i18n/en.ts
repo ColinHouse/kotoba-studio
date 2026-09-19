@@ -58,6 +58,13 @@ export const en: Messages & { errors: Record<ErrorCode, string> } = {
       testOk: 'The connection works',
       testFail: 'Still cannot connect — check the steps below.',
     },
+    ocr: {
+      result: 'OCR result',
+      copied: 'Copied',
+      copyHint: 'Click a box to copy that block of text',
+      noBlocks: 'This engine returns one block of text and no per-block boxes.',
+      noImage: 'No screenshot is available to draw the boxes on; showing the plain text.',
+    },
   },
   errors: {
     ai_failed: 'The AI explanation failed. You can retry, or keep working without it.',

@@ -7,6 +7,7 @@ import CapturedLines from '@/components/capture/CapturedLines.vue'
 import EngineCompare from '@/components/capture/EngineCompare.vue'
 import HookStatus from '@/components/capture/HookStatus.vue'
 import ManualPaste from '@/components/capture/ManualPaste.vue'
+import OcrResultView from '@/components/capture/OcrResultView.vue'
 import RegionPicker from '@/components/capture/RegionPicker.vue'
 import { useOcrCompare } from '@/composables/useOcrCompare'
 import { useScreenCapture } from '@/composables/useScreenCapture'
@@ -43,6 +44,32 @@ async function persistRegion(region: Region) {
 
 const capture = useScreenCapture({ sessionId, persistRegion, onLine: upsert })
 const compare = useOcrCompare()
+
+/** The screenshot the OCR blocks belong to: the saved collect shot, or the
+ *  framed region of the screen preview when nothing was saved. */
+const ocrImage = computed(() => {
+  const saved = capture.ocrImagePath.value
+  if (saved) {
+    const src = mediaUrl(saved)
+    return src ? { src } : null
+  }
+  const shot = capture.shot.value
+  const region = capture.region.value
+  if (!shot || !region) return null
+  const box = shot.region
+  if (box.width <= 0 || box.height <= 0) return null
+  const src = mediaUrl(shot.path)
+  if (!src) return null
+  return {
+    src,
+    crop: {
+      x: (region.left - box.left) / box.width,
+      y: (region.top - box.top) / box.height,
+      width: region.width / box.width,
+      height: region.height / box.height,
+    },
+  }
+})
 
 /** The live window behind the saved binding, so the region can follow it. */
 const boundWindow = computed(() => {
@@ -366,13 +393,7 @@ const elapsed = computed(() =>
 
         <div class="mt-6 flex flex-col md:mt-0 md:pl-[26px]">
           <template v-if="capture.ocr.value">
-            <p class="kicker">
-              识别结果 · {{ capture.ocr.value.provider }} ·
-              <span class="num">{{ capture.ocr.value.elapsed_ms }} ms</span>
-            </p>
-            <p class="jp mt-2 mb-0 text-[18px] leading-[1.95] md:text-[20px]">
-              {{ capture.ocr.value.normalized ?? capture.ocr.value.text }}
-            </p>
+            <OcrResultView :result="capture.ocr.value" :image="ocrImage" />
             <div class="my-4 h-px bg-divider" />
           </template>
 
