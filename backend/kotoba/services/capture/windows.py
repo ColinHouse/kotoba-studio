@@ -216,6 +216,60 @@ def window_for_source(
 PW_RENDERFULLCONTENT = 0x00000002
 
 
+@dataclass(frozen=True)
+class Trust:
+    """Whether a grab of a source's region can be believed right now.
+
+    `window` is carried along so a caller that is allowed to capture does not
+    have to enumerate the windows a second time.
+    """
+
+    ok: bool
+    window: WindowInfo | None = None
+    reason: str = ""
+    message: str = ""
+
+
+TRUSTED = Trust(True)
+
+
+def is_foreground(window: WindowInfo) -> bool:
+    """Whether this window is the one the user is actually looking at."""
+    if not available():
+        return True
+    return int(ctypes.windll.user32.GetForegroundWindow()) == window.handle
+
+
+def capture_trust(
+    db: Session,
+    source_id: int | None,
+    *,
+    finder: Callable[..., WindowInfo | None] | None = None,
+) -> Trust:
+    """The one place that decides whether capturing this source is safe.
+
+    Refusing is the safe answer: a line the user has to grab again costs them a
+    keypress, while Discord's text in their deck makes them distrust the whole
+    application -- and it spreads into frequency ranking, i+1 sorting and FSRS.
+
+    Sources with no window binding are trusted because there is nothing to check:
+    that is every macOS user (`available()` is Windows-only) and anyone who never
+    bound a window. Their exposure is unchanged by this function, not blessed by it.
+    """
+    if source_id is None or not available():
+        return TRUSTED
+    source = db.get(Source, source_id)
+    binding = parse_binding(source.window_json) if source is not None else None
+    if binding is None:
+        return TRUSTED
+    window = (finder or find_window)(str(binding["process"]), binding.get("title"))
+    if window is None:
+        return Trust(False, None, "window_gone", "游戏窗口不在了，采集已暂停")
+    if not is_foreground(window):
+        return Trust(False, window, "not_foreground", "游戏不在前台，采集已暂停")
+    return Trust(True, window)
+
+
 def grab_from_window(window: WindowInfo, region: Region | None = None) -> Grab | None:
     """The window's own pixels, whatever is on top of it -- including our overlay.
 
