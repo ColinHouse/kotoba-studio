@@ -26,6 +26,8 @@ export interface Settings {
   capture_hotkey_enabled: boolean
   overlay_enabled: boolean
   overlay_hotkey: string
+  /** Where the user dragged the overlay when the session has no work; per-work spots live on the source. */
+  overlay_position: { x: number; y: number } | null
 }
 
 export interface ConnectInfo {

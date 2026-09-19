@@ -138,10 +138,12 @@ def test_latest_line_and_save_word(client, db):
 
 
 class FakeView:
-    def __init__(self, snapshot, save, position):
+    def __init__(self, snapshot, save, position, load_position, store_position):
         self.snapshot = snapshot
         self.save = save
         self.position = position
+        self.load_position = load_position
+        self.store_position = store_position
         self.commands: list[str] = []
         self.running = threading.Event()
         self.done = threading.Event()
@@ -213,6 +215,103 @@ def test_controller_callbacks_read_the_active_session(client, monkeypatch):
     assert len(position) == 3 and position[2] >= 520
 
 
+def _active_session(client, *, source: str | None = "覆盖层位置") -> dict:
+    body: dict = {}
+    if source is not None:
+        src = client.post("/api/sources", json={"title": source}).json()
+        body["source_id"] = src["id"]
+    ses = client.post("/api/sessions", json=body).json()
+    client.put("/api/settings", json={"active_session_id": ses["id"]})
+    return ses
+
+
+def test_a_dragged_position_round_trips_per_work(client):
+    ctrl = OverlayController(lambda: client.app.state.db.session())
+    _active_session(client)
+
+    assert ctrl._load_position() is None
+    ctrl._store_position((640, 320))
+    assert ctrl._load_position() == (640, 320)
+    # A restart is a fresh controller reading the same work.
+    assert OverlayController(lambda: client.app.state.db.session())._load_position() == (640, 320)
+    # The global fallback is for sessions without a work and stays untouched.
+    assert client.get("/api/settings").json()["overlay_position"] is None
+
+
+def test_reset_clears_the_stored_position(client):
+    ctrl = OverlayController(lambda: client.app.state.db.session())
+    _active_session(client)
+
+    ctrl._store_position((640, 320))
+    ctrl._store_position(None)
+    assert ctrl._load_position() is None
+
+
+def test_each_work_keeps_its_own_position(client):
+    ctrl = OverlayController(lambda: client.app.state.db.session())
+    first = _active_session(client, source="作品 A")
+    ctrl._store_position((10, 20))
+    _active_session(client, source="作品 B")
+
+    assert ctrl._load_position() is None  # B has its own, still empty, record
+    ctrl._store_position((99, 88))
+
+    client.put("/api/settings", json={"active_session_id": first["id"]})
+    assert ctrl._load_position() == (10, 20)
+
+
+def test_sessions_without_a_work_share_one_global_position(client):
+    ctrl = OverlayController(lambda: client.app.state.db.session())
+    _active_session(client, source=None)
+
+    assert ctrl._load_position() is None
+    ctrl._store_position((15, 25))
+    assert ctrl._load_position() == (15, 25)
+    assert client.get("/api/settings").json()["overlay_position"] == {"x": 15, "y": 25}
+
+
+def test_a_saved_position_comes_back_clamped_on_a_smaller_screen(client):
+    """Criterion: the read path runs through apply_user_position()."""
+    ctrl = OverlayController(lambda: client.app.state.db.session())
+    _active_session(client)
+
+    ctrl._store_position((5000, 5000))  # saved while the screen was much larger
+    loaded = ctrl._load_position()
+    assert apply_user_position(loaded, (0, 0), (520, 160), (1920, 1080)) == (1400, 920)
+
+
+def test_release_saves_the_dragged_spot_and_reset_clears_it():
+    stored: list[tuple[int, int] | None] = []
+    view = TkOverlay(
+        lambda: None,
+        lambda word: {},
+        lambda size: (0, 0, 520),
+        lambda: None,
+        stored.append,
+    )
+    view._refresh = lambda: None  # no Tk widgets in this test
+
+    view._user_position = (12, 34)
+    view._drag_end()
+    view._drag_reset()
+    assert stored == [(12, 34), None]
+
+
+def test_a_click_that_moved_nothing_saves_nothing():
+    stored: list[tuple[int, int] | None] = []
+    view = TkOverlay(
+        lambda: None,
+        lambda word: {},
+        lambda size: (0, 0, 520),
+        lambda: None,
+        stored.append,
+    )
+
+    view._user_position = None
+    view._drag_end()
+    assert stored == []
+
+
 class FakeRoot:
     """Stands in for the Tk root so the tick loop can be tested without a display."""
 
@@ -263,6 +362,16 @@ def test_settings_validate_the_overlay_hotkey(client):
     assert bad.status_code == 400
     assert bad.json()["error"]["code"] == "invalid_value"
     assert client.get("/api/settings").json()["overlay_hotkey"] == "Ctrl+Shift+O"
+
+
+def test_settings_validate_the_overlay_position(client):
+    bad = client.put("/api/settings", json={"overlay_position": {"x": "left", "y": 0}})
+    assert bad.status_code == 400
+    assert bad.json()["error"]["code"] == "invalid_value"
+    ok = client.put("/api/settings", json={"overlay_position": {"x": 10, "y": 20}})
+    assert ok.json()["overlay_position"] == {"x": 10, "y": 20}
+    cleared = client.put("/api/settings", json={"overlay_position": None})
+    assert cleared.json()["overlay_position"] is None
 
 
 @pytest.mark.parametrize("platform", ["linux", "darwin"])

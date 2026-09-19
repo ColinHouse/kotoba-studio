@@ -28,6 +28,7 @@ DEFAULTS: dict[str, Any] = {
     "video_dirs": [],  # directories the subtitle importer may read a video from
     "overlay_enabled": False,
     "overlay_hotkey": "Ctrl+Shift+O",
+    "overlay_position": None,  # {"x": int, "y": int} for sessions without a work
 }
 
 

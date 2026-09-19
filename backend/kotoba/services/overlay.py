@@ -18,6 +18,7 @@ Design notes:
 
 from __future__ import annotations
 
+import json
 import logging
 import queue
 import sys
@@ -29,7 +30,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kotoba.core.errors import ApiError
-from kotoba.models import CaptureSession, Line
+from kotoba.models import CaptureSession, Line, Source
 from kotoba.services import learning, settings_store
 from kotoba.services.capture import windows
 from kotoba.services.capture.screen import Region
@@ -200,10 +201,14 @@ class TkOverlay:
         snapshot: Callable[[], tuple[str, list[OverlayWord]] | None],
         save: Callable[[OverlayWord], dict],
         position: Callable[[tuple[int, int]], tuple[int, int, int]],
+        load_position: Callable[[], tuple[int, int] | None] | None = None,
+        store_position: Callable[[tuple[int, int] | None], None] | None = None,
     ) -> None:
         self._snapshot = snapshot
         self._save = save
         self._position = position
+        self._load_position = load_position or (lambda: None)
+        self._store_position = store_position or (lambda position: None)
         self._commands: queue.Queue[str] = queue.Queue()
         self._root = None
         self._visible = False
@@ -225,7 +230,7 @@ class TkOverlay:
 
         root = tk.Tk()
         self._root = root
-        self._user_position: tuple[int, int] | None = None
+        self._user_position: tuple[int, int] | None = self._load_position()
         self._drag_from: tuple[int, int] | None = None
         self._drag_origin: tuple[int, int] = (0, 0)
         root.withdraw()
@@ -253,10 +258,11 @@ class TkOverlay:
         # of its own (overrideredirect). Deliberately not bound on the whole panel:
         # the words carry their own <Button-1> for picking, and a drag that also
         # picked a word would make both feel unreliable. Double-click gives the
-        # automatic position back.
+        # automatic position back; the release persists what the drag left behind.
         for widget in (title, self._panel):
             widget.bind("<Button-1>", self._drag_start)
             widget.bind("<B1-Motion>", self._drag_move)
+            widget.bind("<ButtonRelease-1>", self._drag_end)
             widget.bind("<Double-Button-1>", self._drag_reset)
         self._line = tk.Label(
             self._panel,
@@ -389,10 +395,22 @@ class TkOverlay:
         self._user_position = (x, y)
         self._root.geometry(f"+{x}+{y}")
 
+    def _drag_end(self, _event=None) -> None:
+        """A drag is only persisted once the button is released.
+
+        Tk's implicit grab delivers the release to the widget the press started
+        on even when the pointer is already outside the panel, so a fast drag
+        still lands here. A plain click moves nothing and saves nothing.
+        """
+        self._drag_from = None
+        if self._user_position is not None:
+            self._store_position(self._user_position)
+
     def _drag_reset(self, _event=None) -> None:
-        """Back to sitting above the dialogue box."""
+        """Back to sitting above the dialogue box, forgetting the saved spot too."""
         self._drag_from = None
         self._user_position = None
+        self._store_position(None)
         self._refresh()
 
     def _refresh(self) -> None:
@@ -425,7 +443,10 @@ class TkOverlay:
         x, y, width = self._position((width, height))
         # Applied on every refresh, not once: _position() recomputes from the dialogue
         # region each time a line arrives, so a drag would otherwise last 600ms.
-        x, y = apply_user_position(self._user_position, (x, y), (width, height), _screen_size())
+        # A position saved for this work arrives by the same path, which is also
+        # what clamps it back on screen after a resolution change.
+        user = self._user_position if self._user_position is not None else self._load_position()
+        x, y = apply_user_position(user, (x, y), (width, height), _screen_size())
         self._line.configure(wraplength=width - 24)
         self._meaning.configure(wraplength=width - 24)
         self._root.geometry(f"{width}x{height}+{x}+{y}")
@@ -518,7 +539,13 @@ class OverlayController:
         if not ok:
             self.last_error = note
             return False
-        view = self._view_factory(self._snapshot, self._save, self._position)
+        view = self._view_factory(
+            self._snapshot,
+            self._save,
+            self._position,
+            self._load_position,
+            self._store_position,
+        )
         self._view = view
         self._thread = threading.Thread(target=self._run, args=(view,), name="overlay", daemon=True)
         self._thread.start()
@@ -607,3 +634,50 @@ class OverlayController:
             width = max(PANEL_MIN_WIDTH, min(region.width, PANEL_MAX_WIDTH))
         x, y = overlay_position(region, (width, size[1]), _screen_size())
         return x, y, width
+
+    # Position persistence: one spot per work when the session is bound to one,
+    # a single global fallback otherwise. Resolved on every call so switching
+    # works picks up that work's spot without restarting the overlay.
+
+    def _position_scope(self, db: Session) -> tuple[str, int]:
+        session_id = settings_store.get(db, "active_session_id")
+        session = db.get(CaptureSession, session_id) if session_id is not None else None
+        if session is not None and session.source_id is not None:
+            return "source", session.source_id
+        return "global", 0
+
+    def _load_position(self) -> tuple[int, int] | None:
+        db = self._session_factory()
+        try:
+            scope, key = self._position_scope(db)
+            if scope == "source":
+                source = db.get(Source, key)
+                data = json.loads(source.overlay_position_json or "null")
+            else:
+                data = settings_store.get(db, "overlay_position")
+            if not isinstance(data, dict):
+                return None
+            return int(data["x"]), int(data["y"])
+        except Exception:  # noqa: BLE001 - a broken saved spot must not stop the overlay
+            log.debug("overlay could not load a saved position", exc_info=True)
+            return None
+        finally:
+            db.close()
+
+    def _store_position(self, position: tuple[int, int] | None) -> None:
+        data = None if position is None else {"x": int(position[0]), "y": int(position[1])}
+        db = self._session_factory()
+        try:
+            scope, key = self._position_scope(db)
+            if scope == "source":
+                source = db.get(Source, key)
+                if source is not None:
+                    source.overlay_position_json = json.dumps(data) if data else None
+            else:
+                settings_store.set_value(db, "overlay_position", data)
+            db.commit()
+        except Exception:  # noqa: BLE001 - losing a spot is not worth killing the overlay
+            db.rollback()
+            log.debug("overlay could not store the dragged position", exc_info=True)
+        finally:
+            db.close()

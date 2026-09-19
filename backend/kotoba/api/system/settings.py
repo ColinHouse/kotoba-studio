@@ -61,6 +61,13 @@ def put_settings(body: dict[str, Any], db: Session = Depends(get_db)) -> dict[st
         except ValueError as exc:
             raise ApiError("invalid_value", f"覆盖层快捷键无效：{exc}") from exc
         body["overlay_hotkey"] = hotkey
+    if "overlay_position" in body and body["overlay_position"] is not None:
+        value = body["overlay_position"]
+        if not isinstance(value, dict) or not all(
+            isinstance(value.get(axis), int) for axis in ("x", "y")
+        ):
+            raise ApiError("invalid_value", "overlay_position must be null or {x, y} integers")
+        body["overlay_position"] = {"x": value["x"], "y": value["y"]}
     if "backfill_tolerance_s" in body:
         value = float(body["backfill_tolerance_s"])
         if not 0 <= value <= 120:
