@@ -6,6 +6,11 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Added
+
+- 覆盖层：按住标题「覆盖层 · 当前句」就能把面板拖到顺手的位置，拖过之后它不再被下一句
+  台词弹回去。双击标题回到自动位置（贴在对话框上方）。位置目前只在本次运行内保留。
+
 ### Changed
 
 - 采集：绑定了游戏窗口之后，只要那个窗口不在最前面，采集就会暂停而不是照样截图。

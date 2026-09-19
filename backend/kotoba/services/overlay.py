@@ -144,6 +144,30 @@ def overlay_position(
     return x, y
 
 
+def apply_user_position(
+    user: tuple[int, int] | None,
+    auto: tuple[int, int],
+    size: tuple[int, int],
+    screen: tuple[int, int],
+) -> tuple[int, int]:
+    """Where the panel actually goes: a spot the user dragged to beats the computed one.
+
+    The override has to be applied on every refresh, not once, because the panel is
+    repositioned each time a line arrives -- without this the next line would snap it
+    straight back and the drag would look broken.
+
+    Still clamped: the user can let go half off the edge, and a saved spot can end up
+    outside after the resolution changes.
+    """
+    if user is None:
+        return auto
+    width, height = size
+    screen_w, screen_h = screen
+    x = max(0, min(user[0], max(0, screen_w - width)))
+    y = max(0, min(user[1], max(0, screen_h - height)))
+    return x, y
+
+
 def save_word(db: Session, line: Line, word: OverlayWord) -> dict:
     """The 收藏 button: the same Encounter the inbox creates on its first step."""
     encounter = learning.add_encounter(
@@ -201,6 +225,9 @@ class TkOverlay:
 
         root = tk.Tk()
         self._root = root
+        self._user_position: tuple[int, int] | None = None
+        self._drag_from: tuple[int, int] | None = None
+        self._drag_origin: tuple[int, int] = (0, 0)
         root.withdraw()
         root.overrideredirect(True)
         root.attributes("-topmost", True)
@@ -212,9 +239,25 @@ class TkOverlay:
 
         self._panel = tk.Frame(root, bg=PAPER, highlightthickness=1, highlightbackground=ACCENT)
         self._panel.pack(fill="both", expand=True)
-        tk.Label(
-            self._panel, text="覆盖层 · 当前句", fg=ACCENT, bg=PAPER, font=(FONT, 10), anchor="w"
-        ).pack(fill="x", padx=12, pady=(8, 0))
+        title = tk.Label(
+            self._panel,
+            text="覆盖层 · 当前句",
+            fg=ACCENT,
+            bg=PAPER,
+            font=(FONT, 10),
+            anchor="w",
+            cursor="fleur",
+        )
+        title.pack(fill="x", padx=12, pady=(8, 0))
+        # Dragged by the title, the way a title bar works -- the window has no frame
+        # of its own (overrideredirect). Deliberately not bound on the whole panel:
+        # the words carry their own <Button-1> for picking, and a drag that also
+        # picked a word would make both feel unreliable. Double-click gives the
+        # automatic position back.
+        for widget in (title, self._panel):
+            widget.bind("<Button-1>", self._drag_start)
+            widget.bind("<B1-Motion>", self._drag_move)
+            widget.bind("<Double-Button-1>", self._drag_reset)
         self._line = tk.Label(
             self._panel,
             text="等待采集…",
@@ -330,6 +373,28 @@ class TkOverlay:
             if self._root is not None:
                 self._root.after(POLL_MS, self._tick)
 
+    def _drag_start(self, event) -> None:
+        if self._root is None:
+            return
+        self._drag_from = (event.x_root, event.y_root)
+        self._drag_origin = (self._root.winfo_x(), self._root.winfo_y())
+
+    def _drag_move(self, event) -> None:
+        if self._root is None or self._drag_from is None:
+            return
+        x = self._drag_origin[0] + (event.x_root - self._drag_from[0])
+        y = self._drag_origin[1] + (event.y_root - self._drag_from[1])
+        size = (self._root.winfo_width(), self._root.winfo_height())
+        x, y = apply_user_position((x, y), (x, y), size, _screen_size())
+        self._user_position = (x, y)
+        self._root.geometry(f"+{x}+{y}")
+
+    def _drag_reset(self, _event=None) -> None:
+        """Back to sitting above the dialogue box."""
+        self._drag_from = None
+        self._user_position = None
+        self._refresh()
+
     def _refresh(self) -> None:
         snapshot = self._snapshot()
         if snapshot is None:
@@ -358,6 +423,9 @@ class TkOverlay:
         self._root.update_idletasks()
         height = max(120, self._panel.winfo_reqheight())
         x, y, width = self._position((width, height))
+        # Applied on every refresh, not once: _position() recomputes from the dialogue
+        # region each time a line arrives, so a drag would otherwise last 600ms.
+        x, y = apply_user_position(self._user_position, (x, y), (width, height), _screen_size())
         self._line.configure(wraplength=width - 24)
         self._meaning.configure(wraplength=width - 24)
         self._root.geometry(f"{width}x{height}+{x}+{y}")
